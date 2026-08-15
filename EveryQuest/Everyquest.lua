@@ -1137,6 +1137,7 @@ end
 function EveryQuest:ScanQuestLog(reportStatus)
 	local category
 	local scanned, added, changed, missing = 0, 0, 0, 0
+	local missingQuests = {}
 	if reportStatus then
 		self:Print("EveryQuest: updating quest history from the quest log...")
 	end
@@ -1161,6 +1162,11 @@ function EveryQuest:ScanQuestLog(reportStatus)
 						end
 					else
 						missing = missing + 1
+						table.insert(missingQuests, {
+							id = questid,
+							title = info.title,
+							category = category,
+						})
 					end
 				end
 			end
@@ -1168,6 +1174,10 @@ function EveryQuest:ScanQuestLog(reportStatus)
 	end
 	if reportStatus then
 		self:Print(("EveryQuest: quest history updated: %d active, %d added, %d changed, %d missing from database."):format(scanned, added, changed, missing))
+		for _, missingQuest in ipairs(missingQuests) do
+			local categoryText = missingQuest.category and (" (" .. missingQuest.category .. ")") or ""
+			self:Print(("EveryQuest: missing quest %d - %s%s"):format(missingQuest.id, missingQuest.title or L["Unknown"], categoryText))
+		end
 	end
 	return scanned, added, changed, missing
 end
