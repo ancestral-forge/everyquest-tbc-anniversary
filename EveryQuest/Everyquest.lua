@@ -262,60 +262,90 @@ local function concat(var)
 		return "nil"
 	end
 end
+
+local function getZoneListMenu()
+	return EveryQuest.ZoneListMenu or getglobal("EveryQuestdewdropZoneListMenu")
+end
+
+local function setZoneListText(text)
+	local zoneListMenu = getZoneListMenu()
+	if zoneListMenu and UIDropDownMenu_SetText then
+		UIDropDownMenu_SetText(zoneListMenu, text)
+	end
+end
+
+local function raiseFrame(frame)
+	if frame and EveryQuestFrame and frame.SetFrameLevel and EveryQuestFrame.GetFrameLevel then
+		frame:SetFrameLevel(EveryQuestFrame:GetFrameLevel() + 2)
+	end
+end
+
 function EveryQuest:EveryQuestInit()
+	if sessionvars.initialized then
+		return
+	end
 	self:RegisterEvents()
-	
+
 	EveryQuestTitleText:SetText(L["EveryQuest Log"])
-	
+
 	self:CreateZoneMenu()
-	
+
 	-- Create the "EQ" toggle button for the questlog frame
-	EveryQuest.EveryQuestToggleButton = CreateFrame("Button",nil, QuestLogFrame, "UIPanelButtonTemplate")
+	EveryQuest.EveryQuestToggleButton = EveryQuest.EveryQuestToggleButton or CreateFrame("Button", nil, QuestLogFrame or UIParent, "UIPanelButtonTemplate")
 	EveryQuest.EveryQuestToggleButton:SetWidth(28)
 	EveryQuest.EveryQuestToggleButton:SetHeight(18)
 	EveryQuest.EveryQuestToggleButton:SetText("EQ")
 	EveryQuest.EveryQuestToggleButton:Show()
 	EveryQuest.EveryQuestToggleButton:ClearAllPoints()
-	
+
 	-- Create the List toggle button to toggle between quest history and quests in a category
-	EveryQuest.ListToggleButton = CreateFrame("Button",EveryQuestListToggleButton, EveryQuestFrame, "UIPanelButtonTemplate")
+	EveryQuest.ListToggleButton = EveryQuest.ListToggleButton or getglobal("EveryQuestListToggleButton") or CreateFrame("Button", "EveryQuestListToggleButton", EveryQuestFrame, "UIPanelButtonTemplate")
 	EveryQuest.ListToggleButton:SetWidth(122)
 	EveryQuest.ListToggleButton:SetHeight(21)
 	EveryQuest.ListToggleButton:SetText(" ")
 	EveryQuest.ListToggleButton:Show()
+	raiseFrame(EveryQuest.ListToggleButton)
 	EveryQuest.ListToggleButton:ClearAllPoints()
 	EveryQuest.ListToggleButton:SetPoint("BOTTOMLEFT",EveryQuestFrame, "BOTTOMLEFT",18,5)
 	EveryQuest.ListToggleButton:SetScript("OnClick", function() EveryQuest:List("toggle") end)
-	
+
 	-- Attach the list toggle button in the right place depending on if beql is installed and loaded
-	if not IsAddOnLoaded("beql") then
-		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
+	if QuestLogFrame then
+		if not IsAddOnLoaded("beql") then
+			EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
+		else
+			EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",75,-15)
+		end
 	else
-		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",75,-15)
+		EveryQuest.EveryQuestToggleButton:Hide()
 	end
 	EveryQuest.EveryQuestToggleButton:SetScript("OnClick", function() EveryQuest:Toggle()	end)
-	
+
 	-- Set the binding text for the key binding window
 	BINDING_HEADER_eqTITLE = L["EveryQuest"]
 	BINDING_NAME_eqTOGGLE = L["Toggle Frame"]
-	
+
 	-- Create the 27 "lines" (buttons) in to display text in the main frame
 	local button = getglobal("EveryQuestTitle1") or CreateFrame("Button", "EveryQuestTitle1", EveryQuestFrame,"EveryQuestTitleButtonTemplate")
 	button:SetID(1)
 	button:Hide()
+	raiseFrame(button)
 	button:ClearAllPoints()
 	button:SetPoint("TOPLEFT", EveryQuestFrame, "TOPLEFT", 19, -75)
 	for i = 2, 27 do
-		button = CreateFrame("Button", "EveryQuestTitle" .. i, EveryQuestFrame,"EveryQuestTitleButtonTemplate")
+		button = getglobal("EveryQuestTitle" .. i) or CreateFrame("Button", "EveryQuestTitle" .. i, EveryQuestFrame,"EveryQuestTitleButtonTemplate")
 		button:SetID(i)
 		button:Hide()
+		raiseFrame(button)
 		button:ClearAllPoints()
 		button:SetPoint("TOPLEFT", getglobal("EveryQuestTitle" .. (i-1)), "BOTTOMLEFT", 0, 1)
 	end
-	
+
 	-- If the quest log has been scaled, lets scale our frame to match
-	EveryQuestFrame:SetScale(QuestLogFrame:GetScale())
-	
+	if QuestLogFrame and QuestLogFrame.GetScale then
+		EveryQuestFrame:SetScale(QuestLogFrame:GetScale())
+	end
+
 	local faction = UnitFactionGroup("player")
 	if faction == "Alliance" then
 		sessionvars.faction = 1
@@ -330,6 +360,7 @@ function EveryQuest:EveryQuestInit()
 
 	-- Load the saved view
 	EveryQuest:List(self.db.profile.view)
+	sessionvars.initialized = true
 end
 
 function EveryQuest:SelectInitialZone()
@@ -345,7 +376,7 @@ function EveryQuest:SelectInitialZone()
 			if zone[2] == currentZone then
 				sessionvars.zoneid = zone[1]
 				sessionvars.zonegroup = group
-				UIDropDownMenu_SetText(EveryQuestdewdropZoneListMenu, zone[2])
+				setZoneListText(zone[2])
 				return
 			end
 		end
@@ -354,27 +385,35 @@ end
 
 function EveryQuest:CreateZoneMenu()
 	-- Zone Menu creation
-	EveryQuest.ZoneListMenu = CreateFrame("Frame", "EveryQuestdewdropZoneListMenu", EveryQuestFrame, "UIDropDownMenuTemplate")
+	EveryQuest.ZoneListMenu = getZoneListMenu() or CreateFrame("Frame", "EveryQuestdewdropZoneListMenu", EveryQuestFrame, "UIDropDownMenuTemplate")
 	EveryQuest.ZoneListMenu:Show()
+	raiseFrame(EveryQuest.ZoneListMenu)
 	EveryQuest.ZoneListMenu:ClearAllPoints()
 	EveryQuest.ZoneListMenu:SetPoint("TOPLEFT",EveryQuestFrame, "TOPLEFT", 115,-40)
-	UIDropDownMenu_SetWidth(EveryQuestdewdropZoneListMenu, 150)
-	UIDropDownMenu_SetButtonWidth(EveryQuestdewdropZoneListMenu, 20)
-	EveryQuestdewdropZoneListMenuButton:SetScript("OnClick", function() if EveryQuestdewdrop:IsOpen() then EveryQuestdewdrop:Close() else EveryQuestdewdrop:Open(EveryQuest.zonemenuloc) end end)
+	if UIDropDownMenu_SetWidth then
+		UIDropDownMenu_SetWidth(EveryQuest.ZoneListMenu, 150)
+	end
+	if UIDropDownMenu_SetButtonWidth then
+		UIDropDownMenu_SetButtonWidth(EveryQuest.ZoneListMenu, 20)
+	end
+	local zoneListMenuButton = getglobal(EveryQuest.ZoneListMenu:GetName().."Button") or EveryQuest.ZoneListMenu.Button
+	if zoneListMenuButton then
+		zoneListMenuButton:SetScript("OnClick", function() if EveryQuestdewdrop:IsOpen() then EveryQuestdewdrop:Close() else EveryQuestdewdrop:Open(EveryQuest.zonemenuloc) end end)
+	end
 	
 	-- Create the point where the zone menu will open and display itself
 	EveryQuest.zonemenuloc = CreateFrame("Frame", nil, EveryQuestFrame)
 	EveryQuest.zonemenuloc:SetWidth(2)
 	EveryQuest.zonemenuloc:SetHeight(2)
 	EveryQuest.zonemenuloc:ClearAllPoints()
-	EveryQuest.zonemenuloc:SetPoint("BOTTOMRIGHT", EveryQuestdewdropZoneListMenuButton)
+	EveryQuest.zonemenuloc:SetPoint("BOTTOMRIGHT", zoneListMenuButton or EveryQuest.ZoneListMenu)
 	
 	local info = {
 		type = 'group',
 		args = {},
 	}
 	
-	UIDropDownMenu_SetText(EveryQuestdewdropZoneListMenu, L["-- Select --"])
+	setZoneListText(L["-- Select --"])
 	
 	local i, j = 0, 0
 	for k, v in pairs (zonemenu) do 
@@ -393,7 +432,7 @@ function EveryQuest:CreateZoneMenu()
 				name = zv[2],
 				desc = zv[2],
 				get = function() if sessionvars.zoneid == zv[1] then return true else return false end end,
-				set = function() sessionvars.zoneid = zv[1] sessionvars.zonegroup = k self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup)) UIDropDownMenu_SetText(EveryQuestdewdropZoneListMenu, zv[2]) EveryQuestdewdrop:Close() self:UpdateFrame() end,
+				set = function() sessionvars.zoneid = zv[1] sessionvars.zonegroup = k self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup)) setZoneListText(zv[2]) EveryQuestdewdrop:Close() self:UpdateFrame() end,
 			}
 		end
 		j = 0
@@ -437,6 +476,9 @@ function EveryQuest:RegisterEvents()
 end
 
 function EveryQuest:Toggle()
+	if not sessionvars.initialized then
+		self:EveryQuestInit()
+	end
 	if EveryQuestFrame:IsShown() then
 		EveryQuestFrame:Hide()
 	else
