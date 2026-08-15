@@ -15,6 +15,17 @@ function EveryQuest:Print(text)
     DEFAULT_CHAT_FRAME:AddMessage(tostring(text))
 end
 
+local function toggleEveryQuest()
+	local ok, err = pcall(function() EveryQuest:Toggle() end)
+	if not ok then
+		EveryQuest:Print(err)
+	end
+end
+
+SlashCmdList = SlashCmdList or {}
+SLASH_EVERYQUESTTOGGLE1 = "/eq"
+SlashCmdList.EVERYQUESTTOGGLE = toggleEveryQuest
+
 -- Addon functions
 
 function EveryQuest:OnInitialize()
@@ -22,14 +33,6 @@ function EveryQuest:OnInitialize()
 	EveryQuest:CreateOptions()
 	EveryQuest:SetupDefaults()
 	EveryQuest:RegisterChatCommand({"/everyquest"}, EveryQuest.options)
-	SlashCmdList = SlashCmdList or {}
-	SLASH_EVERYQUESTTOGGLE1 = "/eq"
-	SlashCmdList.EVERYQUESTTOGGLE = function()
-		local ok, err = pcall(function() EveryQuest:Toggle() end)
-		if not ok then
-			EveryQuest:Print(err)
-		end
-	end
 end
 
 function EveryQuest:OnEnable()
