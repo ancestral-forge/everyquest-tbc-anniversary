@@ -1,5 +1,6 @@
 --[[
 Quest Status:
+-2 = Unavailable (display-only)
 -1 = Failed, Abandoned
 0 = In Progress
 1 = Completed
@@ -284,6 +285,84 @@ local function setButtonTextColor(button, ...)
 	if text and text.SetTextColor then
 		text:SetTextColor(...)
 	end
+end
+
+local completedQuestFlags
+local completedQuestFlagsLoaded = false
+
+local function normalizeCompletedQuestFlags(completedQuestData)
+	local completedQuestMap = {}
+	for questKey, questValue in pairs(completedQuestData or {}) do
+		if questValue == true or questValue == 1 then
+			completedQuestMap[tonumber(questKey) or questKey] = true
+		elseif type(questValue) == "number" then
+			completedQuestMap[questValue] = true
+		end
+	end
+	return completedQuestMap
+end
+
+local function getCompletedQuestFlags()
+	if completedQuestFlagsLoaded then
+		return completedQuestFlags
+	end
+
+	completedQuestFlagsLoaded = true
+	local completedQuestData = {}
+	if GetQuestsCompleted then
+		local completedQuestIDs = GetQuestsCompleted(completedQuestData)
+		if type(completedQuestIDs) == "table" then
+			completedQuestData = completedQuestIDs
+		end
+		completedQuestFlags = normalizeCompletedQuestFlags(completedQuestData)
+		return completedQuestFlags
+	end
+
+	if C_QuestLog and C_QuestLog.GetAllCompletedQuestIDs then
+		local completedQuestIDs = C_QuestLog.GetAllCompletedQuestIDs(completedQuestData)
+		if type(completedQuestIDs) == "table" then
+			completedQuestData = completedQuestIDs
+		end
+		completedQuestFlags = normalizeCompletedQuestFlags(completedQuestData)
+		return completedQuestFlags
+	end
+
+	return nil
+end
+
+local function resetCompletedQuestFlags()
+	completedQuestFlags = nil
+	completedQuestFlagsLoaded = false
+end
+
+local function isQuestFlaggedCompleted(questid)
+	questid = tonumber(questid)
+	if not questid then
+		return false
+	end
+
+	local completedQuestMap = getCompletedQuestFlags()
+	if completedQuestMap then
+		return completedQuestMap[questid] == true
+	end
+
+	if C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted then
+		return C_QuestLog.IsQuestFlaggedCompleted(questid)
+	end
+	if IsQuestFlaggedCompleted then
+		return IsQuestFlaggedCompleted(questid)
+	end
+	return false
+end
+
+local function isQuestUnavailable(quest)
+	local requiredLevel = tonumber(quest and quest.r)
+	if not requiredLevel or requiredLevel <= 0 or not UnitLevel then
+		return false
+	end
+
+	local playerLevel = UnitLevel("player") or 0
+	return playerLevel > 0 and playerLevel < requiredLevel
 end
 
 local function loadQuestDataAddon(addon)
@@ -815,6 +894,54 @@ function EveryQuest:ShowListMessage(message)
 	end
 end
 
+function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
+	if not group or not EveryQuestData or not EveryQuestData[group] then
+		return 0, 0, 0, 0
+	end
+
+	sessionvars.completedSyncGroups = sessionvars.completedSyncGroups or {}
+	if sessionvars.completedSyncGroups[group] then
+		return 0, 0, 0, 0
+	end
+	sessionvars.completedSyncGroups[group] = true
+
+	if self.db.char.history == nil then
+		self.db.char.history = {}
+	end
+
+	local checked, completed, added, changed = 0, 0, 0, 0
+	for zoneid, quests in pairs(EveryQuestData[group]) do
+		if type(quests) == "table" then
+			for _, quest in pairs(quests) do
+				local questid = tonumber(quest and quest.id)
+				if questid then
+					checked = checked + 1
+					if isQuestFlaggedCompleted(questid) then
+						completed = completed + 1
+						if self.db.char.history[zoneid] == nil then
+							self.db.char.history[zoneid] = {}
+						end
+						local history = self.db.char.history[zoneid][questid]
+						if history == nil then
+							self.db.char.history[zoneid][questid] = quest
+							history = self.db.char.history[zoneid][questid]
+							added = added + 1
+						elseif history.status ~= 2 then
+							changed = changed + 1
+						end
+						history.status = 2
+					end
+				end
+			end
+		end
+	end
+
+	if reportStatus then
+		self:Print(("EveryQuest: %s completed quest sync: %d checked, %d completed, %d added, %d changed."):format(group, checked, completed, added, changed))
+	end
+	return checked, completed, added, changed
+end
+
 function EveryQuest:LoadQuestData(group)
 	if group == nil then
 		return false
@@ -845,6 +972,7 @@ function EveryQuest:LoadQuestData(group)
 	else
 		self:Debug("Module "..concat(group).." is loaded")
 	end
+	self:SyncCompletedQuestFlagsForGroup(group, true)
 	--for k,v in pairs(EveryQuestData) do self:Debug(k) end
 	return EveryQuestData[group] --questdata[varname] and varname
 end
@@ -1128,6 +1256,7 @@ end
 
 function EveryQuest:QuestTurnedIn(questName, questid)
 	-- history: Update Status: Quest completed, add completed timestamp
+	resetCompletedQuestFlags()
 	local category
 	if not questid and questName then
 		local _, foundCategory, foundQuestID = self:FindQuestLogEntryByName(questName)
@@ -1353,11 +1482,13 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 				setButtonTextColor(ListFrame, self:GetColor(2))
 			elseif history["status"] == 0 then -- In Progress (Yellow)
 				setButtonTextColor(ListFrame, self:GetColor(0))
-			elseif not history["status"] then
-				setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
-			elseif history["status"] == nil then
+			elseif history["status"] == nil and isQuestUnavailable(quest) then
+				setButtonTextColor(ListFrame, self:GetColor(-2))
+			else
 				setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
 			end
+		elseif isQuestUnavailable(quest) then
+			setButtonTextColor(ListFrame, self:GetColor(-2))
 		else
 			setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
 		end
@@ -1376,7 +1507,7 @@ function EveryQuest:ButtonEnter(frame)
 	local questid = quest.id
 	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
 	GameTooltip:SetHyperlink("quest:"..quest.id)
-	local queststatus = "Unknown"
+	local queststatus = L["Unknown"]
 	local status = 99
 	if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
 		isCollected = true
@@ -1393,6 +1524,10 @@ function EveryQuest:ButtonEnter(frame)
 				queststatus = L["Turned In"]
 			end
 		end
+	end
+	if status == 99 and isQuestUnavailable(quest) then
+		queststatus = L["Unavailable"]
+		status = -2
 	end
 	GameTooltip:AddLine(" ", self:GetColor("FFFFFF"))
 	--self:Debug("ButtonEnter - buttonid:"..index.." queststatus:"..queststatus.." status:"..status)
@@ -1550,6 +1685,8 @@ end
 function EveryQuest:GetColor(hex)
 	if hex == 1 then
 		return 0,1,0
+	elseif hex == -2 then
+		return .5,.5,.5
 	elseif hex == -1 then
 		return 1,0,0
 	elseif hex == 2 then
