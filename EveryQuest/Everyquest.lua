@@ -227,12 +227,60 @@ local function getZoneListMenu()
 	return EveryQuest.ZoneListMenu or _G.EveryQuestZoneListMenu
 end
 
-local function setButtonTextColor(button, ...)
+local function getQuestTitleText(button)
 	if not button then return end
-	local text = button.GetFontString and button:GetFontString()
-	if not text and button.GetName then
-		text = _G[button:GetName().."NormalText"]
+	local name = button.GetName and button:GetName()
+	local text = button.eqTitleText or (name and _G[name.."NormalText"]) or (button.GetFontString and button:GetFontString())
+	if not text and button.CreateFontString then
+		text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	end
+	if not text then return end
+
+	button.eqTitleText = text
+	if button.SetFontString and (not button.GetFontString or button:GetFontString() ~= text) then
+		button:SetFontString(text)
+	end
+	if GameFontNormal and text.SetFontObject then
+		text:SetFontObject(GameFontNormal)
+	end
+	if text.SetDrawLayer then
+		text:SetDrawLayer("OVERLAY", 1)
+	end
+	text:ClearAllPoints()
+	text:SetPoint("LEFT", button, "LEFT", 22, 0)
+	text:SetPoint("RIGHT", button, "RIGHT", -4, 0)
+	text:SetHeight(16)
+	text:SetJustifyH("LEFT")
+	if text.SetJustifyV then
+		text:SetJustifyV("MIDDLE")
+	end
+	text:Show()
+	return text
+end
+
+local function setupQuestTitleButton(button)
+	if not button then return end
+	if button.SetSize then
+		button:SetSize(300, 16)
+	else
+		button:SetWidth(300)
+		button:SetHeight(16)
+	end
+	getQuestTitleText(button)
+end
+
+local function setButtonText(button, value)
+	if not button then return end
+	local text = getQuestTitleText(button)
+	if text then
+		text:SetText(value or "")
+	else
+		button:SetText(value or "")
+	end
+end
+
+local function setButtonTextColor(button, ...)
+	local text = getQuestTitleText(button)
 	if text and text.SetTextColor then
 		text:SetTextColor(...)
 	end
@@ -349,6 +397,7 @@ function EveryQuest:EveryQuestInit()
 	button:SetID(1)
 	button:Hide()
 	raiseFrame(button)
+	setupQuestTitleButton(button)
 	button:ClearAllPoints()
 	button:SetPoint("TOPLEFT", EveryQuestFrame, "TOPLEFT", 19, -75)
 	for i = 2, 27 do
@@ -356,6 +405,7 @@ function EveryQuest:EveryQuestInit()
 		button:SetID(i)
 		button:Hide()
 		raiseFrame(button)
+		setupQuestTitleButton(button)
 		button:ClearAllPoints()
 		button:SetPoint("TOPLEFT", _G["EveryQuestTitle" .. (i-1)], "BOTTOMLEFT", 0, 1)
 	end
@@ -751,7 +801,7 @@ function EveryQuest:ShowListMessage(message)
 	local frame = _G.EveryQuestTitle1
 	if frame then
 		frame:SetNormalTexture("")
-		frame:SetText(message)
+		setButtonText(frame, message)
 		setButtonTextColor(frame, self:GetColor("FFFFFF"))
 		frame:Show()
 	end
@@ -1244,7 +1294,7 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 	if questtitle ~= "Collapsed" and self.db.profile.view == "history" or self.db.profile.view == "zone" then
 		ListFrame = _G["EveryQuestTitle"..buttonid]
 		ListFrame:SetNormalTexture("")
-		ListFrame:SetText("")
+		setButtonText(ListFrame, "")
 		if not questdisplay[buttonid] then questdisplay[buttonid] = quest end
 		if questdisplay[buttonid].id ~= quest.id then questdisplay[buttonid] = nil questdisplay[buttonid] = quest end
 		--questdisplay[buttonid].arrayid = arrayid
@@ -1268,7 +1318,7 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 				level = "--"
 			end
 		end
-		ListFrame:SetText("["..level..qTag.."] "..quest["n"])
+		setButtonText(ListFrame, "["..level..qTag.."] "..quest["n"])
 		--r,g,b = EveryQuest:GetQuestColor(zonelist.value, j)
 		if self.db.char.history and self.db.char.history[sessionvars.zoneid] and self.db.char.history[sessionvars.zoneid][quest["id"]] then
 			local history = self.db.char.history[sessionvars.zoneid][quest["id"]]
