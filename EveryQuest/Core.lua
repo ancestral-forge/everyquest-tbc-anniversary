@@ -38,19 +38,20 @@ end
 
 local function registerSlash(name, index, command)
 	_G["SLASH_" .. name .. index] = command
-	if hash_SlashCmdList then
-		hash_SlashCmdList[command:upper()] = name
+end
+
+local function handleEveryQuestSlash(input)
+	if EveryQuest.HandleSlash then
+		EveryQuest:HandleSlash(input)
+	else
+		toggleEveryQuest()
 	end
 end
 
 SlashCmdList = SlashCmdList or {}
-SlashCmdList.EVERYQUESTTOGGLE = toggleEveryQuest
-registerSlash("EVERYQUESTTOGGLE", 1, "/eq")
-
-SlashCmdList.EVERYQUEST = function(input)
-	EveryQuest:HandleSlash(input)
-end
-registerSlash("EVERYQUEST", 1, "/everyquest")
+SlashCmdList.EVERYQUEST = handleEveryQuestSlash
+registerSlash("EVERYQUEST", 1, "/eq")
+registerSlash("EVERYQUEST", 2, "/everyquest")
 
 -- Addon functions
 
