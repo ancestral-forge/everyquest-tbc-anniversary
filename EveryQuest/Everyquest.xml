@@ -45,16 +45,16 @@
 				</Texture>
 			</Layer>
 		</Layers>
-		<Scripts>
-			<OnLoad>
-				this:RegisterForClicks("LeftButtonUp", "RightButtonDown");
-		    </OnLoad>
-			<OnClick>
-				EveryQuest:ButtonClick(arg1)
-			</OnClick>
-			<OnEnter>
-				EveryQuest:ButtonEnter()
-			</OnEnter>
+			<Scripts>
+				<OnLoad>
+					self:RegisterForClicks("LeftButtonUp", "RightButtonDown");
+			    </OnLoad>
+				<OnClick>
+					EveryQuest:ButtonClick(self, button)
+				</OnClick>
+				<OnEnter>
+					EveryQuest:ButtonEnter(self)
+				</OnEnter>
 			<OnLeave>
 				GameTooltip:Hide()
 			</OnLeave>
@@ -84,9 +84,9 @@
 				</Anchor>
 			</Anchors> 
 		</ButtonText>
-		<NormalFont inherits="GameFontNormal" justifyH="LEFT"/>
-		<HighlightFont inherits="GameFontHighlight" justifyH="LEFT"/>
-		<DisabledFont inherits="GameFontHighlight" justifyH="LEFT"/>
+		<NormalFont inherits="GameFontNormal"/>
+		<HighlightFont inherits="GameFontHighlight"/>
+		<DisabledFont inherits="GameFontHighlight"/>
 	</Button>
 	<Frame name="EveryQuestFrame" toplevel="true" enableMouse="true" movable="true" parent="UIParent" hidden="true">
 		<Size>
@@ -229,11 +229,11 @@
 						</Offset>
 					</Anchor>
 				</Anchors>
-				<Scripts>
-					<OnVerticalScroll>
-						FauxScrollFrame_OnVerticalScroll(16, EveryQuest_ScrollFrame_Update);
-					</OnVerticalScroll>
-				</Scripts>
+					<Scripts>
+						<OnVerticalScroll>
+							FauxScrollFrame_OnVerticalScroll(self, offset, 16, EveryQuest_ScrollFrame_Update);
+						</OnVerticalScroll>
+					</Scripts>
 			</ScrollFrame>
 		</Frames>
 		<Scripts>
@@ -247,13 +247,13 @@
 			<OnShow>
 				EveryQuest_OnShow();
 			</OnShow>
-			<OnHide>
-				-- EveryQuest_OnHide();
-				if ( this.isMoving ) then
-				  this:StopMovingOrSizing();
-				  this.isMoving = false;
-				  EveryQuest:SavePosition()
-				end
+				<OnHide>
+					-- EveryQuest_OnHide();
+					if ( self.isMoving ) then
+					  self:StopMovingOrSizing();
+					  self.isMoving = false;
+					  EveryQuest:SavePosition()
+					end
 			</OnHide>
 			<OnUpdate>
 				-- EveryQuest_OnUpdate(arg1);
@@ -267,19 +267,19 @@
 			<OnDragStop>
 				-- EveryQuestFrame:StopMovingOrSizing();
 			</OnDragStop>
-			<OnMouseUp>
-				if ( this.isMoving ) then
-				  this:StopMovingOrSizing();
-				  this.isMoving = false;
-				  EveryQuest:SavePosition()
-				end
-			</OnMouseUp>
-			<OnMouseDown>
-				if ( ( ( not this.isLocked ) or ( this.isLocked == 0 ) ) and ( arg1 == "LeftButton" ) ) then
-				  this:StartMoving();
-				  this.isMoving = true;
-				end
-			</OnMouseDown>
+				<OnMouseUp>
+					if ( self.isMoving ) then
+					  self:StopMovingOrSizing();
+					  self.isMoving = false;
+					  EveryQuest:SavePosition()
+					end
+				</OnMouseUp>
+				<OnMouseDown>
+					if ( ( ( not self.isLocked ) or ( self.isLocked == 0 ) ) and ( button == "LeftButton" ) ) then
+					  self:StartMoving();
+					  self.isMoving = true;
+					end
+				</OnMouseDown>
 		</Scripts>
 	</Frame>
 </Ui>

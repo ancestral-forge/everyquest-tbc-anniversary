@@ -17,3 +17,9 @@ repository, so this import uses the official CurseForge/WowAce release zip that
 was generated from the same SVN tag. The contents are the packaged installable
 layout, including embedded Ace2, Deformat, Dewdrop, and Quixote libraries and
 the moved `EveryQuest_*` module addon folders.
+
+The follow-up Anniversary compatibility patch targets WoW Anniversary
+`2.5.6.69110` / TOC interface `20506`. It keeps the packaged installable
+layout, disables the stale source-layout `modules.xml` load from the main TOC,
+adds `C_AddOns` compatibility shims for embedded Ace2 libraries, and updates
+old XML script globals (`this`/`arg1`) used by EveryQuest's own frame XML.

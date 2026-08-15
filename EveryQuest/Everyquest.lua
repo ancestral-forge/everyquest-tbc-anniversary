@@ -640,7 +640,7 @@ function EveryQuest:LoadQuestData(group)
 			if enabled then
 				EveryQuest:Print(L["Loading "] .. group .. L[" Quest Data"])
 				local succ,reason = LoadAddOn(varname)
-				if succ ~= 1 then
+				if not succ then
 					EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"], reason)
 					return false
 				end
@@ -996,13 +996,13 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 	end
 end
 
-function EveryQuest:ButtonEnter()
-	local index = this:GetID()
+function EveryQuest:ButtonEnter(frame)
+	local index = frame:GetID()
 	local isCollected = false
 	local quest = questdisplay[index]
 	local zoneid = sessionvars.zoneid
 	local questid = quest.id
-	GameTooltip_SetDefaultAnchor(GameTooltip, this)
+	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
 	GameTooltip:SetHyperlink("quest:"..questdisplay[index].id)
 	local queststatus = "Unknown"
 	local status = 99
@@ -1046,8 +1046,8 @@ function EveryQuest:ButtonEnter()
 	GameTooltip:Show()
 end
 
-function EveryQuest:ButtonClick(button)
-	clickedID = this:GetID()
+function EveryQuest:ButtonClick(frame, button)
+	clickedID = frame:GetID()
 	local quest = questdisplay[clickedID]
 	if button == "LeftButton" then
 		if ( IsModifiedClick() ) then

@@ -1,4 +1,4 @@
-## Interface: 20400
+## Interface: 20506
 ## Title: EveryQuest Miscellaneous Quests
 ## Notes: Contains a list of quests for Miscellaneous
 ## RequiredDeps: EveryQuest

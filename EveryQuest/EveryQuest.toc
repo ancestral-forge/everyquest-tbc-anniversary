@@ -1,4 +1,4 @@
-## Interface: 20400
+## Interface: 20506
 ## Title: EveryQuest |cff7fff7f -Ace2-|r
 ## Notes: Quest History tracker and shows lists of quests in each category
 ## Author: kandarz
@@ -13,6 +13,8 @@
 ## OptionalDeps: Ace2, Deformat, Quixote
 ## X-Embeds: Ace2, Deformat, Quixote
 
+Compat.lua
+
 embeds.xml
 
 localization.lua
@@ -21,5 +23,3 @@ Core.lua
 Options.lua
 
 EveryQuest.xml
-
-modules.xml

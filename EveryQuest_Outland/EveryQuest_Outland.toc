@@ -1,4 +1,4 @@
-## Interface: 20400
+## Interface: 20506
 ## Title: EveryQuest Outland Quests
 ## Notes: Contains a list of quests for Outland
 ## RequiredDeps: EveryQuest
