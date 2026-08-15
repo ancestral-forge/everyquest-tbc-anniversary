@@ -21,7 +21,8 @@ function EveryQuest:OnInitialize()
 	EveryQuest:RegisterDB("EveryQuestDB","EveryQuestDBPC")
 	EveryQuest:CreateOptions()
 	EveryQuest:SetupDefaults()
-	EveryQuest:RegisterChatCommand({"/everyquest", "/eq"}, EveryQuest.options)
+	EveryQuest:RegisterChatCommand({"/everyquest"}, EveryQuest.options)
+	EveryQuest:RegisterChatCommand({"/eq"}, function() EveryQuest:Toggle() end)
 end
 
 function EveryQuest:OnEnable()
