@@ -106,3 +106,121 @@ if not DisableAddOn then
 		end
 	end
 end
+
+local function validQuestID(questID)
+	questID = tonumber(questID)
+	if questID and questID > 0 then
+		return questID
+	end
+end
+
+local function isModernQuestLogTitle(third, fourth)
+	return type(fourth) == "boolean" or type(third) == "number"
+end
+
+local function isDailyQuestLogFrequency(frequency)
+	if not frequency then
+		return false
+	end
+	if LE_QUEST_FREQUENCY_DAILY and frequency == LE_QUEST_FREQUENCY_DAILY then
+		return true
+	end
+	return frequency == 2
+end
+
+local function isDailyQuestInfoFrequency(frequency)
+	if not frequency then
+		return false
+	end
+	if Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily then
+		return frequency == Enum.QuestFrequency.Daily
+	end
+	return frequency == 1
+end
+
+local function getQuestTagName(questID)
+	if not questID then
+		return nil
+	end
+	if C_QuestLog and C_QuestLog.GetQuestTagInfo then
+		local ok, tagInfo, tagName = pcall(C_QuestLog.GetQuestTagInfo, questID)
+		if ok then
+			if type(tagInfo) == "table" then
+				return tagInfo.tagName
+			elseif type(tagInfo) == "string" then
+				return tagInfo
+			elseif type(tagName) == "string" then
+				return tagName
+			end
+		end
+	end
+	if GetQuestTagInfo then
+		local ok, tagID, tagName = pcall(GetQuestTagInfo, questID)
+		if ok then
+			if type(tagID) == "string" then
+				return tagID
+			elseif type(tagName) == "string" then
+				return tagName
+			end
+		end
+	end
+	return nil
+end
+
+function EveryQuest_GetQuestLogTitle(index)
+	if GetQuestLogTitle then
+		local title, level, third, fourth, fifth, sixth, seventh, eighth, ninth = GetQuestLogTitle(index)
+		if isModernQuestLogTitle(third, fourth) then
+			local questID = validQuestID(eighth)
+			return title, level, getQuestTagName(questID), third, fourth, fifth, sixth, isDailyQuestLogFrequency(seventh), questID
+		end
+		return title, level, third, fourth, fifth, sixth, seventh, eighth, ninth
+	end
+
+	if C_QuestLog and C_QuestLog.GetInfo then
+		local info = C_QuestLog.GetInfo(index)
+		if not info then
+			return nil
+		end
+		local questID = validQuestID(info.questID)
+		return info.title, info.level, getQuestTagName(questID), info.suggestedGroup, info.isHeader, info.isCollapsed, info.isComplete, isDailyQuestInfoFrequency(info.frequency), questID
+	end
+end
+
+function EveryQuest_GetQuestLogQuestID(index)
+	if not index then
+		return nil
+	end
+	if C_QuestLog and C_QuestLog.GetInfo then
+		local info = C_QuestLog.GetInfo(index)
+		local questID = info and validQuestID(info.questID)
+		if questID then
+			return questID
+		end
+	end
+	if GetQuestLogTitle then
+		local _, _, third, fourth, _, _, _, eighth, ninth = GetQuestLogTitle(index)
+		local questID
+		if isModernQuestLogTitle(third, fourth) then
+			questID = eighth
+		else
+			questID = ninth
+		end
+		questID = validQuestID(questID)
+		if questID then
+			return questID
+		end
+	end
+	return nil
+end
+
+function EveryQuest_PlaySound(soundKitKey, legacySoundName)
+	if not PlaySound then
+		return
+	end
+	if SOUNDKIT and soundKitKey and SOUNDKIT[soundKitKey] then
+		PlaySound(SOUNDKIT[soundKitKey])
+	elseif not SOUNDKIT and legacySoundName then
+		PlaySound(legacySoundName)
+	end
+end

@@ -417,8 +417,8 @@ function EveryQuest:RegisterEvents()
 	self:RegisterEvent("Quixote_Quest_Gained")
 	
 	-- fuax self:RegisterEvent("ABANDON_QUEST")
-	StaticPopupDialogs["ABANDON_QUEST"].OnAccept = function() EveryQuest:QUEST_ABANDON(GetAbandonQuestName()) AbandonQuest(); PlaySound("igQuestLogAbandonQuest"); end
-	StaticPopupDialogs["ABANDON_QUEST_WITH_ITEMS"].OnAccept = function() EveryQuest:QUEST_ABANDON(GetAbandonQuestName()) AbandonQuest(); PlaySound("igQuestLogAbandonQuest"); end
+	StaticPopupDialogs["ABANDON_QUEST"].OnAccept = function() EveryQuest:QUEST_ABANDON(GetAbandonQuestName()) AbandonQuest(); EveryQuest_PlaySound("IG_QUEST_LOG_ABANDON_QUEST", "igQuestLogAbandonQuest"); end
+	StaticPopupDialogs["ABANDON_QUEST_WITH_ITEMS"].OnAccept = function() EveryQuest:QUEST_ABANDON(GetAbandonQuestName()) AbandonQuest(); EveryQuest_PlaySound("IG_QUEST_LOG_ABANDON_QUEST", "igQuestLogAbandonQuest"); end
 
 	-- Hooks
 	QuestFrameCompleteQuestButton:SetScript("OnClick", function() EveryQuest:Hooks_QuestCompleted() end)
@@ -447,16 +447,19 @@ function EveryQuest_OnShow()
 		EveryQuestFrame:ClearAllPoints()
 		EveryQuestFrame:SetPoint("TOPLEFT","UIParent", "BOTTOMLEFT", self.db.char.saved.eqlogposx, self.db.char.saved.eqlogposy)
 	end
+	EveryQuest:UpdateFrame()
 end
 
 function EveryQuest:NewZone()
 	if sessionvars.zoneid ~= nil and sessionvars.zonegroup ~= nil then
 		self:Debug("NewZone view:"..concat(self.db.profile.view).." zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup))
-		EveryQuestListScrollFrame:SetVerticalScroll(0)
-		self:UpdateFrame()
 	else
 		self:Debug("NewZone - zoneid and zonegroup are empty")
 	end
+	if EveryQuestListScrollFrame then
+		EveryQuestListScrollFrame:SetVerticalScroll(0)
+	end
+	self:UpdateFrame()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------- 
@@ -652,9 +655,11 @@ function EveryQuest:GetQuestZoneData(zonegroup, zoneid, view)
 end
 
 function EveryQuest:ShowListMessage(message)
+	for j = 1, 27, 1 do
+		questdisplay[j] = nil
+	end
 	local frame = getglobal("EveryQuestTitle1")
 	if frame then
-		questdisplay[1] = nil
 		frame:SetNormalTexture("")
 		frame:SetText(message)
 		frame:SetTextColor(self:GetColor("FFFFFF"))
@@ -705,7 +710,8 @@ function EveryQuest:LoadQuestData(group)
 end
 
 function EveryQuest:GetStatus(displayid, queststatus)
-	if questdisplay[displayid].status and questdisplay[displayid].status == queststatus then
+	local quest = displayid and questdisplay[displayid]
+	if quest and quest.status and quest.status == queststatus then
 		return true
 	else
 		return false
@@ -789,7 +795,7 @@ function EveryQuest:Hooks_QuestCompleted()
 		self:Debug("Hooks_QuestCompleted success")
 		EveryQuest:QuestTurnedIn(GetTitleText())
 		GetQuestReward(QuestFrameRewardPanel.itemChoice);
-		PlaySound("igQuestListComplete");
+		EveryQuest_PlaySound("IG_QUEST_LIST_COMPLETE", "igQuestListComplete");
 	end
 end
 
@@ -852,6 +858,7 @@ end
 function EveryQuest:UpdateStatus(displayid, queststatus)
 	--questdisplay[displayid]
 	local quest = questdisplay[displayid]
+	if not quest then return end
 	local questid = quest.id
 	local zoneid = sessionvars.zoneid
 	if not self.db.char.history[zoneid] then
@@ -943,6 +950,7 @@ function EveryQuest:UpdateFrame()
 			end
 		end
 		for j = buttonid, 27 ,1 do
+			questdisplay[j] = nil
 			ListFrame = getglobal("EveryQuestTitle"..j)
 			ListFrame:Hide()
 		end
@@ -1049,10 +1057,12 @@ function EveryQuest:ButtonEnter(frame)
 	local index = frame:GetID()
 	local isCollected = false
 	local quest = questdisplay[index]
+	if not quest or not quest.id then return end
 	local zoneid = sessionvars.zoneid
+	if not zoneid then return end
 	local questid = quest.id
 	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
-	GameTooltip:SetHyperlink("quest:"..questdisplay[index].id)
+	GameTooltip:SetHyperlink("quest:"..quest.id)
 	local queststatus = "Unknown"
 	local status = 99
 	if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
@@ -1098,6 +1108,7 @@ end
 function EveryQuest:ButtonClick(frame, button)
 	clickedID = frame:GetID()
 	local quest = questdisplay[clickedID]
+	if not quest or not quest.id then return end
 	if button == "LeftButton" then
 		if ( IsModifiedClick() ) then
 			if ( IsModifiedClick("CHATLINK") and ChatFrameEditBox:IsVisible() ) then
@@ -1164,6 +1175,10 @@ function EveryQuest:GetQID(index)
 	--local index = GetQuestLogSelection()
 	if not index then return end
 
+	local questID = EveryQuest_GetQuestLogQuestID and EveryQuest_GetQuestLogQuestID(index)
+	if questID then return questID end
+
+	if not GetQuestLink then return end
 	local link = GetQuestLink(index)
 	if not link then return end
 

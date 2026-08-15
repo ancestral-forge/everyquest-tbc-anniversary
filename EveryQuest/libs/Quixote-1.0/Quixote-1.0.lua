@@ -110,6 +110,7 @@ end
 -- All the cool kids seem to be pulling global functions into local scope, and I want to be hip to their jive.
 
 local GetQuestLogTitle = GetQuestLogTitle
+local GetQuestLogTitleCompat = EveryQuest_GetQuestLogTitle or GetQuestLogTitle
 local GetQuestLogSelection = GetQuestLogSelection
 local GetNumQuestLogEntries = GetNumQuestLogEntries
 local GetQuestLogQuestText = GetQuestLogQuestText
@@ -250,7 +251,7 @@ function Quixote:QUEST_LOG_UPDATE()
 		local questid
 		for questid = 1, numEntries do
 			SelectQuestLogEntry(questid) -- this is required for a few of the quest functions.
-			local strQuestLogTitleText, strQuestLevel, strQuestTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questid)
+			local strQuestLogTitleText, strQuestLevel, strQuestTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitleCompat(questid)
 
 			if isHeader then
 				zoneIndex = strQuestLogTitleText
@@ -1226,7 +1227,7 @@ end
 
 -- #NODOC
 function Quixote:HasAnythingFuckedUpGetQuestLogTitle()
-	return (select('#', GetQuestLogTitle(1)) < 7)
+	return (select('#', GetQuestLogTitleCompat(1)) < 7)
 end
 
 ------------------------------------------------
