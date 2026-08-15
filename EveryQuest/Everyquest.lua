@@ -290,12 +290,7 @@ end
 local function clearButtonTexture(button)
 	if not button then return end
 	if button.SetNormalTexture then
-		button:SetNormalTexture(nil)
-	end
-	local normalTexture = button.GetNormalTexture and button:GetNormalTexture()
-	if normalTexture then
-		normalTexture:SetTexture(nil)
-		normalTexture:Hide()
+		button:SetNormalTexture("")
 	end
 end
 
