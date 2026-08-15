@@ -427,6 +427,8 @@ function EveryQuest:EveryQuestInit()
 
 	self:SelectInitialZone()
 
+	self:ScanQuestLog(true)
+
 	-- Load the saved view
 	EveryQuest:List(self.db.profile.view)
 	sessionvars.initialized = true
@@ -997,8 +999,12 @@ function EveryQuest:MarkQuestByName(questName, status, timestampField)
 	return false
 end
 
-function EveryQuest:ScanQuestLog()
+function EveryQuest:ScanQuestLog(reportStatus)
 	local category
+	local scanned, added, changed, missing = 0, 0, 0, 0
+	if reportStatus then
+		self:Print("EveryQuest: updating quest history from the quest log...")
+	end
 	for index = 1, getNumQuestLogEntries() do
 		local info = getQuestLogInfo(index)
 		if info and info.title then
@@ -1007,11 +1013,28 @@ function EveryQuest:ScanQuestLog()
 			else
 				local questid = tonumber(info.questID)
 				if questid then
-					self:AddQuestByID(questid, category, statusFromQuestLog(info.isComplete))
+					scanned = scanned + 1
+					local status = statusFromQuestLog(info.isComplete)
+					local history = self:GetHistoryByQuestID(questid)
+					local oldStatus = history and history.status
+					local savedQuestID, zoneid = self:AddQuestByID(questid, category, status)
+					if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+						if history == nil then
+							added = added + 1
+						elseif oldStatus ~= status then
+							changed = changed + 1
+						end
+					else
+						missing = missing + 1
+					end
 				end
 			end
 		end
 	end
+	if reportStatus then
+		self:Print(("EveryQuest: quest history updated: %d active, %d added, %d changed, %d missing from database."):format(scanned, added, changed, missing))
+	end
+	return scanned, added, changed, missing
 end
 
 function EveryQuest:QUEST_ACCEPTED(questLogIndex, questid)
