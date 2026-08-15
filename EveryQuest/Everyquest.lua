@@ -415,13 +415,24 @@ function EveryQuest:RegisterEvents()
     self:RegisterEvent("Quixote_Quest_Complete")
 	self:RegisterEvent("Quixote_Quest_Failed")
 	self:RegisterEvent("Quixote_Quest_Gained")
-	
+
 	-- fuax self:RegisterEvent("ABANDON_QUEST")
-	StaticPopupDialogs["ABANDON_QUEST"].OnAccept = function() EveryQuest:QUEST_ABANDON(GetAbandonQuestName()) AbandonQuest(); EveryQuest_PlaySound("IG_QUEST_LOG_ABANDON_QUEST", "igQuestLogAbandonQuest"); end
-	StaticPopupDialogs["ABANDON_QUEST_WITH_ITEMS"].OnAccept = function() EveryQuest:QUEST_ABANDON(GetAbandonQuestName()) AbandonQuest(); EveryQuest_PlaySound("IG_QUEST_LOG_ABANDON_QUEST", "igQuestLogAbandonQuest"); end
+	local function hookAbandonPopup(name)
+		local popup = StaticPopupDialogs and StaticPopupDialogs[name]
+		if not popup then return end
+		popup.OnAccept = function()
+			EveryQuest:QUEST_ABANDON(GetAbandonQuestName())
+			AbandonQuest()
+			EveryQuest_PlaySound("IG_QUEST_LOG_ABANDON_QUEST", "igQuestLogAbandonQuest")
+		end
+	end
+	hookAbandonPopup("ABANDON_QUEST")
+	hookAbandonPopup("ABANDON_QUEST_WITH_ITEMS")
 
 	-- Hooks
-	QuestFrameCompleteQuestButton:SetScript("OnClick", function() EveryQuest:Hooks_QuestCompleted() end)
+	if QuestFrameCompleteQuestButton then
+		QuestFrameCompleteQuestButton:SetScript("OnClick", function() EveryQuest:Hooks_QuestCompleted() end)
+	end
 	--self:Hook("QuestFrameCompleteQuestButton_OnClick", "Hooks_QuestCompleted", true)
 end
 
