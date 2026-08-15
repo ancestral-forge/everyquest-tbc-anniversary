@@ -1,0 +1,11 @@
+## Interface: 20400
+## Title: EveryQuest Raid Quests
+## Notes: Contains a list of quests for Raids
+## RequiredDeps: EveryQuest
+## Author: kandarz
+## X-Email: kandarz@gmail.com
+## Version: 1
+## LoadOnDemand: 1
+## X-Category: Quest
+
+Raids.lua

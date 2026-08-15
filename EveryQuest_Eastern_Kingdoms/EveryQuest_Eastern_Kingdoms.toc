@@ -1,0 +1,11 @@
+## Interface: 20400
+## Title: EveryQuest Eastern Kingdoms Quests
+## Notes: Contains a list of quests for Eastern Kingdoms
+## RequiredDeps: EveryQuest
+## Author: kandarz
+## X-Email: kandarz@gmail.com
+## Version: 1
+## LoadOnDemand: 1
+## X-Category: Quest
+
+Eastern_Kingdoms.lua

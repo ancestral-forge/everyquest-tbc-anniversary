@@ -1,0 +1,11 @@
+## Interface: 20400
+## Title: EveryQuest Kalimdor Quests
+## Notes: Contains a list of quests for Kalimdor
+## RequiredDeps: EveryQuest
+## Author: kandarz
+## X-Email: kandarz@gmail.com
+## Version: 1
+## LoadOnDemand: 1
+## X-Category: Quest
+
+Kalimdor.lua

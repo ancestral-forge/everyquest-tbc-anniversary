@@ -1,0 +1,11 @@
+## Interface: 20400
+## Title: EveryQuest Battlegrounds Quests
+## Notes: Contains a list of quests for Battlegrounds
+## RequiredDeps: EveryQuest
+## Author: kandarz
+## X-Email: kandarz@gmail.com
+## Version: 1
+## LoadOnDemand: 1
+## X-Category: Quest
+
+Battlegrounds.lua
