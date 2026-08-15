@@ -50,8 +50,8 @@ function EveryQuest:SetupDefaults()
 		locked = true,
 		debug = false,
 		
-		view = "history",
-	})		
+		view = "zone",
+	})
 	
 end
 

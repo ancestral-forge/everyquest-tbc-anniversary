@@ -11,8 +11,10 @@ L:RegisterTranslations("enUS", function() return{
 	["EveryQuest Log"] = true,
 	["EveryQuest"] = true,
 	["Toggle Frame"] = true,
-	
+
 	["-- Select --"] = true,
+	["Select a zone to show quests"] = true,
+	["No quests to display"] = true,
 	["Loading "] = true,
 	["Could not load "] = true,
 	["Failed or Abandoned"] = true,

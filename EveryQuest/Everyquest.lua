@@ -300,11 +300,11 @@ function EveryQuest:EveryQuestInit()
 	BINDING_NAME_eqTOGGLE = L["Toggle Frame"]
 	
 	-- Create the 27 "lines" (buttons) in to display text in the main frame
-	local button = CreateFrame("Button", "EveryQuestTitle1", EveryQuestFrame,"EveryQuestTitleButtonTemplate")
+	local button = getglobal("EveryQuestTitle1") or CreateFrame("Button", "EveryQuestTitle1", EveryQuestFrame,"EveryQuestTitleButtonTemplate")
 	button:SetID(1)
 	button:Hide()
 	button:ClearAllPoints()
-	button:SetPoint("TOPLEFT", EveryQuestFrame, "BOTTOMLEFT", 19, -75)
+	button:SetPoint("TOPLEFT", EveryQuestFrame, "TOPLEFT", 19, -75)
 	for i = 2, 27 do
 		button = CreateFrame("Button", "EveryQuestTitle" .. i, EveryQuestFrame,"EveryQuestTitleButtonTemplate")
 		button:SetID(i)
@@ -316,24 +316,50 @@ function EveryQuest:EveryQuestInit()
 	-- If the quest log has been scaled, lets scale our frame to match
 	EveryQuestFrame:SetScale(QuestLogFrame:GetScale())
 	
-	-- Load the saved view
-	EveryQuest:List(self.db.profile.view)
-	
 	local faction = UnitFactionGroup("player")
 	if faction == "Alliance" then
 		sessionvars.faction = 1
 	else
 		sessionvars.faction = 2
 	end
+	if self.db.profile.view == "history" and (not self.db.char.history or not next(self.db.char.history)) then
+		self.db.profile.view = "zone"
+	end
+
+	self:SelectInitialZone()
+
+	-- Load the saved view
+	EveryQuest:List(self.db.profile.view)
 end
+
+function EveryQuest:SelectInitialZone()
+	if sessionvars.zoneid and sessionvars.zonegroup then
+		return
+	end
+	local currentZone = GetRealZoneText and GetRealZoneText()
+	if not currentZone or currentZone == "" then
+		return
+	end
+	for group, zones in pairs(zonemenu) do
+		for _, zone in pairs(zones) do
+			if zone[2] == currentZone then
+				sessionvars.zoneid = zone[1]
+				sessionvars.zonegroup = group
+				UIDropDownMenu_SetText(EveryQuestdewdropZoneListMenu, zone[2])
+				return
+			end
+		end
+	end
+end
+
 function EveryQuest:CreateZoneMenu()
 	-- Zone Menu creation
 	EveryQuest.ZoneListMenu = CreateFrame("Frame", "EveryQuestdewdropZoneListMenu", EveryQuestFrame, "UIDropDownMenuTemplate")
 	EveryQuest.ZoneListMenu:Show()
 	EveryQuest.ZoneListMenu:ClearAllPoints()
 	EveryQuest.ZoneListMenu:SetPoint("TOPLEFT",EveryQuestFrame, "TOPLEFT", 115,-40)
-	UIDropDownMenu_SetWidth(150, EveryQuestdewdropZoneListMenu)
-	UIDropDownMenu_SetButtonWidth(20, EveryQuestdewdropZoneListMenu)
+	UIDropDownMenu_SetWidth(EveryQuestdewdropZoneListMenu, 150)
+	UIDropDownMenu_SetButtonWidth(EveryQuestdewdropZoneListMenu, 20)
 	EveryQuestdewdropZoneListMenuButton:SetScript("OnClick", function() if EveryQuestdewdrop:IsOpen() then EveryQuestdewdrop:Close() else EveryQuestdewdrop:Open(EveryQuest.zonemenuloc) end end)
 	
 	-- Create the point where the zone menu will open and display itself
@@ -348,7 +374,7 @@ function EveryQuest:CreateZoneMenu()
 		args = {},
 	}
 	
-	UIDropDownMenu_SetText(L["-- Select --"], EveryQuestdewdropZoneListMenu)
+	UIDropDownMenu_SetText(EveryQuestdewdropZoneListMenu, L["-- Select --"])
 	
 	local i, j = 0, 0
 	for k, v in pairs (zonemenu) do 
@@ -367,7 +393,7 @@ function EveryQuest:CreateZoneMenu()
 				name = zv[2],
 				desc = zv[2],
 				get = function() if sessionvars.zoneid == zv[1] then return true else return false end end,
-				set = function() sessionvars.zoneid = zv[1] sessionvars.zonegroup = k self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup)) UIDropDownMenu_SetText(zv[2], EveryQuestdewdropZoneListMenu) EveryQuestdewdrop:Close() self:UpdateFrame() end,
+				set = function() sessionvars.zoneid = zv[1] sessionvars.zonegroup = k self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup)) UIDropDownMenu_SetText(EveryQuestdewdropZoneListMenu, zv[2]) EveryQuestdewdrop:Close() self:UpdateFrame() end,
 			}
 		end
 		j = 0
@@ -625,6 +651,23 @@ function EveryQuest:GetQuestZoneData(zonegroup, zoneid, view)
 	return false
 end
 
+function EveryQuest:ShowListMessage(message)
+	local frame = getglobal("EveryQuestTitle1")
+	if frame then
+		questdisplay[1] = nil
+		frame:SetNormalTexture("")
+		frame:SetText(message)
+		frame:SetTextColor(self:GetColor("FFFFFF"))
+		frame:Show()
+	end
+	for j = 2, 27, 1 do
+		local listFrame = getglobal("EveryQuestTitle"..j)
+		if listFrame then
+			listFrame:Hide()
+		end
+	end
+end
+
 function EveryQuest:LoadQuestData(group)
 	if group ~= nil then
 		
@@ -827,6 +870,11 @@ function EveryQuest:UpdateFrame()
 		local buttonid = 1
 		local controli = 0
 		local questlist
+		if not sessionvars.zonegroup or not sessionvars.zoneid then
+			FauxScrollFrame_Update(EveryQuestListScrollFrame,0,27,16)
+			self:ShowListMessage(L["Select a zone to show quests"])
+			return
+		end
 		--if self.db.profile.view == "zone" then
 			--self:Debug("GetQuestData - zone zoneid:"..sessionvars["zoneid"].." zonegroup:"..sessionvars.zonegroup)
 			questlist = self:GetQuestZoneData(sessionvars["zonegroup"], sessionvars["zoneid"])
@@ -840,53 +888,54 @@ function EveryQuest:UpdateFrame()
 		if questlist then
 			for k, v in pairs (questlist) do
 				if v.s then
-					if v.s == sessionvars.faction or v.s == 3 then
+					if v.s == sessionvars.faction or v.s == 3 or v.s == 0 then
 						questcount = questcount +1
 						table.insert(historylist, v.id)
 					end
 				end
 			end
 		end
-		if questcount > 0 then
-			if self.db.profile.view == "zone" then
-				sort(questlist, function(a,b) return EveryQuest:SortTable(a,b) end)
-			else
-				sort(historylist, function(a,b) return EveryQuest:SortTable(a,b,questlist) end)
-			end
+		if questcount == 0 then
+			FauxScrollFrame_Update(EveryQuestListScrollFrame,0,27,16)
+			self:ShowListMessage(L["No quests to display"])
+			return
+		end
+		if self.db.profile.view == "zone" then
+			sort(questlist, function(a,b) return EveryQuest:SortTable(a,b) end)
+		else
+			sort(historylist, function(a,b) return EveryQuest:SortTable(a,b,questlist) end)
 		end
 		--self:Debug("QuestCount:"..questcount)
 		FauxScrollFrame_Update(EveryQuestListScrollFrame,questcount,27,16)
 		local scrolloffset = FauxScrollFrame_GetOffset(EveryQuestListScrollFrame)
-		
-		if questcount then
-			if questlist then
-				if self.db.profile.view == "zone" then
-					for k, quest in pairs (questlist) do
-						if quest["s"] then
-							if quest["s"] == sessionvars.faction or quest["s"] == 3 or quest.s == 0 then
-								controli = controli + 1
-								if controli > scrolloffset then
-									if buttonid > 27 then 
-										break 
-									end
-									self:UpdateButton(buttonid, quest, k)
-									buttonid = buttonid +1		
+
+		if questlist then
+			if self.db.profile.view == "zone" then
+				for k, quest in pairs (questlist) do
+					if quest["s"] then
+						if quest["s"] == sessionvars.faction or quest["s"] == 3 or quest["s"] == 0 then
+							controli = controli + 1
+							if controli > scrolloffset then
+								if buttonid > 27 then
+									break
 								end
+								self:UpdateButton(buttonid, quest, k)
+								buttonid = buttonid +1
 							end
 						end
 					end
-				else
-					for k, id in pairs (historylist) do
-						if questlist[id]["s"] then
-							if questlist[id]["s"] == sessionvars.faction or questlist[id]["s"] == 3 or quest.s == 0 then
-								controli = controli + 1
-								if controli > scrolloffset then
-									if buttonid > 27 then 
-										break 
-									end
-									self:UpdateButton(buttonid, questlist[id], k)
-									buttonid = buttonid +1		
+				end
+			else
+				for k, id in pairs (historylist) do
+					if questlist[id] and questlist[id]["s"] then
+						if questlist[id]["s"] == sessionvars.faction or questlist[id]["s"] == 3 or questlist[id]["s"] == 0 then
+							controli = controli + 1
+							if controli > scrolloffset then
+								if buttonid > 27 then
+									break
 								end
+								self:UpdateButton(buttonid, questlist[id], k)
+								buttonid = buttonid +1
 							end
 						end
 					end
