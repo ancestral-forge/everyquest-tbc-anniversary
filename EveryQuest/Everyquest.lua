@@ -248,7 +248,7 @@ local function getQuestTitleText(button)
 		text:SetDrawLayer("OVERLAY", 1)
 	end
 	text:ClearAllPoints()
-	text:SetPoint("LEFT", button, "LEFT", 22, 0)
+	text:SetPoint("LEFT", button, "LEFT", 4, 0)
 	text:SetPoint("RIGHT", button, "RIGHT", -4, 0)
 	text:SetHeight(16)
 	text:SetJustifyH("LEFT")
@@ -284,6 +284,18 @@ local function setButtonTextColor(button, ...)
 	local text = getQuestTitleText(button)
 	if text and text.SetTextColor then
 		text:SetTextColor(...)
+	end
+end
+
+local function clearButtonTexture(button)
+	if not button then return end
+	if button.SetNormalTexture then
+		button:SetNormalTexture(nil)
+	end
+	local normalTexture = button.GetNormalTexture and button:GetNormalTexture()
+	if normalTexture then
+		normalTexture:SetTexture(nil)
+		normalTexture:Hide()
 	end
 end
 
@@ -881,7 +893,7 @@ function EveryQuest:ShowListMessage(message)
 	end
 	local frame = _G.EveryQuestTitle1
 	if frame then
-		frame:SetNormalTexture("")
+		clearButtonTexture(frame)
 		setButtonText(frame, message)
 		setButtonTextColor(frame, self:GetColor("FFFFFF"))
 		frame:Show()
@@ -1445,7 +1457,7 @@ end
 function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 	if questtitle ~= "Collapsed" and self.db.profile.view == "history" or self.db.profile.view == "zone" then
 		ListFrame = _G["EveryQuestTitle"..buttonid]
-		ListFrame:SetNormalTexture("")
+		clearButtonTexture(ListFrame)
 		setButtonText(ListFrame, "")
 		if not questdisplay[buttonid] then questdisplay[buttonid] = quest end
 		if questdisplay[buttonid].id ~= quest.id then questdisplay[buttonid] = nil questdisplay[buttonid] = quest end

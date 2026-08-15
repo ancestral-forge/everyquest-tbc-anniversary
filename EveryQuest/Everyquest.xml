@@ -59,30 +59,18 @@
 				GameTooltip:Hide()
 			</OnLeave>
 		</Scripts>
-		<NormalTexture file="Interface\Buttons\UI-MinusButton-UP">
-			<Size>
-				<AbsDimension x="16" y="16"/>
-			</Size>
-			<Anchors>
-				<Anchor point="LEFT">
-					<Offset>
-						<AbsDimension x="3" y="0"/>
-					</Offset>
-				</Anchor>
-			</Anchors>
-		</NormalTexture>
 		<HighlightTexture name="$parentHighlight" file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD"/>
 		<ButtonText name="$parentNormalText" nonspacewrap="true">
 			<Size>
-				<AbsDimension x="275" y="10"/>
+				<AbsDimension x="295" y="10"/>
 			</Size>
 			<Anchors>
 				<Anchor point="LEFT">
 					<Offset>
-						<AbsDimension x="20" y="0"/>
+						<AbsDimension x="4" y="0"/>
 					</Offset>
 				</Anchor>
-			</Anchors> 
+			</Anchors>
 		</ButtonText>
 		<NormalFont inherits="GameFontNormal"/>
 		<HighlightFont inherits="GameFontHighlight"/>
