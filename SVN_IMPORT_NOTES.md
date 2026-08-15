@@ -1,6 +1,7 @@
 # SVN Import Notes
 
-TBC-compatible EveryQuest release package.
+EveryQuest release package imported from the original TBC-era release and
+modernized for WoW Anniversary.
 
 - SVN tag: `https://repos.wowace.com/wow/everyquest/tags/release-5`
 - Tag creation revision: `r16`
@@ -13,13 +14,11 @@ TBC-compatible EveryQuest release package.
 - CurseForge supported game version: `2.4.3`
 
 The direct SVN export currently times out on large blobs from the WowAce
-repository, so this import uses the official CurseForge/WowAce release zip that
-was generated from the same SVN tag. The contents are the packaged installable
-layout, including embedded Ace2, Deformat, Dewdrop, and Quixote libraries and
-the moved `EveryQuest_*` module addon folders.
+repository, so the initial import used the official CurseForge/WowAce release
+zip generated from the same SVN tag.
 
-The follow-up Anniversary compatibility patch targets WoW Anniversary
-`2.5.6.69110` / TOC interface `20506`. It keeps the packaged installable
-layout, disables the stale source-layout `modules.xml` load from the main TOC,
-adds `C_AddOns` compatibility shims for embedded Ace2 libraries, and updates
-old XML script globals (`this`/`arg1`) used by EveryQuest's own frame XML.
+The current package targets WoW Anniversary `2.5.6.69110` / TOC interface
+`20506` directly. Ace2, Deformat, Dewdrop, Quixote, `embeds.xml`, and the
+Classic compatibility shim have been removed; runtime code now uses the
+Anniversary APIs directly, including `C_AddOns`, `C_QuestLog`, native slash
+commands, native saved variables, `UIDropDownMenu`, and `SOUNDKIT`.

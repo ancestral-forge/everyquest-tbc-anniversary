@@ -9,9 +9,7 @@ Rock("LibRockConfig-1.0").OpenConfigMenu(EveryQuest)
 --]]
 
 local EveryQuest, self = EveryQuest, EveryQuest
-local EveryQuestQ, EveryQuestQ = EveryQuestQ, EveryQuestQ
-local EveryQuestdewdrop = AceLibrary("Dewdrop-2.0")
-local L = AceLibrary("AceLocale-2.2"):new("EveryQuest")
+local L = EveryQuest_Locale
 local questdisplay = {}
 local sorta = {}
 local sortb = {}
@@ -21,58 +19,7 @@ local HOUR = 3600
 local DAY = 86400
 local clickedID
 local sessionvars = {}
-local QuestMenu = { -- Rightclick quest menu
-	type = 'group',
-	args = {
-		turnedin = {
-			type = 'toggle',
-			name = L["Turned In"],
-			desc = L["Turned In"],
-			order = 1,
-			get = function() if EveryQuest:GetStatus(clickedID, 2) then return true else return false end end,
-			set = function() EveryQuest:UpdateStatus(clickedID, 2) end,
-		},
-		completed = {
-			type = 'toggle',
-			name = L["Completed"],
-			desc = L["Completed"],
-			order = 3,
-			get = function() if EveryQuest:GetStatus(clickedID, 1) then return true else return false end end,
-			set = function() EveryQuest:UpdateStatus(clickedID, 1) end,
-		},
-		inprogress = {
-			type = 'toggle',
-			name = L["In Progress"],
-			desc = L["In Progress"],
-			order = 5,
-			get = function() if EveryQuest:GetStatus(clickedID, 0) then return true else return false end end,
-			set = function() EveryQuest:UpdateStatus(clickedID, 0) end,
-		},
-		abandoned = {
-			type = 'toggle',
-			name = L["Abandoned"],
-			desc = L["Abandoned"],
-			order = 7,
-			get = function() if EveryQuest:GetStatus(clickedID, -1) then return true else return false end end,
-			set = function() EveryQuest:UpdateStatus(clickedID, -1) end,
-		},
-		failed = {
-			type = 'toggle',
-			name = L["Failed"],
-			desc = L["Failed"],
-			order = 9,
-			get = function() if EveryQuest:GetStatus(clickedID, -1) then return true else return false end end,
-			set = function() EveryQuest:UpdateStatus(clickedID, -1) end,
-		},
-		close = {
-			type = 'execute',
-			name = L["Close"],
-			desc = L["Close"],
-			order = 10,
-			func = function() EveryQuestdewdrop:Close() end,
-		},
-	},
-}
+local QuestMenuFrame
 local zonemenu = { -- Dropdown Zone list
 	["Eastern Kingdoms"] = {
 		{36,"Alterac Mountains"},
@@ -251,6 +198,19 @@ local zonemenu = { -- Dropdown Zone list
 		{-22,"Seasonal"},
 	},
 }
+local zoneGroupOrder = {
+	"Eastern Kingdoms",
+	"Kalimdor",
+	"Outland",
+	"Dungeons",
+	"Raids",
+	"Classes",
+	"Professions",
+	"Battlegrounds",
+	"Seasonal",
+	"Miscellaneous",
+}
+
 local function concat(var)
 	if type(var) == "number" then
 		return var
@@ -264,7 +224,25 @@ local function concat(var)
 end
 
 local function getZoneListMenu()
-	return EveryQuest.ZoneListMenu or getglobal("EveryQuestdewdropZoneListMenu")
+	return EveryQuest.ZoneListMenu or _G.EveryQuestZoneListMenu
+end
+
+local function getAddOnEnableState(addon)
+	local playerName = UnitName("player")
+	return C_AddOns.GetAddOnEnableState(addon, playerName) > 0
+end
+
+local function getQuestLogInfo(index)
+	return C_QuestLog.GetInfo(index)
+end
+
+local function getQuestLogQuestID(index)
+	local info = getQuestLogInfo(index)
+	return info and tonumber(info.questID)
+end
+
+local function isDailyQuest(frequency)
+	return frequency == Enum.QuestFrequency.Daily
 end
 
 local function setZoneListText(text)
@@ -305,7 +283,7 @@ function EveryQuest:EveryQuestInit()
 	EveryQuest.EveryQuestToggleButton:ClearAllPoints()
 
 	-- Create the List toggle button to toggle between quest history and quests in a category
-	EveryQuest.ListToggleButton = EveryQuest.ListToggleButton or getglobal("EveryQuestListToggleButton") or CreateFrame("Button", "EveryQuestListToggleButton", EveryQuestFrame, "UIPanelButtonTemplate")
+	EveryQuest.ListToggleButton = EveryQuest.ListToggleButton or _G.EveryQuestListToggleButton or CreateFrame("Button", "EveryQuestListToggleButton", EveryQuestFrame, "UIPanelButtonTemplate")
 	EveryQuest.ListToggleButton:SetWidth(122)
 	EveryQuest.ListToggleButton:SetHeight(21)
 	EveryQuest.ListToggleButton:SetText(" ")
@@ -317,7 +295,7 @@ function EveryQuest:EveryQuestInit()
 
 	-- Attach the list toggle button in the right place depending on if beql is installed and loaded
 	if QuestLogFrame then
-		if not IsAddOnLoaded("beql") then
+		if not C_AddOns.IsAddOnLoaded("beql") then
 			EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
 		else
 			EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",75,-15)
@@ -332,19 +310,19 @@ function EveryQuest:EveryQuestInit()
 	BINDING_NAME_eqTOGGLE = L["Toggle Frame"]
 
 	-- Create the 27 "lines" (buttons) in to display text in the main frame
-	local button = getglobal("EveryQuestTitle1") or CreateFrame("Button", "EveryQuestTitle1", EveryQuestFrame,"EveryQuestTitleButtonTemplate")
+	local button = _G.EveryQuestTitle1 or CreateFrame("Button", "EveryQuestTitle1", EveryQuestFrame,"EveryQuestTitleButtonTemplate")
 	button:SetID(1)
 	button:Hide()
 	raiseFrame(button)
 	button:ClearAllPoints()
 	button:SetPoint("TOPLEFT", EveryQuestFrame, "TOPLEFT", 19, -75)
 	for i = 2, 27 do
-		button = getglobal("EveryQuestTitle" .. i) or CreateFrame("Button", "EveryQuestTitle" .. i, EveryQuestFrame,"EveryQuestTitleButtonTemplate")
+		button = _G["EveryQuestTitle" .. i] or CreateFrame("Button", "EveryQuestTitle" .. i, EveryQuestFrame,"EveryQuestTitleButtonTemplate")
 		button:SetID(i)
 		button:Hide()
 		raiseFrame(button)
 		button:ClearAllPoints()
-		button:SetPoint("TOPLEFT", getglobal("EveryQuestTitle" .. (i-1)), "BOTTOMLEFT", 0, 1)
+		button:SetPoint("TOPLEFT", _G["EveryQuestTitle" .. (i-1)], "BOTTOMLEFT", 0, 1)
 	end
 
 	-- If the quest log has been scaled, lets scale our frame to match
@@ -399,7 +377,7 @@ end
 
 function EveryQuest:CreateZoneMenu()
 	-- Zone Menu creation
-	EveryQuest.ZoneListMenu = getZoneListMenu() or CreateFrame("Frame", "EveryQuestdewdropZoneListMenu", EveryQuestFrame, "UIDropDownMenuTemplate")
+	EveryQuest.ZoneListMenu = getZoneListMenu() or CreateFrame("Frame", "EveryQuestZoneListMenu", EveryQuestFrame, "UIDropDownMenuTemplate")
 	EveryQuest.ZoneListMenu:Show()
 	raiseFrame(EveryQuest.ZoneListMenu)
 	EveryQuest.ZoneListMenu:ClearAllPoints()
@@ -410,64 +388,74 @@ function EveryQuest:CreateZoneMenu()
 	if UIDropDownMenu_SetButtonWidth then
 		UIDropDownMenu_SetButtonWidth(EveryQuest.ZoneListMenu, 20)
 	end
-	local zoneListMenuButton = getglobal(EveryQuest.ZoneListMenu:GetName().."Button") or EveryQuest.ZoneListMenu.Button
+	local zoneListMenuButton = _G[EveryQuest.ZoneListMenu:GetName().."Button"] or EveryQuest.ZoneListMenu.Button
 	if zoneListMenuButton then
-		zoneListMenuButton:SetScript("OnClick", function() if EveryQuestdewdrop:IsOpen() then EveryQuestdewdrop:Close() else EveryQuestdewdrop:Open(EveryQuest.zonemenuloc) end end)
+		zoneListMenuButton:SetScript("OnClick", function()
+			ToggleDropDownMenu(1, nil, EveryQuest.ZoneListMenu, EveryQuest.ZoneListMenu, 0, 0)
+		end)
 	end
-	
-	-- Create the point where the zone menu will open and display itself
-	EveryQuest.zonemenuloc = CreateFrame("Frame", nil, EveryQuestFrame)
-	EveryQuest.zonemenuloc:SetWidth(2)
-	EveryQuest.zonemenuloc:SetHeight(2)
-	EveryQuest.zonemenuloc:ClearAllPoints()
-	EveryQuest.zonemenuloc:SetPoint("BOTTOMRIGHT", zoneListMenuButton or EveryQuest.ZoneListMenu)
-	
-	local info = {
-		type = 'group',
-		args = {},
-	}
-	
+
 	setZoneListText(L["-- Select --"])
-	
-	local i, j = 0, 0
-	for k, v in pairs (zonemenu) do 
-		i = i +1
-		info.args[i] = {
-			type = 'group',
-			name = k,
-			desc = k,
-			order = 1,
-			args = {}
-		}
-		for zk, zv in pairs (zonemenu[k]) do
-			j = j +1
-			info.args[i].args[j] = {
-				type = 'toggle',
-				name = zv[2],
-				desc = zv[2],
-				get = function() if sessionvars.zoneid == zv[1] then return true else return false end end,
-				set = function() sessionvars.zoneid = zv[1] sessionvars.zonegroup = k self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup)) setZoneListText(zv[2]) EveryQuestdewdrop:Close() self:UpdateFrame() end,
-			}
-		end
-		j = 0
-	end
-	info.args[i+1] = {
-			type = 'execute',
-			name = L["Close"],
-			desc = L["Close"],
-			order = 10,
-			func = function() EveryQuestdewdrop:Close() end,
-		}
-	EveryQuestdewdrop:Register(EveryQuest.zonemenuloc, 'children', function() EveryQuestdewdrop:FeedAceOptionsTable(info) end)
+
+	UIDropDownMenu_Initialize(EveryQuest.ZoneListMenu, function(_, level, menuList)
+		EveryQuest:InitializeZoneDropdown(level, menuList)
+	end)
 end
+
+function EveryQuest:InitializeZoneDropdown(level, menuList)
+	level = level or 1
+	if level == 1 then
+		for _, group in ipairs(zoneGroupOrder) do
+			if zonemenu[group] then
+				local info = UIDropDownMenu_CreateInfo()
+				info.text = group
+				info.hasArrow = true
+				info.menuList = group
+				info.notCheckable = true
+				UIDropDownMenu_AddButton(info, level)
+			end
+		end
+		local closeInfo = UIDropDownMenu_CreateInfo()
+		closeInfo.text = L["Close"]
+		closeInfo.notCheckable = true
+		closeInfo.func = CloseDropDownMenus
+		UIDropDownMenu_AddButton(closeInfo, level)
+		return
+	end
+
+	local group = menuList
+	for _, zone in ipairs(zonemenu[group] or {}) do
+		local info = UIDropDownMenu_CreateInfo()
+		info.text = zone[2]
+		info.checked = sessionvars.zoneid == zone[1]
+		info.arg1 = group
+		info.arg2 = zone
+		info.func = function(_, selectedGroup, selectedZone)
+			selectZone(selectedGroup, selectedZone)
+			self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup))
+			if CloseDropDownMenus then
+				CloseDropDownMenus()
+			end
+			self:UpdateFrame()
+		end
+		UIDropDownMenu_AddButton(info, level)
+	end
+end
+
 function EveryQuest:RegisterEvents()
+	if sessionvars.eventsRegistered then
+		return
+	end
+	sessionvars.eventsRegistered = true
 	self:Debug("RegisterEvents")
 	-- Register Events
 	self:RegisterEvent("QUEST_PROGRESS")
-	--self:RegisterEvent("QUEST_COMPLETE")
-    self:RegisterEvent("Quixote_Quest_Complete")
-	self:RegisterEvent("Quixote_Quest_Failed")
-	self:RegisterEvent("Quixote_Quest_Gained")
+	self:RegisterEvent("QUEST_ACCEPTED")
+	self:RegisterEvent("QUEST_COMPLETE")
+	self:RegisterEvent("QUEST_FAILED")
+	self:RegisterEvent("QUEST_LOG_UPDATE")
+	self:RegisterEvent("QUEST_REMOVED")
+	self:RegisterEvent("QUEST_TURNED_IN")
 
 	-- fuax self:RegisterEvent("ABANDON_QUEST")
 	local function hookAbandonPopup(name)
@@ -476,7 +464,7 @@ function EveryQuest:RegisterEvents()
 		popup.OnAccept = function()
 			EveryQuest:QUEST_ABANDON(GetAbandonQuestName())
 			AbandonQuest()
-			EveryQuest_PlaySound("IG_QUEST_LOG_ABANDON_QUEST", "igQuestLogAbandonQuest")
+			PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST)
 		end
 	end
 	hookAbandonPopup("ABANDON_QUEST")
@@ -725,7 +713,7 @@ function EveryQuest:ShowListMessage(message)
 	for j = 1, 27, 1 do
 		questdisplay[j] = nil
 	end
-	local frame = getglobal("EveryQuestTitle1")
+	local frame = _G.EveryQuestTitle1
 	if frame then
 		frame:SetNormalTexture("")
 		frame:SetText(message)
@@ -733,7 +721,7 @@ function EveryQuest:ShowListMessage(message)
 		frame:Show()
 	end
 	for j = 2, 27, 1 do
-		local listFrame = getglobal("EveryQuestTitle"..j)
+		local listFrame = _G["EveryQuestTitle"..j]
 		if listFrame then
 			listFrame:Hide()
 		end
@@ -747,14 +735,14 @@ function EveryQuest:LoadQuestData(group)
 		--local varname = "EveryQuest_"..group.." Quests"
 		self:Debug("Loading single module: "..concat(varname))
 		--local addonname = ("EveryQuest__%s%s_Data"):format(faction:sub(1,1), questtype)
-		local _, _, _, enabled = GetAddOnInfo(varname)
+		local enabled = getAddOnEnableState(varname)
 		--if questdata and questdata[varname] then return varname end
 		if not EveryQuestData[group] then
 			
 			self:Debug("Module "..concat(group).." not loaded")
-			if enabled then
-				EveryQuest:Print(L["Loading "] .. group .. L[" Quest Data"])
-				local succ,reason = LoadAddOn(varname)
+				if enabled then
+					EveryQuest:Print(L["Loading "] .. group .. L[" Quest Data"])
+					local succ,reason = C_AddOns.LoadAddOn(varname)
 				if not succ then
 					EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"], reason)
 					return false
@@ -768,8 +756,7 @@ function EveryQuest:LoadQuestData(group)
 			self:Debug("Module "..concat(group).." is loaded")
 		end
 		--for k,v in pairs(EveryQuestData) do self:Debug(k) end
-		--questdata[varname] = getglobal(varname)
-		return EveryQuestData[group] --questdata[varname] and varname
+			return EveryQuestData[group] --questdata[varname] and varname
 	else
 		
 	end
@@ -778,66 +765,214 @@ end
 
 function EveryQuest:GetStatus(displayid, queststatus)
 	local quest = displayid and questdisplay[displayid]
-	if quest and quest.status and quest.status == queststatus then
+	local zoneid = sessionvars.zoneid
+	if quest and zoneid and self.db.char.history[zoneid] and self.db.char.history[zoneid][quest.id] then
+		return self.db.char.history[zoneid][quest.id].status == queststatus
+	elseif quest and quest.status and quest.status == queststatus then
 		return true
 	else
 		return false
 	end
 end
-function EveryQuest:Quixote_Quest_Complete(questname, questindex)
-	-- history: Update Status: Quest Finished, not turned in
-	local _, _, _, _, _, _, category = EveryQuestQ:GetQuestById(questindex)
-	local questid, zoneid = EveryQuest:AddQuest(questindex, category)
-	if questid ~= nil and questid ~= false and zoneid ~= nil then
-		self.db.char.history[zoneid][questid].status = 1
-		self:Debug("Quixote_Quest_Complete - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-		self:UpdateFrame()
-	else
-		self:Error("Complete Quest: Unable to get Quest Information from DB")
+
+local function getNumQuestLogEntries()
+	return C_QuestLog.GetNumQuestLogEntries() or 0
+end
+
+local function statusFromQuestLog(isComplete)
+	if isComplete == 1 or isComplete == true then
+		return 1
+	elseif isComplete == -1 then
+		return -1
+	end
+	return 0
+end
+
+function EveryQuest:FindQuestLogEntryByID(questid)
+	questid = tonumber(questid)
+	if not questid then return end
+
+	local category
+	for index = 1, getNumQuestLogEntries() do
+		local info = getQuestLogInfo(index)
+		if info and info.title then
+			if info.isHeader then
+				category = info.title
+			else
+				local currentQuestID = tonumber(info.questID)
+				if currentQuestID == questid then
+					return index, category, info.title, statusFromQuestLog(info.isComplete), isDailyQuest(info.frequency)
+				end
+			end
+		end
 	end
 end
 
-function EveryQuest:Quixote_Quest_Gained(questname, questindex, numObjectives)
-	-- history: Add Quest to history, update Status: In Progress
-	local _, _, _, _, _, _, category = EveryQuestQ:GetQuestById(questindex)
-	local questid, zoneid = EveryQuest:AddQuest(questindex, category)
-	
-	if questid ~= nil and questid ~= false and zoneid ~= nil then
-		self:Debug("Quixote_Quest_Gained - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-		if questid then
-			self.db.char.history[zoneid][questid].status = 0
-			self:Debug("Quixote_Quest_Gained - set status")--..questid.." zoneid:"..zoneid)
-		else
-			self:Debug("Quixote_Quest_Gained - !!failed!!")
+function EveryQuest:FindQuestLogEntryByName(questName)
+	if not questName then return end
+
+	local category
+	for index = 1, getNumQuestLogEntries() do
+		local info = getQuestLogInfo(index)
+		if info and info.title then
+			if info.isHeader then
+				category = info.title
+			elseif info.title == questName then
+				local questid = tonumber(info.questID)
+				return index, category, questid, statusFromQuestLog(info.isComplete), isDailyQuest(info.frequency)
+			end
 		end
+	end
+end
+
+function EveryQuest:GetHistoryByQuestID(questid)
+	questid = tonumber(questid)
+	if not questid then return end
+
+	for zoneid, quests in pairs(self.db.char.history or {}) do
+		if type(quests) == "table" and quests[questid] then
+			return quests[questid], zoneid
+		end
+	end
+end
+
+function EveryQuest:AddQuestByID(questid, category, qstatus)
+	if self.db.char.history == nil then
+		self.db.char.history = {}
+	end
+	questid = tonumber(questid)
+	if not questid then
+		return false
+	end
+
+	local _, foundCategory, _, foundStatus = self:FindQuestLogEntryByID(questid)
+	category = category or foundCategory
+	if qstatus == nil then
+		qstatus = foundStatus
+	end
+
+	local quest, zoneid = self:GetQuestData(questid, category)
+	if quest == false then
+		return false
+	end
+	self:Debug("AddQuestByID - questid:"..concat(questid) .. " zoneid:"..concat(zoneid))
+	if zoneid ~= nil then
+		if self.db.char.history[zoneid] == nil then
+			self.db.char.history[zoneid] = {}
+		end
+		if quest ~= nil then
+			if self.db.char.history[zoneid][questid] == nil then
+				self.db.char.history[zoneid][questid] = quest
+			end
+			if qstatus ~= nil then
+				self.db.char.history[zoneid][questid].status = qstatus
+			end
+			self:UpdateFrame()
+			return questid, zoneid, self.db.char.history[zoneid][questid].d
+		else
+			return false
+		end
+	else
 		self:UpdateFrame()
+		return false
+	end
+end
+
+function EveryQuest:MarkQuestByID(questid, status, timestampField, category)
+	local savedQuestID, zoneid = self:AddQuestByID(questid, category, status)
+	if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+		local history = self.db.char.history[zoneid][savedQuestID]
+		history.status = status
+		if timestampField then
+			history[timestampField] = time()
+		end
+		self:Debug("MarkQuestByID - questid:"..concat(savedQuestID).." zoneid:"..concat(zoneid).." status:"..concat(status))
+		self:UpdateFrame()
+		return savedQuestID, zoneid
+	end
+	return false
+end
+
+function EveryQuest:MarkQuestByName(questName, status, timestampField)
+	local questindex, category, questid = self:FindQuestLogEntryByName(questName)
+	if questid then
+		return self:MarkQuestByID(questid, status, timestampField, category)
+	elseif questindex then
+		local savedQuestID, zoneid = self:AddQuest(questindex, category, status)
+		if savedQuestID and zoneid then
+			local history = self.db.char.history[zoneid][savedQuestID]
+			history.status = status
+			if timestampField then
+				history[timestampField] = time()
+			end
+			self:UpdateFrame()
+			return savedQuestID, zoneid
+		end
+	end
+	return false
+end
+
+function EveryQuest:ScanQuestLog()
+	local category
+	for index = 1, getNumQuestLogEntries() do
+		local info = getQuestLogInfo(index)
+		if info and info.title then
+			if info.isHeader then
+				category = info.title
+			else
+				local questid = tonumber(info.questID)
+				if questid then
+					self:AddQuestByID(questid, category, statusFromQuestLog(info.isComplete))
+				end
+			end
+		end
+	end
+end
+
+function EveryQuest:QUEST_ACCEPTED(questLogIndex, questid)
+	questid = tonumber(questid)
+	if not questid and questLogIndex then
+		questid = getQuestLogQuestID(questLogIndex) or tonumber(questLogIndex)
+	end
+	if not questid then
+		self:ScanQuestLog()
+		return
+	end
+
+	local _, category = self:FindQuestLogEntryByID(questid)
+	local savedQuestID, zoneid = self:AddQuestByID(questid, category, 0)
+	if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+		self:Debug("QUEST_ACCEPTED - questid:"..concat(savedQuestID).." zoneid:"..concat(zoneid))
 	else
 		self:Error("Gained Quest: Unable to get Quest Information from DB")
 	end
 end
 
-function EveryQuest:Quixote_Quest_Failed(questname, questindex)
-	-- history: Update Status: Failed, failed counter +1
-	local _, _, _, _, _, _, category = EveryQuestQ:GetQuestById(questindex)
-	local questid, zoneid = EveryQuest:AddQuest(questindex, category)
-	if questid ~= nil and questid ~= false and zoneid ~= nil then
-		self.db.char.history[zoneid][questid].status = -1
-		self.db.char.history[zoneid][questid].failed = time()
-		self:Debug("Quixote_Quest_Failed - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-		self:UpdateFrame()
-	else
-		self:Error("Failed Quest: Unable to get Quest Information from DB")
+function EveryQuest:QUEST_COMPLETE()
+	local questtitle = GetTitleText and GetTitleText()
+	if questtitle then
+		local questid, zoneid = self:MarkQuestByName(questtitle, 1)
+		if questid then
+			self:Debug("QUEST_COMPLETE - questid:"..concat(questid).." zoneid:"..concat(zoneid))
+		end
+	end
+end
+
+function EveryQuest:QUEST_FAILED(questName)
+	questName = questName or (GetTitleText and GetTitleText())
+	if questName then
+		local questid, zoneid = self:MarkQuestByName(questName, -1, "failed")
+		if questid then
+			self:Debug("QUEST_FAILED - questid:"..concat(questid).." zoneid:"..concat(zoneid))
+		end
 	end
 end
 
 function EveryQuest:QUEST_ABANDON(questName)
-	local _, _, _, _, _, _, category, questindex = EveryQuestQ:GetQuestByName(questName)
-	if questindex then
-		local questid, zoneid = EveryQuest:AddQuest(questindex, category)
-		if questid ~= nil and questid ~= false and zoneid ~= nil then
+	if questName then
+		local questid, zoneid = self:MarkQuestByName(questName, -1, "abandoned")
+		if questid then
 			self:Debug("QUEST_ABANDON - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-			self.db.char.history[zoneid][questid].status = -1
-			self.db.char.history[zoneid][questid].abandoned = time()
 		else
 			self:Error("Abandon Quest: Unable to get Quest Information from DB")
 		end
@@ -845,11 +980,28 @@ function EveryQuest:QUEST_ABANDON(questName)
 	self:UpdateFrame()
 end
 
+function EveryQuest:QUEST_REMOVED(questid)
+	local history = self:GetHistoryByQuestID(questid)
+	if history and history.status == 2 then
+		return
+	end
+	self:MarkQuestByID(questid, -1, "abandoned")
+end
+
+function EveryQuest:QUEST_TURNED_IN(questid)
+	if questid then
+		self:QuestTurnedIn(nil, questid)
+	end
+end
+
+function EveryQuest:QUEST_LOG_UPDATE()
+	self:ScanQuestLog()
+end
+
 function EveryQuest:QUEST_PROGRESS()
-	local questtitle = GetTitleText()
-	local _, _, _, _, _, _, category, questindex = EveryQuestQ:GetQuestByName(questtitle)
-	if questindex then
-		local questid, zoneid = EveryQuest:AddQuest(questindex, category)
+	local questtitle = GetTitleText and GetTitleText()
+	if questtitle then
+		local questid, zoneid = self:MarkQuestByName(questtitle, 0)
 		self:Debug("QUEST_PROGRESS - questid:"..concat(questid).." zoneid:"..concat(zoneid))
 	end
 end
@@ -862,24 +1014,29 @@ function EveryQuest:Hooks_QuestCompleted()
 		self:Debug("Hooks_QuestCompleted success")
 		EveryQuest:QuestTurnedIn(GetTitleText())
 		GetQuestReward(QuestFrameRewardPanel.itemChoice);
-		EveryQuest_PlaySound("IG_QUEST_LIST_COMPLETE", "igQuestListComplete");
+		PlaySound(SOUNDKIT.IG_QUEST_LIST_COMPLETE);
 	end
 end
 
-function EveryQuest:QuestTurnedIn(questName)
-	local _, _, _, _, _, _, category, questindex = EveryQuestQ:GetQuestByName(questName)
+function EveryQuest:QuestTurnedIn(questName, questid)
 	-- history: Update Status: Quest completed, add completed timestamp
-	if questindex then
-		local questid, zoneid, daily = EveryQuest:AddQuest(questindex, category)
-		if questid ~= nil and questid ~= false and zoneid ~= nil then
-			self:Debug("QuestTurnedIn - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-			self.db.char.history[zoneid][questid].status = 2
-			self.db.char.history[zoneid][questid].completed = time()
+	local category
+	if not questid and questName then
+		local _, foundCategory, foundQuestID = self:FindQuestLogEntryByName(questName)
+		category = foundCategory
+		questid = foundQuestID
+	end
+	if questid then
+		local savedQuestID, zoneid, daily = EveryQuest:AddQuestByID(questid, category, 2)
+		if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+			self:Debug("QuestTurnedIn - questid:"..concat(savedQuestID).." zoneid:"..concat(zoneid))
+			self.db.char.history[zoneid][savedQuestID].status = 2
+			self.db.char.history[zoneid][savedQuestID].completed = time()
 			if daily then
-				if self.db.char.history[zoneid][questid].count ~= nil then
-					self.db.char.history[zoneid][questid].count = self.db.char.history[zoneid][questid].count +1
+				if self.db.char.history[zoneid][savedQuestID].count ~= nil then
+					self.db.char.history[zoneid][savedQuestID].count = self.db.char.history[zoneid][savedQuestID].count +1
 				else
-					self.db.char.history[zoneid][questid].count = 1
+					self.db.char.history[zoneid][savedQuestID].count = 1
 				end
 			end
 		else
@@ -889,36 +1046,17 @@ function EveryQuest:QuestTurnedIn(questName)
 	self:UpdateFrame()
 end
 
-function EveryQuest:AddQuest(questindex, category)
+function EveryQuest:AddQuest(questindex, category, qstatus)
 	if self.db.char.history == nil then
 		self.db.char.history = {} 
 	end
 	if questindex then
 		local questid = self:GetQID(questindex)
-		local quest, zoneid = self:GetQuestData(questid, category)
-		if quest == false then
-			return false
+		if qstatus == nil then
+			local _, _, _, foundStatus = self:FindQuestLogEntryByID(questid)
+			qstatus = foundStatus
 		end
-		self:Debug("AddQuest - questid:"..concat(questid) .. " zoneid:"..concat(zoneid))
-		if zoneid ~= nil then
-			if self.db.char.history[zoneid] == nil then
-				self.db.char.history[zoneid] = {}
-			end
-			if quest ~= nil then
-				if self.db.char.history[zoneid][questid] == nil then
-					local _, _, _, _, qstatus = EveryQuestQ:GetQuestById(questindex)
-					self.db.char.history[zoneid][questid] = quest
-					self.db.char.history[zoneid][questid].status = qstatus
-				end
-				self:UpdateFrame()
-				return questid, zoneid, self.db.char.history[zoneid][questid].d
-			else
-				return false
-			end
-		else
-			self:UpdateFrame()
-			return false
-		end
+		return self:AddQuestByID(questid, category, qstatus)
 	end
 end
 
@@ -1018,7 +1156,7 @@ function EveryQuest:UpdateFrame()
 		end
 		for j = buttonid, 27 ,1 do
 			questdisplay[j] = nil
-			ListFrame = getglobal("EveryQuestTitle"..j)
+	ListFrame = _G["EveryQuestTitle"..j]
 			ListFrame:Hide()
 		end
 	end
@@ -1069,7 +1207,7 @@ end
 
 function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 	if questtitle ~= "Collapsed" and self.db.profile.view == "history" or self.db.profile.view == "zone" then
-		ListFrame = getglobal("EveryQuestTitle"..buttonid)
+		ListFrame = _G["EveryQuestTitle"..buttonid]
 		ListFrame:SetNormalTexture("")
 		ListFrame:SetText("")
 		if not questdisplay[buttonid] then questdisplay[buttonid] = quest end
@@ -1172,45 +1310,86 @@ function EveryQuest:ButtonEnter(frame)
 	GameTooltip:Show()
 end
 
+function EveryQuest:BuildQuestMenu()
+	local function statusLine(text, status)
+		return {
+			text = text,
+			checked = self:GetStatus(clickedID, status),
+			isNotRadio = true,
+			func = function()
+				self:UpdateStatus(clickedID, status)
+				if CloseDropDownMenus then
+					CloseDropDownMenus()
+				end
+			end,
+		}
+	end
+
+	return {
+		{
+			text = L["Change Status"],
+			isTitle = true,
+			notCheckable = true,
+		},
+		statusLine(L["Turned In"], 2),
+		statusLine(L["Completed"], 1),
+		statusLine(L["In Progress"], 0),
+		statusLine(L["Abandoned"], -1),
+		statusLine(L["Failed"], -1),
+		{
+			text = L["Close"],
+			notCheckable = true,
+			func = function()
+				if CloseDropDownMenus then
+					CloseDropDownMenus()
+				end
+			end,
+		},
+	}
+end
+
+function EveryQuest:OpenQuestMenu()
+	QuestMenuFrame = QuestMenuFrame or CreateFrame("Frame", "EveryQuestStatusMenu", UIParent, "UIDropDownMenuTemplate")
+	local menu = self:BuildQuestMenu()
+	if EasyMenu then
+		EasyMenu(menu, QuestMenuFrame, "cursor", 0, 0, "MENU")
+		return
+	end
+
+	UIDropDownMenu_Initialize(QuestMenuFrame, function(_, level)
+		for _, item in ipairs(menu) do
+			UIDropDownMenu_AddButton(item, level)
+		end
+	end, "MENU")
+	ToggleDropDownMenu(1, nil, QuestMenuFrame, "cursor", 0, 0)
+end
+
 function EveryQuest:ButtonClick(frame, button)
 	clickedID = frame:GetID()
 	local quest = questdisplay[clickedID]
 	if not quest or not quest.id then return end
+
 	if button == "LeftButton" then
-		if ( IsModifiedClick() ) then
-			if ( IsModifiedClick("CHATLINK") and ChatFrameEditBox:IsVisible() ) then
-				local questLink = self:CreateQuestLink(quest.id, quest.n, quest.l);
-				if ( questLink ) then
-					ChatEdit_InsertLink(questLink);
+		if IsModifiedClick() then
+			local editBox = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow() or ChatFrameEditBox
+			if IsModifiedClick("CHATLINK") and editBox and editBox:IsVisible() then
+				local questLink = self:CreateQuestLink(quest.id, quest.n, quest.l)
+				if questLink then
+					ChatEdit_InsertLink(questLink)
 				end
 			end
-		else
-			-- open lightheaded if enabled
-			if IsAddOnLoaded("Lightheaded") then
-				if IsAddOnLoaded("beql") then
-					beql:Minimize()
-				end
-				QuestLogFrame:Show()
-				LightHeaded:UpdateFrame(quest.id, 1)
-				QuestLogFrame:ClearAllPoints()
-				QuestLogFrame:SetPoint("TOPLEFT",EveryQuestFrame, "TOPLEFT", 360, 0)
+		elseif C_AddOns.IsAddOnLoaded("Lightheaded") then
+			if C_AddOns.IsAddOnLoaded("beql") then
+				beql:Minimize()
 			end
+			QuestLogFrame:Show()
+			LightHeaded:UpdateFrame(quest.id, 1)
+			QuestLogFrame:ClearAllPoints()
+			QuestLogFrame:SetPoint("TOPLEFT",EveryQuestFrame, "TOPLEFT", 360, 0)
 		end
 	elseif button == "RightButton" then
-		-- open quest menu
-		if not ddframe then
-				ddframe = CreateFrame("Frame", nil, UIParent)
-				ddframe:SetWidth(2)
-				ddframe:SetHeight(2)
-				ddframe:SetPoint("BOTTOMLEFT", GetCursorPosition())
-				ddframe:SetClampedToScreen(true)
-				EveryQuestdewdrop:Register(ddframe, 'dontHook', true, 'children', function() EveryQuestdewdrop:FeedAceOptionsTable(QuestMenu) end)
-		end
-		local x,y = GetCursorPosition()
-		ddframe:SetPoint("BOTTOMLEFT", x / UIParent:GetScale(), y / UIParent:GetScale())
-		EveryQuestdewdrop:Open(ddframe)
+		self:OpenQuestMenu()
 	end
-	
 end
 
 function EveryQuest:List(value)
@@ -1239,17 +1418,9 @@ function EveryQuest:List(value)
 end
 
 function EveryQuest:GetQID(index)
-	--local index = GetQuestLogSelection()
 	if not index then return end
 
-	local questID = EveryQuest_GetQuestLogQuestID and EveryQuest_GetQuestLogQuestID(index)
-	if questID then return questID end
-
-	if not GetQuestLink then return end
-	local link = GetQuestLink(index)
-	if not link then return end
-
-	return tonumber(link:match(":(%d+):"))
+	return getQuestLogQuestID(index)
 end
 
 function EveryQuest:CreateQuestLink(questid, questname, questlevel)

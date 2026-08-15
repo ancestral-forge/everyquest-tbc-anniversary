@@ -1,5 +1,5 @@
 ## Interface: 20506
-## Title: EveryQuest |cff7fff7f -Ace2-|r
+## Title: EveryQuest
 ## Notes: Quest History tracker and shows lists of quests in each category
 ## Author: kandarz
 ## SavedVariables: EveryQuestDB
@@ -10,12 +10,7 @@
 ## X-Category: Quest
 ## X-Build: $Revision: 13 $
 ## X-ReleaseDate: $Date: 2008-10-06 07:14:54 +0000 (Mon, 06 Oct 2008) $
-## OptionalDeps: Ace2, Deformat, Quixote
-## X-Embeds: Ace2, Deformat, Quixote
-
-Compat.lua
-
-embeds.xml
+## OptionalDeps: Lightheaded, beql
 
 localization.lua
 

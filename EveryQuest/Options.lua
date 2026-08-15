@@ -1,29 +1,35 @@
 local EveryQuest = EveryQuest
-local L = AceLibrary("AceLocale-2.2"):new("EveryQuest")
+local L = EveryQuest_Locale
 
 function EveryQuest:CreateOptions()
+	EveryQuest.options = {
+		toggle = function() EveryQuest:Toggle() end,
+		debug = function() EveryQuest:ToggleDebug() end,
+	}
+end
 
-EveryQuest.options = { 
-    type='group',
-    args = {
-		Spacing1 = {
-			name = " ",
-			type = "header",
-		},
-		toggle = {
-			type = 'execute',
-			name = "Toggle EveryQuest Frame",
-			desc = "Toggle EveryQuest Frame",
-			func = function() EveryQuest:Toggle() end,
-		},
-		debug = {
-			type = 'toggle',
-			name = "Show Debugging Messages",
-			desc = "Show Debugging Messages - *WARNING* Spams your default chat frame",
-			set = function(newval) EveryQuest.db.profile.debug = newval end,
-			get = function() return EveryQuest.db.profile.debug end,
-		},
-    },
-}
+function EveryQuest:ToggleDebug()
+	self.db.profile.debug = not self.db.profile.debug
+	if self.db.profile.debug then
+		self:Print("EveryQuest: debugging messages enabled")
+	else
+		self:Print("EveryQuest: debugging messages disabled")
+	end
+end
 
+function EveryQuest:PrintUsage()
+	self:Print(L["EveryQuest"] .. ": /eq, /everyquest toggle, /everyquest debug")
+end
+
+function EveryQuest:HandleSlash(input)
+	local command = string.lower((input or ""):match("^%s*(%S*)") or "")
+	if command == "" or command == "toggle" then
+		self:Toggle()
+	elseif command == "debug" then
+		self:ToggleDebug()
+	elseif command == "help" or command == "?" then
+		self:PrintUsage()
+	else
+		self:PrintUsage()
+	end
 end

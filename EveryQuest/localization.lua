@@ -1,9 +1,8 @@
-local L = AceLibrary("AceLocale-2.2"):new("EveryQuest")
-L:RegisterTranslations("enUS", function() return{
-	["Change Status"] = true,
-	["Turned In"] = true,
-	["Completed"] = true,
-	["In Progress"] = true,
+EveryQuest_Locale = {
+		["Change Status"] = true,
+		["Turned In"] = true,
+		["Completed"] = true,
+		["In Progress"] = true,
 	["Abandoned"] = true,
 	["Failed"] = true,
 	["Close"] = true,
@@ -45,9 +44,21 @@ L:RegisterTranslations("enUS", function() return{
 	["Heroic"] = true,
 	["D"] = true,
 	["Dungeon"] = true,
-	["P"] = true,
-	["PvP"] = true,
-	["Y"] = true,
-	["Daily"] = true,
-	["Times"] = true,
-} end )
+		["P"] = true,
+		["PvP"] = true,
+		["Y"] = true,
+		["Daily"] = true,
+		["Times"] = true,
+}
+
+for key, value in pairs(EveryQuest_Locale) do
+	if value == true then
+		EveryQuest_Locale[key] = key
+	end
+end
+
+setmetatable(EveryQuest_Locale, {
+	__index = function(_, key)
+		return key
+	end
+})
