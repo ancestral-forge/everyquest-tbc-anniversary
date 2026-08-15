@@ -5,8 +5,6 @@ Quest Status:
 0 = In Progress
 1 = Completed
 2 = Turned In
-
-Rock("LibRockConfig-1.0").OpenConfigMenu(EveryQuest)
 --]]
 
 local EveryQuest, self = EveryQuest, EveryQuest

@@ -156,7 +156,7 @@ function EveryQuest:UnregisterEvent(event)
 	self.registeredEvents[event] = nil
 end
 
--- Hook escape key so it closes EveryQuestFrame, credit: Ckknight (LibRockConfig-1.0)
+-- Hook escape key so it closes EveryQuestFrame.
 local orig_CloseSpecialWindows = _G.CloseSpecialWindows
 function _G.CloseSpecialWindows()
 	local found = orig_CloseSpecialWindows and orig_CloseSpecialWindows()
