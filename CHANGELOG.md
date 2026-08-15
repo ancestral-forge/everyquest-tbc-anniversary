@@ -6,7 +6,7 @@ This changelog covers the Ancestral Forge continuation. The original EveryQuest
 SVN changelog is preserved separately in
 `EveryQuest/Changelog-EveryQuest-release-5.txt`.
 
-## [2026.3.1] - Unreleased
+## [2026.3.1] - 2026-08-16
 
 ### Added
 

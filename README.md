@@ -38,8 +38,8 @@ Modernization work in this repository includes:
 ## Releases
 
 GitHub releases are built from tags named `v<version>`, for example
-`v2026.3.1`. The release workflow packages the addon folders and project
-notices into `EveryQuest-TBC-Anniversary-<version>.zip`.
+`v2026.3.1`. The release workflow packages only the addon folders into
+`EveryQuest-TBC-Anniversary-<version>.zip`.
 
 ## Source and Issues
 

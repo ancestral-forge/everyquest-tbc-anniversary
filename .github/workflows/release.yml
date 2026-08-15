@@ -87,8 +87,6 @@ jobs:
             cp -R "$dir" "$staging/"
           done
 
-          cp README.md CHANGELOG.md COPYING SVN_IMPORT_NOTES.md "$staging/"
-
           (
             cd "$staging"
             zip -r "../${asset}" . \
