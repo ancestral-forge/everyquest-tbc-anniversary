@@ -1,0 +1,152 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v2026.3.1. Defaults to v<TOC version>."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package addon zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read addon version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="$(awk -F': ' '/^## Version:/ { print $2; exit }' EveryQuest/EveryQuest.toc | tr -d '\r')"
+          if [[ -z "$version" ]]; then
+            echo "EveryQuest/EveryQuest.toc does not contain a Version field" >&2
+            exit 1
+          fi
+
+          tag="${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+            if [[ -z "$tag" ]]; then
+              tag="v${version}"
+            fi
+          fi
+
+          expected_tag="v${version}"
+          if [[ "$tag" != "$expected_tag" ]]; then
+            echo "Release tag '$tag' does not match TOC version '$version' (expected '$expected_tag')" >&2
+            exit 1
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "asset=EveryQuest-TBC-Anniversary-${version}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Build addon archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+          asset="${{ steps.version.outputs.asset }}"
+          staging="dist/package"
+
+          addon_dirs=(
+            EveryQuest
+            EveryQuest_Battlegrounds
+            EveryQuest_Classes
+            EveryQuest_Dungeons
+            EveryQuest_Eastern_Kingdoms
+            EveryQuest_Kalimdor
+            EveryQuest_Miscellaneous
+            EveryQuest_Outland
+            EveryQuest_Professions
+            EveryQuest_Raids
+            EveryQuest_Seasonal
+          )
+
+          rm -rf dist
+          mkdir -p "$staging"
+
+          for dir in "${addon_dirs[@]}"; do
+            if [[ ! -d "$dir" ]]; then
+              echo "Missing addon directory: $dir" >&2
+              exit 1
+            fi
+            cp -R "$dir" "$staging/"
+          done
+
+          cp README.md CHANGELOG.md COPYING SVN_IMPORT_NOTES.md "$staging/"
+
+          (
+            cd "$staging"
+            zip -r "../${asset}" . \
+              -x "*.DS_Store" \
+              -x "__MACOSX/*" \
+              -x "*/.git/*"
+          )
+
+          (cd dist && sha256sum "$asset" > "${asset}.sha256")
+          unzip -l "dist/${asset}"
+
+      - name: Extract release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+
+          awk -v version="$version" '
+            $0 ~ "^## \\[" version "\\]" {
+              print "## " version
+              in_section = 1
+              next
+            }
+            in_section && /^## \[/ {
+              exit
+            }
+            in_section {
+              print
+            }
+          ' CHANGELOG.md > dist/release-notes.md
+
+          if [[ ! -s dist/release-notes.md ]]; then
+            {
+              echo "## ${version}"
+              echo
+              echo "See CHANGELOG.md for release details."
+            } > dist/release-notes.md
+          fi
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${{ steps.version.outputs.tag }}"
+          version="${{ steps.version.outputs.version }}"
+          asset="${{ steps.version.outputs.asset }}"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "dist/${asset}" "dist/${asset}.sha256" --clobber
+          else
+            gh release create "$tag" \
+              "dist/${asset}" \
+              "dist/${asset}.sha256" \
+              --target "$GITHUB_SHA" \
+              --title "EveryQuest TBC Anniversary ${version}" \
+              --notes-file dist/release-notes.md
+          fi
