@@ -9,7 +9,13 @@ EveryQuest.options = {
 		Spacing1 = {
 			name = " ",
 			type = "header",
-		},    
+		},
+		toggle = {
+			type = 'execute',
+			name = "Toggle Frame",
+			desc = "Toggle EveryQuest frame",
+			func = function() EveryQuest:Toggle() end,
+		},
 		debug = {
 			type = 'toggle',
 			name = "Show Debugging Messages",
