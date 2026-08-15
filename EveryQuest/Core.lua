@@ -50,8 +50,7 @@ end
 
 SlashCmdList = SlashCmdList or {}
 SlashCmdList.EVERYQUEST = handleEveryQuestSlash
-registerSlash("EVERYQUEST", 1, "/eq")
-registerSlash("EVERYQUEST", 2, "/everyquest")
+registerSlash("EVERYQUEST", 1, "/everyquest")
 
 -- Addon functions
 

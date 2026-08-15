@@ -3,7 +3,6 @@ local L = EveryQuest_Locale
 
 function EveryQuest:CreateOptions()
 	EveryQuest.options = {
-		toggle = function() EveryQuest:Toggle() end,
 		debug = function() EveryQuest:ToggleDebug() end,
 	}
 end
@@ -18,12 +17,12 @@ function EveryQuest:ToggleDebug()
 end
 
 function EveryQuest:PrintUsage()
-	self:Print(L["EveryQuest"] .. ": /eq, /everyquest toggle, /everyquest debug")
+	self:Print(L["EveryQuest"] .. ": /everyquest, /everyquest debug")
 end
 
 function EveryQuest:HandleSlash(input)
 	local command = string.lower((input or ""):match("^%s*(%S*)") or "")
-	if command == "" or command == "toggle" then
+	if command == "" then
 		self:Toggle()
 	elseif command == "debug" then
 		self:ToggleDebug()
