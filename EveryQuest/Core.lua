@@ -16,15 +16,35 @@ function EveryQuest:Print(text)
 end
 
 local function toggleEveryQuest()
-	local ok, err = pcall(function() EveryQuest:Toggle() end)
+	local ok, err = pcall(function()
+		if EveryQuest.Toggle then
+			EveryQuest:Toggle()
+		elseif EveryQuestFrame then
+			if EveryQuestFrame:IsShown() then
+				EveryQuestFrame:Hide()
+			else
+				EveryQuestFrame:Show()
+			end
+		else
+			EveryQuest:Print("EveryQuest frame is not loaded")
+		end
+	end)
 	if not ok then
 		EveryQuest:Print(err)
 	end
 end
 
+local function registerSlash(index, command)
+	setglobal("SLASH_EVERYQUEST" .. index, command)
+	if hash_SlashCmdList then
+		hash_SlashCmdList[command:upper()] = "EVERYQUEST"
+	end
+end
+
 SlashCmdList = SlashCmdList or {}
-SLASH_EVERYQUESTTOGGLE1 = "/eq"
-SlashCmdList.EVERYQUESTTOGGLE = toggleEveryQuest
+SlashCmdList.EVERYQUEST = toggleEveryQuest
+registerSlash(1, "/everyquest")
+registerSlash(2, "/eq")
 
 -- Addon functions
 
@@ -32,7 +52,6 @@ function EveryQuest:OnInitialize()
 	EveryQuest:RegisterDB("EveryQuestDB","EveryQuestDBPC")
 	EveryQuest:CreateOptions()
 	EveryQuest:SetupDefaults()
-	EveryQuest:RegisterChatCommand({"/everyquest"}, EveryQuest.options)
 end
 
 function EveryQuest:OnEnable()

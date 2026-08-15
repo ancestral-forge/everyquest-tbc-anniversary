@@ -280,6 +280,12 @@ local function raiseFrame(frame)
 	end
 end
 
+local function selectZone(group, zone)
+	sessionvars.zoneid = zone[1]
+	sessionvars.zonegroup = group
+	setZoneListText(zone[2])
+end
+
 function EveryQuest:EveryQuestInit()
 	if sessionvars.initialized then
 		return
@@ -368,17 +374,25 @@ function EveryQuest:SelectInitialZone()
 		return
 	end
 	local currentZone = GetRealZoneText and GetRealZoneText()
-	if not currentZone or currentZone == "" then
-		return
-	end
-	for group, zones in pairs(zonemenu) do
-		for _, zone in pairs(zones) do
-			if zone[2] == currentZone then
-				sessionvars.zoneid = zone[1]
-				sessionvars.zonegroup = group
-				setZoneListText(zone[2])
-				return
+	if currentZone and currentZone ~= "" then
+		for group, zones in pairs(zonemenu) do
+			for _, zone in pairs(zones) do
+				if zone[2] == currentZone then
+					selectZone(group, zone)
+					return
+				end
 			end
+		end
+	end
+
+	local fallbackGroup, fallbackID = "Eastern Kingdoms", 12
+	if sessionvars.faction == 2 then
+		fallbackGroup, fallbackID = "Kalimdor", 14
+	end
+	for _, zone in pairs(zonemenu[fallbackGroup]) do
+		if zone[1] == fallbackID then
+			selectZone(fallbackGroup, zone)
+			return
 		end
 	end
 end
