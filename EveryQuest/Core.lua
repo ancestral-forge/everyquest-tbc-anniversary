@@ -22,7 +22,14 @@ function EveryQuest:OnInitialize()
 	EveryQuest:CreateOptions()
 	EveryQuest:SetupDefaults()
 	EveryQuest:RegisterChatCommand({"/everyquest"}, EveryQuest.options)
-	EveryQuest:RegisterChatCommand({"/eq"}, function() EveryQuest:Toggle() end)
+	SlashCmdList = SlashCmdList or {}
+	SLASH_EVERYQUESTTOGGLE1 = "/eq"
+	SlashCmdList.EVERYQUESTTOGGLE = function()
+		local ok, err = pcall(function() EveryQuest:Toggle() end)
+		if not ok then
+			EveryQuest:Print(err)
+		end
+	end
 end
 
 function EveryQuest:OnEnable()
