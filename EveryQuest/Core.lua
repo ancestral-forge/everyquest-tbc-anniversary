@@ -34,17 +34,16 @@ local function toggleEveryQuest()
 	end
 end
 
-local function registerSlash(index, command)
-	setglobal("SLASH_EVERYQUEST" .. index, command)
+local function registerSlash(name, index, command)
+	setglobal("SLASH_" .. name .. index, command)
 	if hash_SlashCmdList then
-		hash_SlashCmdList[command:upper()] = "EVERYQUEST"
+		hash_SlashCmdList[command:upper()] = name
 	end
 end
 
 SlashCmdList = SlashCmdList or {}
-SlashCmdList.EVERYQUEST = toggleEveryQuest
-registerSlash(1, "/everyquest")
-registerSlash(2, "/eq")
+SlashCmdList.EVERYQUESTTOGGLE = toggleEveryQuest
+registerSlash("EVERYQUESTTOGGLE", 1, "/eq")
 
 -- Addon functions
 
@@ -52,6 +51,10 @@ function EveryQuest:OnInitialize()
 	EveryQuest:RegisterDB("EveryQuestDB","EveryQuestDBPC")
 	EveryQuest:CreateOptions()
 	EveryQuest:SetupDefaults()
+	EveryQuest:RegisterChatCommand({"/everyquest"}, EveryQuest.options)
+	if hash_SlashCmdList then
+		hash_SlashCmdList["/EVERYQUEST"] = "EVERYQUEST"
+	end
 end
 
 function EveryQuest:OnEnable()

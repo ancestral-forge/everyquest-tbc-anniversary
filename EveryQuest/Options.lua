@@ -10,6 +10,12 @@ EveryQuest.options = {
 			name = " ",
 			type = "header",
 		},
+		toggle = {
+			type = 'execute',
+			name = "Toggle EveryQuest Frame",
+			desc = "Toggle EveryQuest Frame",
+			func = function() EveryQuest:Toggle() end,
+		},
 		debug = {
 			type = 'toggle',
 			name = "Show Debugging Messages",
