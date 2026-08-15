@@ -227,9 +227,20 @@ local function getZoneListMenu()
 	return EveryQuest.ZoneListMenu or _G.EveryQuestZoneListMenu
 end
 
-local function getAddOnEnableState(addon)
+local function loadQuestDataAddon(addon)
+	if C_AddOns.IsAddOnLoaded(addon) then
+		return true
+	end
+	if not C_AddOns.DoesAddOnExist(addon) then
+		return false, "MISSING"
+	end
+
 	local playerName = UnitName("player")
-	return C_AddOns.GetAddOnEnableState(addon, playerName) > 0
+	if C_AddOns.GetAddOnEnableState(addon, playerName) == Enum.AddOnEnableState.None then
+		C_AddOns.EnableAddOn(addon)
+	end
+
+	return C_AddOns.LoadAddOn(addon)
 end
 
 local function getQuestLogInfo(index)
@@ -729,38 +740,37 @@ function EveryQuest:ShowListMessage(message)
 end
 
 function EveryQuest:LoadQuestData(group)
-	if group ~= nil then
-		
-		local varname = "EveryQuest_"..gsub(group, " ", "_")
-		--local varname = "EveryQuest_"..group.." Quests"
-		self:Debug("Loading single module: "..concat(varname))
-		--local addonname = ("EveryQuest__%s%s_Data"):format(faction:sub(1,1), questtype)
-		local enabled = getAddOnEnableState(varname)
-		--if questdata and questdata[varname] then return varname end
-		if not EveryQuestData[group] then
-			
-			self:Debug("Module "..concat(group).." not loaded")
-				if enabled then
-					EveryQuest:Print(L["Loading "] .. group .. L[" Quest Data"])
-					local succ,reason = C_AddOns.LoadAddOn(varname)
-				if not succ then
-					EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"], reason)
-					return false
-				end
-				collectgarbage("collect")
-			else
-				EveryQuest:Print(L["Requires LOD Module: "] .. varname)
-				return false
-			end
-		else
-			self:Debug("Module "..concat(group).." is loaded")
-		end
-		--for k,v in pairs(EveryQuestData) do self:Debug(k) end
-			return EveryQuestData[group] --questdata[varname] and varname
-	else
-		
+	if group == nil then
+		return false
 	end
-	return false
+
+	local varname = "EveryQuest_"..gsub(group, " ", "_")
+	--local varname = "EveryQuest_"..group.." Quests"
+	self:Debug("Loading single module: "..concat(varname))
+	--local addonname = ("EveryQuest__%s%s_Data"):format(faction:sub(1,1), questtype)
+	--if questdata and questdata[varname] then return varname end
+	if not EveryQuestData[group] then
+		self:Debug("Module "..concat(group).." not loaded")
+		EveryQuest:Print(L["Loading "] .. group .. L[" Quest Data"])
+		local succ, reason = loadQuestDataAddon(varname)
+		if not succ then
+			if reason == "MISSING" then
+				EveryQuest:Print(L["Requires LOD Module: "] .. varname)
+			else
+				EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"] .. ": " .. concat(reason))
+			end
+			return false
+		end
+		collectgarbage("collect")
+		if not EveryQuestData[group] then
+			EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"] .. ": NO_DATA")
+			return false
+		end
+	else
+		self:Debug("Module "..concat(group).." is loaded")
+	end
+	--for k,v in pairs(EveryQuestData) do self:Debug(k) end
+	return EveryQuestData[group] --questdata[varname] and varname
 end
 
 function EveryQuest:GetStatus(displayid, queststatus)
