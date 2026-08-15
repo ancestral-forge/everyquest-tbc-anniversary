@@ -227,6 +227,17 @@ local function getZoneListMenu()
 	return EveryQuest.ZoneListMenu or _G.EveryQuestZoneListMenu
 end
 
+local function setButtonTextColor(button, ...)
+	if not button then return end
+	local text = button.GetFontString and button:GetFontString()
+	if not text and button.GetName then
+		text = _G[button:GetName().."NormalText"]
+	end
+	if text and text.SetTextColor then
+		text:SetTextColor(...)
+	end
+end
+
 local function loadQuestDataAddon(addon)
 	if C_AddOns.IsAddOnLoaded(addon) then
 		return true
@@ -244,7 +255,20 @@ local function loadQuestDataAddon(addon)
 end
 
 local function getQuestLogInfo(index)
-	return C_QuestLog.GetInfo(index)
+	local title, level, questTag, isHeader, isCollapsed, isComplete, frequency, questID = GetQuestLogTitle(index)
+	if not title and C_QuestLog.GetInfo then
+		return C_QuestLog.GetInfo(index)
+	end
+	return {
+		title = title,
+		level = level,
+		questTag = questTag,
+		isHeader = isHeader,
+		isCollapsed = isCollapsed,
+		isComplete = isComplete,
+		frequency = frequency,
+		questID = questID,
+	}
 end
 
 local function getQuestLogQuestID(index)
@@ -728,7 +752,7 @@ function EveryQuest:ShowListMessage(message)
 	if frame then
 		frame:SetNormalTexture("")
 		frame:SetText(message)
-		frame:SetTextColor(self:GetColor("FFFFFF"))
+		setButtonTextColor(frame, self:GetColor("FFFFFF"))
 		frame:Show()
 	end
 	for j = 2, 27, 1 do
@@ -786,7 +810,8 @@ function EveryQuest:GetStatus(displayid, queststatus)
 end
 
 local function getNumQuestLogEntries()
-	return C_QuestLog.GetNumQuestLogEntries() or 0
+	local numEntries = GetNumQuestLogEntries()
+	return numEntries or 0
 end
 
 local function statusFromQuestLog(isComplete)
@@ -1245,23 +1270,23 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 		end
 		ListFrame:SetText("["..level..qTag.."] "..quest["n"])
 		--r,g,b = EveryQuest:GetQuestColor(zonelist.value, j)
-		if self.db.char.history[sessionvars.zoneid] and self.db.char.history[sessionvars.zoneid][quest["id"]] then
+		if self.db.char.history and self.db.char.history[sessionvars.zoneid] and self.db.char.history[sessionvars.zoneid][quest["id"]] then
 			local history = self.db.char.history[sessionvars.zoneid][quest["id"]]
 			if history["status"] == 1 then -- Completed
-				ListFrame:SetTextColor(self:GetColor(1))
+				setButtonTextColor(ListFrame, self:GetColor(1))
 			elseif history["status"] == -1 then -- Failed/Abandoned
-				ListFrame:SetTextColor(self:GetColor(-1))
+				setButtonTextColor(ListFrame, self:GetColor(-1))
 			elseif history["status"] == 2 then -- Turned in
-				ListFrame:SetTextColor(self:GetColor(2))
+				setButtonTextColor(ListFrame, self:GetColor(2))
 			elseif history["status"] == 0 then -- In Progress (Yellow)
-				ListFrame:SetTextColor(self:GetColor(0))
+				setButtonTextColor(ListFrame, self:GetColor(0))
 			elseif not history["status"] then
-				ListFrame:SetTextColor(self:GetColor("FFFFFF"))
+				setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
 			elseif history["status"] == nil then
-				ListFrame:SetTextColor(self:GetColor("FFFFFF"))
+				setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
 			end
 		else
-			ListFrame:SetTextColor(self:GetColor("FFFFFF"))
+			setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
 		end
 		--ListFrame:SetTextColor(r,g,b) --ListFrame:SetTextColor(GetDifficultyColor(history[j].Level).r,GetDifficultyColor(history[j].Level).g,GetDifficultyColor(history[j].Level).b)
 		ListFrame:Show()
