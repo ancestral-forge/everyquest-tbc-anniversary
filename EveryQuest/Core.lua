@@ -1,10 +1,6 @@
-local MINOR_VERSION = tonumber(("$Revision: 13 $"):match("%d+"))
-
 EveryQuest = EveryQuest or {}
 local EveryQuest, self = EveryQuest, EveryQuest
 EveryQuestData = {}
-EveryQuest.version = MINOR_VERSION
-EveryQuest.revision = MINOR_VERSION
 EveryQuest.eventFrame = EveryQuest.eventFrame or CreateFrame("Frame")
 EveryQuest.registeredEvents = EveryQuest.registeredEvents or {}
 
@@ -36,10 +32,6 @@ local function toggleEveryQuest()
 	end
 end
 
-local function registerSlash(name, index, command)
-	_G["SLASH_" .. name .. index] = command
-end
-
 local function handleEveryQuestSlash(input)
 	if EveryQuest.HandleSlash then
 		EveryQuest:HandleSlash(input)
@@ -48,9 +40,8 @@ local function handleEveryQuestSlash(input)
 	end
 end
 
-SlashCmdList = SlashCmdList or {}
 SlashCmdList.EVERYQUEST = handleEveryQuestSlash
-registerSlash("EVERYQUEST", 1, "/everyquest")
+_G.SLASH_EVERYQUEST1 = "/everyquest"
 
 -- Addon functions
 

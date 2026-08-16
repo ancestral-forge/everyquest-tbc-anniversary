@@ -4,6 +4,10 @@ EveryQuest TBC Anniversary is a maintained version of EveryQuest for WoW TBC
 Anniversary. It keeps the original purpose of EveryQuest: tracking quest
 history and browsing zone quest lists in game.
 
+This continuation targets the TBC Anniversary client only. The original TBC
+release is preserved as provenance and data history, not as a runtime
+compatibility target.
+
 Maintained by Ancestral Forge.
 
 ## Provenance

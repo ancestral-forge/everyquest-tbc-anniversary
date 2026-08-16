@@ -21,6 +21,7 @@ Anniversary version.
 - Maintainer: `Ancestral Forge`
 - Target game version: WoW Anniversary `2.5.6.69110`
 - TOC interface: `20506`
+- Runtime compatibility target: TBC Anniversary only
 - License: `GPL-2.0-only`
 
 ## Modernization Summary

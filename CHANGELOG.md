@@ -8,6 +8,14 @@ SVN changelog is preserved separately in
 
 ## [2026.3.2] - 2026-08-16
 
+### Changed
+
+- Scope quest-log and completed-quest runtime paths to the Anniversary
+  `C_QuestLog` API instead of probing pre-Anniversary globals.
+- Remove unused legacy quest-counting code and empty XML script hooks.
+- Remove old optional integration hooks for `LightHeaded` and `beql`.
+- Remove the imported SVN `$Revision` runtime version fields.
+
 ### Fixed
 
 - Avoid false abandoned quest timestamps when the Anniversary client emits

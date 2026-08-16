@@ -260,12 +260,7 @@ end
 
 local function setupQuestTitleButton(button)
 	if not button then return end
-	if button.SetSize then
-		button:SetSize(300, 16)
-	else
-		button:SetWidth(300)
-		button:SetHeight(16)
-	end
+	button:SetSize(300, 16)
 	getQuestTitleText(button)
 end
 
@@ -315,25 +310,16 @@ local function getCompletedQuestFlags()
 
 	completedQuestFlagsLoaded = true
 	local completedQuestData = {}
-	if GetQuestsCompleted then
-		local completedQuestIDs = GetQuestsCompleted(completedQuestData)
-		if type(completedQuestIDs) == "table" then
-			completedQuestData = completedQuestIDs
-		end
-		completedQuestFlags = normalizeCompletedQuestFlags(completedQuestData)
-		return completedQuestFlags
-	end
 
-	if C_QuestLog and C_QuestLog.GetAllCompletedQuestIDs then
+	if C_QuestLog.GetAllCompletedQuestIDs then
 		local completedQuestIDs = C_QuestLog.GetAllCompletedQuestIDs(completedQuestData)
 		if type(completedQuestIDs) == "table" then
 			completedQuestData = completedQuestIDs
 		end
 		completedQuestFlags = normalizeCompletedQuestFlags(completedQuestData)
-		return completedQuestFlags
 	end
 
-	return nil
+	return completedQuestFlags
 end
 
 local function resetCompletedQuestFlags()
@@ -352,11 +338,8 @@ local function isQuestFlaggedCompleted(questid)
 		return completedQuestMap[questid] == true
 	end
 
-	if C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted then
+	if C_QuestLog.IsQuestFlaggedCompleted then
 		return C_QuestLog.IsQuestFlaggedCompleted(questid)
-	end
-	if IsQuestFlaggedCompleted then
-		return IsQuestFlaggedCompleted(questid)
 	end
 	return false
 end
@@ -388,20 +371,7 @@ local function loadQuestDataAddon(addon)
 end
 
 local function getQuestLogInfo(index)
-	local title, level, questTag, isHeader, isCollapsed, isComplete, frequency, questID = GetQuestLogTitle(index)
-	if not title and C_QuestLog.GetInfo then
-		return C_QuestLog.GetInfo(index)
-	end
-	return {
-		title = title,
-		level = level,
-		questTag = questTag,
-		isHeader = isHeader,
-		isCollapsed = isCollapsed,
-		isComplete = isComplete,
-		frequency = frequency,
-		questID = questID,
-	}
+	return C_QuestLog.GetInfo(index)
 end
 
 local function getQuestLogQuestID(index)
@@ -494,16 +464,14 @@ function EveryQuest:EveryQuestInit()
 
 	-- Create the "EQ" toggle button for the questlog frame
 	EveryQuest.EveryQuestToggleButton = EveryQuest.EveryQuestToggleButton or CreateFrame("Button", nil, QuestLogFrame or UIParent, "UIPanelButtonTemplate")
-	EveryQuest.EveryQuestToggleButton:SetWidth(28)
-	EveryQuest.EveryQuestToggleButton:SetHeight(18)
+	EveryQuest.EveryQuestToggleButton:SetSize(28, 18)
 	EveryQuest.EveryQuestToggleButton:SetText("EQ")
 	EveryQuest.EveryQuestToggleButton:Show()
 	EveryQuest.EveryQuestToggleButton:ClearAllPoints()
 
 	-- Create the List toggle button to toggle between quest history and quests in a category
 	EveryQuest.ListToggleButton = EveryQuest.ListToggleButton or _G.EveryQuestListToggleButton or CreateFrame("Button", "EveryQuestListToggleButton", EveryQuestFrame, "UIPanelButtonTemplate")
-	EveryQuest.ListToggleButton:SetWidth(122)
-	EveryQuest.ListToggleButton:SetHeight(21)
+	EveryQuest.ListToggleButton:SetSize(122, 21)
 	EveryQuest.ListToggleButton:SetText(" ")
 	EveryQuest.ListToggleButton:Show()
 	raiseFrame(EveryQuest.ListToggleButton)
@@ -511,13 +479,8 @@ function EveryQuest:EveryQuestInit()
 	EveryQuest.ListToggleButton:SetPoint("BOTTOMLEFT",EveryQuestFrame, "BOTTOMLEFT",18,5)
 	EveryQuest.ListToggleButton:SetScript("OnClick", function() EveryQuest:List("toggle") end)
 
-	-- Attach the list toggle button in the right place depending on if beql is installed and loaded
 	if QuestLogFrame then
-		if not C_AddOns.IsAddOnLoaded("beql") then
-			EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
-		else
-			EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",75,-15)
-		end
+		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
 	else
 		EveryQuest.EveryQuestToggleButton:Hide()
 	end
@@ -573,7 +536,7 @@ function EveryQuest:SelectInitialZone()
 	if sessionvars.zoneid and sessionvars.zonegroup then
 		return
 	end
-	local currentZone = GetRealZoneText and GetRealZoneText()
+	local currentZone = GetRealZoneText()
 	if currentZone and currentZone ~= "" then
 		for group, zones in pairs(zonemenu) do
 			for _, zone in pairs(zones) do
@@ -604,12 +567,8 @@ function EveryQuest:CreateZoneMenu()
 	raiseFrame(EveryQuest.ZoneListMenu)
 	EveryQuest.ZoneListMenu:ClearAllPoints()
 	EveryQuest.ZoneListMenu:SetPoint("TOPLEFT",EveryQuestFrame, "TOPLEFT", 115,-40)
-	if UIDropDownMenu_SetWidth then
-		UIDropDownMenu_SetWidth(EveryQuest.ZoneListMenu, 150)
-	end
-	if UIDropDownMenu_SetButtonWidth then
-		UIDropDownMenu_SetButtonWidth(EveryQuest.ZoneListMenu, 20)
-	end
+	UIDropDownMenu_SetWidth(EveryQuest.ZoneListMenu, 150)
+	UIDropDownMenu_SetButtonWidth(EveryQuest.ZoneListMenu, 20)
 	local zoneListMenuButton = _G[EveryQuest.ZoneListMenu:GetName().."Button"] or EveryQuest.ZoneListMenu.Button
 	if zoneListMenuButton then
 		zoneListMenuButton:SetScript("OnClick", function()
@@ -655,9 +614,7 @@ function EveryQuest:InitializeZoneDropdown(level, menuList)
 		info.func = function(_, selectedGroup, selectedZone)
 			selectZone(selectedGroup, selectedZone)
 			self:Debug("Menuclick - zoneid:"..concat(sessionvars.zoneid).." zonegroup:"..concat(sessionvars.zonegroup))
-			if CloseDropDownMenus then
-				CloseDropDownMenus()
-			end
+			CloseDropDownMenus()
 			self:UpdateFrame()
 		end
 		UIDropDownMenu_AddButton(info, level)
@@ -721,36 +678,6 @@ function EveryQuest:NewZone()
 		EveryQuestListScrollFrame:SetVerticalScroll(0)
 	end
 	self:UpdateFrame()
-end
-
----------------------------------------------------------------------------------------------------------------------------- 
-
-function EveryQuest:GetEveryQuestCount()
-	local k,v,j,l
-	--local debugg
-	local n = 0
-	if self.db.profile.view ~= "history" then
-		--debugg = "showall"
-		if questlist and questlist[questzone] then
-			for k, v in pairs (questlist[questzone]) do
-				n = n +1
-			end
-		end
-	else
-		--debugg = "else"
-		for k, v in pairs (self.db.char.history) do
-			n = n +1
-			if not self.db.char.history[k].Collapsed then
-				for j, l in pairs (self.db.char.history[k]) do
-					if j ~= "Collapsed" then
-						n = n +1
-					end
-				end
-			end
-		end
-	end
-	--if self.db.profile.debug then self:Print("EveryQuest:GetEveryQuestCount("..n..") - "..debugg) end
-	return n
 end
 
 function EveryQuest_ScrollFrame_Update()
@@ -1034,7 +961,7 @@ function EveryQuest:GetStatus(displayid, queststatus)
 end
 
 local function getNumQuestLogEntries()
-	local numEntries = GetNumQuestLogEntries()
+	local numEntries = C_QuestLog.GetNumQuestLogEntries()
 	return numEntries or 0
 end
 
@@ -1248,7 +1175,7 @@ function EveryQuest:QUEST_ACCEPTED(questLogIndex, questid)
 end
 
 function EveryQuest:QUEST_COMPLETE()
-	local questtitle = GetTitleText and GetTitleText()
+	local questtitle = GetTitleText()
 	if questtitle then
 		local questid, zoneid = self:MarkQuestByName(questtitle, 1)
 		if questid then
@@ -1258,25 +1185,13 @@ function EveryQuest:QUEST_COMPLETE()
 end
 
 function EveryQuest:QUEST_FAILED(questName)
-	questName = questName or (GetTitleText and GetTitleText())
+	questName = questName or GetTitleText()
 	if questName then
 		local questid, zoneid = self:MarkQuestByName(questName, -1, "failed")
 		if questid then
 			self:Debug("QUEST_FAILED - questid:"..concat(questid).." zoneid:"..concat(zoneid))
 		end
 	end
-end
-
-function EveryQuest:QUEST_ABANDON(questName)
-	if questName then
-		local questid, zoneid = self:MarkQuestByName(questName, -1, "abandoned")
-		if questid then
-			self:Debug("QUEST_ABANDON - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-		else
-			self:Error("Abandon Quest: Unable to get Quest Information from DB")
-		end
-	end
-	self:UpdateFrame()
 end
 
 function EveryQuest:QUEST_REMOVED(questid)
@@ -1306,7 +1221,7 @@ function EveryQuest:QUEST_TURNED_IN(questid)
 		return
 	end
 
-	local questtitle = GetTitleText and GetTitleText()
+	local questtitle = GetTitleText()
 	if questtitle then
 		self:QuestTurnedIn(questtitle)
 	end
@@ -1317,7 +1232,7 @@ function EveryQuest:QUEST_LOG_UPDATE()
 end
 
 function EveryQuest:QUEST_PROGRESS()
-	local questtitle = GetTitleText and GetTitleText()
+	local questtitle = GetTitleText()
 	if questtitle then
 		local questid, zoneid = self:MarkQuestByName(questtitle, 0)
 		self:Debug("QUEST_PROGRESS - questid:"..concat(questid).." zoneid:"..concat(zoneid))
@@ -1638,9 +1553,7 @@ function EveryQuest:BuildQuestMenu()
 			isNotRadio = true,
 			func = function()
 				self:UpdateStatus(clickedID, status)
-				if CloseDropDownMenus then
-					CloseDropDownMenus()
-				end
+				CloseDropDownMenus()
 			end,
 		}
 	end
@@ -1660,9 +1573,7 @@ function EveryQuest:BuildQuestMenu()
 			text = L["Close"],
 			notCheckable = true,
 			func = function()
-				if CloseDropDownMenus then
-					CloseDropDownMenus()
-				end
+				CloseDropDownMenus()
 			end,
 		},
 	}
@@ -1670,18 +1581,7 @@ end
 
 function EveryQuest:OpenQuestMenu()
 	QuestMenuFrame = QuestMenuFrame or CreateFrame("Frame", "EveryQuestStatusMenu", UIParent, "UIDropDownMenuTemplate")
-	local menu = self:BuildQuestMenu()
-	if EasyMenu then
-		EasyMenu(menu, QuestMenuFrame, "cursor", 0, 0, "MENU")
-		return
-	end
-
-	UIDropDownMenu_Initialize(QuestMenuFrame, function(_, level)
-		for _, item in ipairs(menu) do
-			UIDropDownMenu_AddButton(item, level)
-		end
-	end, "MENU")
-	ToggleDropDownMenu(1, nil, QuestMenuFrame, "cursor", 0, 0)
+	EasyMenu(self:BuildQuestMenu(), QuestMenuFrame, "cursor", 0, 0, "MENU")
 end
 
 function EveryQuest:ButtonClick(frame, button)
@@ -1691,21 +1591,13 @@ function EveryQuest:ButtonClick(frame, button)
 
 	if button == "LeftButton" then
 		if IsModifiedClick() then
-			local editBox = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow() or ChatFrameEditBox
+			local editBox = ChatEdit_GetActiveWindow()
 			if IsModifiedClick("CHATLINK") and editBox and editBox:IsVisible() then
 				local questLink = self:CreateQuestLink(quest.id, quest.n, quest.l)
 				if questLink then
 					ChatEdit_InsertLink(questLink)
 				end
 			end
-		elseif C_AddOns.IsAddOnLoaded("Lightheaded") then
-			if C_AddOns.IsAddOnLoaded("beql") then
-				beql:Minimize()
-			end
-			QuestLogFrame:Show()
-			LightHeaded:UpdateFrame(quest.id, 1)
-			QuestLogFrame:ClearAllPoints()
-			QuestLogFrame:SetPoint("TOPLEFT",EveryQuestFrame, "TOPLEFT", 360, 0)
 		end
 	elseif button == "RightButton" then
 		self:OpenQuestMenu()

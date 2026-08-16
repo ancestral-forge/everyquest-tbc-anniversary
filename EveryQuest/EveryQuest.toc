@@ -13,7 +13,6 @@
 ## X-Source: https://github.com/ancestral-forge/everyquest-tbc-anniversary
 ## X-Credits: Wowhead for the Quest data, bayi for Quest history display
 ## X-Category: Quest
-## OptionalDeps: Lightheaded, beql
 
 localization.lua
 

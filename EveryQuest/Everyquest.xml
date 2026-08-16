@@ -223,49 +223,29 @@
 						</OnVerticalScroll>
 					</Scripts>
 			</ScrollFrame>
-		</Frames>
-		<Scripts>
-			<OnEvent>
-				-- EveryQuest_OnEvent(event);
-			</OnEvent>
-			<OnLoad>
-				-- EveryQuest_OnLoad();
-				
-			</OnLoad>
-			<OnShow>
-				EveryQuest_OnShow();
-			</OnShow>
+			</Frames>
+			<Scripts>
+				<OnShow>
+					EveryQuest_OnShow();
+				</OnShow>
 				<OnHide>
-					-- EveryQuest_OnHide();
 					if ( self.isMoving ) then
-					  self:StopMovingOrSizing();
-					  self.isMoving = false;
-					  EveryQuest:SavePosition()
+						self:StopMovingOrSizing();
+						self.isMoving = false;
+						EveryQuest:SavePosition()
 					end
-			</OnHide>
-			<OnUpdate>
-				-- EveryQuest_OnUpdate(arg1);
-			</OnUpdate>
-			<OnMouseWheel>
-				-- return;
-			</OnMouseWheel>
-			<OnDragStart>
-				-- EveryQuestFrame:StartMoving();
-			</OnDragStart>
-			<OnDragStop>
-				-- EveryQuestFrame:StopMovingOrSizing();
-			</OnDragStop>
+				</OnHide>
 				<OnMouseUp>
 					if ( self.isMoving ) then
-					  self:StopMovingOrSizing();
-					  self.isMoving = false;
-					  EveryQuest:SavePosition()
+						self:StopMovingOrSizing();
+						self.isMoving = false;
+						EveryQuest:SavePosition()
 					end
 				</OnMouseUp>
 				<OnMouseDown>
 					if ( ( ( not self.isLocked ) or ( self.isLocked == 0 ) ) and ( button == "LeftButton" ) ) then
-					  self:StartMoving();
-					  self.isMoving = true;
+						self:StartMoving();
+						self.isMoving = true;
 					end
 				</OnMouseDown>
 		</Scripts>
