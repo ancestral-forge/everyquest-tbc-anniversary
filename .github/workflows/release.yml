@@ -126,7 +126,7 @@ jobs:
           ' CHANGELOG.md > "$notes_section"
 
           {
-            echo "EveryQuest TBC Anniversary"
+            echo "## EveryQuest TBC Anniversary"
             echo
             if [[ -s "$notes_section" ]]; then
               cat "$notes_section"
