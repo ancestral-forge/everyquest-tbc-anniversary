@@ -105,27 +105,35 @@ jobs:
 
           version="${{ steps.version.outputs.version }}"
 
+          notes_section="dist/release-notes-section.md"
+
           awk -v version="$version" '
             $0 ~ "^## \\[" version "\\]" {
-              print "## " version
               in_section = 1
+              skip_leading_blank = 1
               next
             }
             in_section && /^## \[/ {
               exit
             }
             in_section {
+              if (skip_leading_blank && $0 == "") {
+                next
+              }
+              skip_leading_blank = 0
               print
             }
-          ' CHANGELOG.md > dist/release-notes.md
+          ' CHANGELOG.md > "$notes_section"
 
-          if [[ ! -s dist/release-notes.md ]]; then
-            {
-              echo "## ${version}"
-              echo
+          {
+            echo "EveryQuest TBC Anniversary"
+            echo
+            if [[ -s "$notes_section" ]]; then
+              cat "$notes_section"
+            else
               echo "See CHANGELOG.md for release details."
-            } > dist/release-notes.md
-          fi
+            fi
+          } > dist/release-notes.md
 
       - name: Publish GitHub release
         env:
@@ -145,6 +153,6 @@ jobs:
               "dist/${asset}" \
               "dist/${asset}.sha256" \
               --target "$GITHUB_SHA" \
-              --title "EveryQuest TBC Anniversary ${version}" \
+              --title "${version}" \
               --notes-file dist/release-notes.md
           fi
