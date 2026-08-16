@@ -38,6 +38,7 @@ EveryQuest_Locale = {
 	
 	["Requires LOD Module: "] = true,
 	["Missing LOD Module: "] = true,
+	["Disabled LOD Module: "] = true,
 	["G"] = true,
 	["Group"] = true,
 	["R"] = true,

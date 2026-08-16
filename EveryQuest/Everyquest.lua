@@ -16,6 +16,7 @@ local SECOND = 1
 local MINUTE = 60
 local HOUR = 3600
 local DAY = 86400
+local QUEST_LOG_SCAN_DELAY = 0.2
 local clickedID
 local sessionvars = {}
 local QuestMenuFrame
@@ -380,7 +381,7 @@ local function loadQuestDataAddon(addon)
 
 	local playerName = UnitName("player")
 	if C_AddOns.GetAddOnEnableState(addon, playerName) == Enum.AddOnEnableState.None then
-		C_AddOns.EnableAddOn(addon)
+		return false, "DISABLED"
 	end
 
 	return C_AddOns.LoadAddOn(addon)
@@ -410,6 +411,56 @@ end
 
 local function isDailyQuest(frequency)
 	return frequency == Enum.QuestFrequency.Daily
+end
+
+function EveryQuest:RequestFrameUpdate()
+	if sessionvars.suppressFrameUpdates then
+		sessionvars.frameUpdatePending = true
+		return
+	end
+	self:UpdateFrame()
+end
+
+function EveryQuest:ScheduleQuestLogScan(reportStatus)
+	sessionvars.questLogScanPending = true
+	if reportStatus then
+		sessionvars.questLogScanReportStatus = true
+	end
+	sessionvars.questLogScanElapsed = 0
+
+	EveryQuest.QuestLogScanFrame = EveryQuest.QuestLogScanFrame or CreateFrame("Frame")
+	if not sessionvars.questLogScanOnUpdate then
+		EveryQuest.QuestLogScanFrame:SetScript("OnUpdate", function(_, elapsed)
+			EveryQuest:RunScheduledQuestLogScan(elapsed)
+		end)
+		sessionvars.questLogScanOnUpdate = true
+	end
+end
+
+function EveryQuest:RunScheduledQuestLogScan(elapsed)
+	if not sessionvars.questLogScanPending then
+		if EveryQuest.QuestLogScanFrame then
+			EveryQuest.QuestLogScanFrame:SetScript("OnUpdate", nil)
+		end
+		sessionvars.questLogScanOnUpdate = nil
+		return
+	end
+
+	sessionvars.questLogScanElapsed = (sessionvars.questLogScanElapsed or 0) + (elapsed or 0)
+	if sessionvars.questLogScanElapsed < QUEST_LOG_SCAN_DELAY then
+		return
+	end
+
+	local reportStatus = sessionvars.questLogScanReportStatus
+	sessionvars.questLogScanPending = nil
+	sessionvars.questLogScanReportStatus = nil
+	sessionvars.questLogScanElapsed = nil
+	if EveryQuest.QuestLogScanFrame then
+		EveryQuest.QuestLogScanFrame:SetScript("OnUpdate", nil)
+	end
+	sessionvars.questLogScanOnUpdate = nil
+
+	self:ScanQuestLog(reportStatus)
 end
 
 local function setZoneListText(text)
@@ -950,6 +1001,8 @@ function EveryQuest:LoadQuestData(group)
 		if not succ then
 			if reason == "MISSING" then
 				EveryQuest:Print(L["Requires LOD Module: "] .. varname)
+			elseif reason == "DISABLED" then
+				EveryQuest:Print(L["Disabled LOD Module: "] .. varname)
 			else
 				EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"] .. ": " .. concat(reason))
 			end
@@ -1073,13 +1126,13 @@ function EveryQuest:AddQuestByID(questid, category, qstatus)
 			if qstatus ~= nil then
 				self.db.char.history[zoneid][questid].status = qstatus
 			end
-			self:UpdateFrame()
+			self:RequestFrameUpdate()
 			return questid, zoneid, self.db.char.history[zoneid][questid].d
 		else
 			return false
 		end
 	else
-		self:UpdateFrame()
+		self:RequestFrameUpdate()
 		return false
 	end
 end
@@ -1122,6 +1175,8 @@ function EveryQuest:ScanQuestLog(reportStatus)
 	local category
 	local scanned, added, changed, missing = 0, 0, 0, 0
 	local missingQuests = {}
+	local flushFrameUpdate = not sessionvars.suppressFrameUpdates
+	sessionvars.suppressFrameUpdates = true
 	if reportStatus then
 		self:Print("EveryQuest: updating quest history from the quest log...")
 	end
@@ -1156,6 +1211,13 @@ function EveryQuest:ScanQuestLog(reportStatus)
 			end
 		end
 	end
+	if flushFrameUpdate then
+		sessionvars.suppressFrameUpdates = nil
+		if sessionvars.frameUpdatePending then
+			sessionvars.frameUpdatePending = nil
+			self:UpdateFrame()
+		end
+	end
 	if reportStatus then
 		self:Print(("EveryQuest: quest history updated: %d active, %d added, %d changed, %d missing from database."):format(scanned, added, changed, missing))
 		for _, missingQuest in ipairs(missingQuests) do
@@ -1172,7 +1234,7 @@ function EveryQuest:QUEST_ACCEPTED(questLogIndex, questid)
 		questid = getQuestLogQuestID(questLogIndex) or tonumber(questLogIndex)
 	end
 	if not questid then
-		self:ScanQuestLog()
+		self:ScheduleQuestLogScan()
 		return
 	end
 
@@ -1251,7 +1313,7 @@ function EveryQuest:QUEST_TURNED_IN(questid)
 end
 
 function EveryQuest:QUEST_LOG_UPDATE()
-	self:ScanQuestLog()
+	self:ScheduleQuestLogScan()
 end
 
 function EveryQuest:QUEST_PROGRESS()

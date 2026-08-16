@@ -18,6 +18,8 @@ SVN changelog is preserved separately in
   tracking now relies on `QUEST_REMOVED`.
 - Stop overriding Blizzard's quest reward button; quest turn-in tracking now
   relies on the `QUEST_TURNED_IN` event.
+- Coalesce `QUEST_LOG_UPDATE` quest-log scans and batch frame refreshes.
+- Respect disabled quest data modules instead of enabling them during lazy load.
 
 ## [2026.3.1] - 2026-08-16
 
