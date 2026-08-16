@@ -3,6 +3,7 @@ local EveryQuest, self = EveryQuest, EveryQuest
 EveryQuestData = {}
 EveryQuest.eventFrame = EveryQuest.eventFrame or CreateFrame("Frame")
 EveryQuest.registeredEvents = EveryQuest.registeredEvents or {}
+local SAVED_VARIABLES_SCHEMA = 1
 
 
 -- Debug Function
@@ -84,33 +85,41 @@ local function applyDefaults(target, defaults)
 	end
 end
 
+local function clearTable(target)
+	for key in pairs(target) do
+		target[key] = nil
+	end
+end
+
 function EveryQuest:SetupDatabase()
-	EveryQuestDB = EveryQuestDB or {}
-	EveryQuestDBPC = EveryQuestDBPC or {}
-
-	local profile = EveryQuestDB.profile
-	if not profile and EveryQuestDB.profiles then
-		profile = EveryQuestDB.profiles.Default
+	if type(EveryQuestDB) ~= "table" then
+		EveryQuestDB = {}
 	end
-	if not profile then
-		profile = EveryQuestDB
+	if type(EveryQuestDBPC) ~= "table" then
+		EveryQuestDBPC = {}
 	end
 
-	local char = EveryQuestDBPC.char or EveryQuestDBPC
-	if profile ~= EveryQuestDB then
-		EveryQuestDB.profile = profile
+	local profile = EveryQuestDB.schemaVersion == SAVED_VARIABLES_SCHEMA and EveryQuestDB.profile
+	if type(profile) ~= "table" then
+		profile = {}
 	end
-	if char ~= EveryQuestDBPC then
-		EveryQuestDBPC.char = char
+
+	local char = EveryQuestDBPC.schemaVersion == SAVED_VARIABLES_SCHEMA and EveryQuestDBPC.char
+	if type(char) ~= "table" then
+		char = {}
 	end
+
+	clearTable(EveryQuestDB)
+	EveryQuestDB.schemaVersion = SAVED_VARIABLES_SCHEMA
+	EveryQuestDB.profile = profile
+
+	clearTable(EveryQuestDBPC)
+	EveryQuestDBPC.schemaVersion = SAVED_VARIABLES_SCHEMA
+	EveryQuestDBPC.char = char
 
 	self.db = {
 		profile = profile,
 		char = char,
-		raw = {
-			profile = EveryQuestDB,
-			char = EveryQuestDBPC,
-		},
 	}
 end
 

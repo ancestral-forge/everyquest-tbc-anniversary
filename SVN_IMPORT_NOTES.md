@@ -32,6 +32,7 @@ Anniversary version.
 - Replaced legacy addon loading with `C_AddOns`
 - Replaced legacy quest checks with `C_QuestLog`
 - Uses native saved variables, slash commands, and event handling
+- Ignores old AceDB-shaped saved variables at runtime
 - Uses Blizzard `UIDropDownMenu` and `SOUNDKIT`
 
 ## Attribution

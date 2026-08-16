@@ -34,7 +34,7 @@ Modernization work in this repository includes:
 
 - Direct support for WoW Anniversary `2.5.6.69110` / TOC interface `20506`
 - Removal of obsolete Ace2-era dependencies and compatibility shims
-- Native saved-variable handling
+- Native saved-variable handling with a strict Anniversary schema
 - Native slash-command handling
 - Use of current Anniversary APIs such as `C_AddOns` and `C_QuestLog`
 - Runtime fixes for the modern TBC Anniversary client

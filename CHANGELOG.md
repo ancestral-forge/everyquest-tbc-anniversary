@@ -15,6 +15,8 @@ SVN changelog is preserved separately in
 - Remove unused legacy quest-counting code and empty XML script hooks.
 - Remove old optional integration hooks for `LightHeaded` and `beql`.
 - Remove the imported SVN `$Revision` runtime version fields.
+- Use a strict Anniversary SavedVariables schema instead of reading AceDB or
+  root-shaped legacy data.
 
 ### Fixed
 
