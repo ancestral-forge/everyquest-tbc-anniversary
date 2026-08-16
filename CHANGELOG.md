@@ -12,6 +12,8 @@ SVN changelog is preserved separately in
 
 - Wait for the quest log to expose accepted quest categories before saving new
   quest history, keeping newly accepted quests synced to the correct zone.
+- Keep the legacy zone dropdown under the selector while nudging long submenus
+  upward just enough to keep their bottom edge on screen.
 
 ## [2026.3.2] - 2026-08-16
 
