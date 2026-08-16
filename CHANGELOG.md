@@ -16,8 +16,8 @@ SVN changelog is preserved separately in
 
 ### Changed
 
-- Scope quest-log and completed-quest runtime paths to the Anniversary
-  `C_QuestLog` API instead of probing pre-Anniversary globals.
+- Prefer the Anniversary `C_QuestLog` API for completed-quest state and
+  supported quest-log calls.
 - Remove unused legacy quest-counting code and empty XML script hooks.
 - Remove old optional integration hooks for `LightHeaded` and `beql`.
 - Remove the imported SVN `$Revision` runtime version fields.
@@ -38,7 +38,9 @@ SVN changelog is preserved separately in
 - Respect disabled quest data modules instead of enabling them during lazy load.
 - Preserve existing quest history when migrating old root-shaped SavedVariables
   into the strict Anniversary schema.
-- Fall back to legacy quest-log APIs when `C_QuestLog` entry APIs are missing.
+- Handle the current Anniversary client's hybrid quest-log API by using the
+  still-present quest-log globals for active quest-log entries when
+  `C_QuestLog` entry methods are unavailable.
 - Replace legacy global `gsub` and `sort` calls with namespaced Lua APIs to
   avoid login sync failures.
 
