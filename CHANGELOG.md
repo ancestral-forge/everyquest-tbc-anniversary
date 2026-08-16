@@ -6,6 +6,15 @@ This changelog covers the Ancestral Forge continuation. The original EveryQuest
 SVN changelog is preserved separately in
 `EveryQuest/Changelog-EveryQuest-release-5.txt`.
 
+## [2026.3.2] - 2026-08-16
+
+### Fixed
+
+- Avoid false abandoned quest timestamps when the Anniversary client emits
+  `QUEST_REMOVED` during quest turn-in.
+- Stop overriding Blizzard's quest reward button; quest turn-in tracking now
+  relies on the `QUEST_TURNED_IN` event.
+
 ## [2026.3.1] - 2026-08-16
 
 ### Added

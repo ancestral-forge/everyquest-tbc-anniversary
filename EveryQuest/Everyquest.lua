@@ -641,11 +641,7 @@ function EveryQuest:RegisterEvents()
 	hookAbandonPopup("ABANDON_QUEST")
 	hookAbandonPopup("ABANDON_QUEST_WITH_ITEMS")
 
-	-- Hooks
-	if QuestFrameCompleteQuestButton then
-		QuestFrameCompleteQuestButton:SetScript("OnClick", function() EveryQuest:Hooks_QuestCompleted() end)
-	end
-	--self:Hook("QuestFrameCompleteQuestButton_OnClick", "Hooks_QuestCompleted", true)
+	-- Quest turn-in is tracked through QUEST_TURNED_IN; leave Blizzard reward handling intact.
 end
 
 function EveryQuest:Toggle()
@@ -935,6 +931,8 @@ function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 							changed = changed + 1
 						end
 						history.status = 2
+						history.abandoned = nil
+						history.failed = nil
 					end
 				end
 			end
@@ -1232,16 +1230,35 @@ function EveryQuest:QUEST_ABANDON(questName)
 end
 
 function EveryQuest:QUEST_REMOVED(questid)
+	questid = tonumber(questid)
+	if not questid then
+		return
+	end
+
 	local history = self:GetHistoryByQuestID(questid)
 	if history and history.status == 2 then
 		return
 	end
+
+	resetCompletedQuestFlags()
+	if isQuestFlaggedCompleted(questid) then
+		self:QuestTurnedIn(nil, questid)
+		return
+	end
+
 	self:MarkQuestByID(questid, -1, "abandoned")
 end
 
 function EveryQuest:QUEST_TURNED_IN(questid)
+	questid = tonumber(questid)
 	if questid then
 		self:QuestTurnedIn(nil, questid)
+		return
+	end
+
+	local questtitle = GetTitleText and GetTitleText()
+	if questtitle then
+		self:QuestTurnedIn(questtitle)
 	end
 end
 
@@ -1254,18 +1271,6 @@ function EveryQuest:QUEST_PROGRESS()
 	if questtitle then
 		local questid, zoneid = self:MarkQuestByName(questtitle, 0)
 		self:Debug("QUEST_PROGRESS - questid:"..concat(questid).." zoneid:"..concat(zoneid))
-	end
-end
-
-function EveryQuest:Hooks_QuestCompleted()
-	self:Debug("Hooks_QuestCompleted")
-	if ( QuestFrameRewardPanel.itemChoice == 0 and GetNumQuestChoices() > 0 ) then
-		QuestChooseRewardError();
-	else
-		self:Debug("Hooks_QuestCompleted success")
-		EveryQuest:QuestTurnedIn(GetTitleText())
-		GetQuestReward(QuestFrameRewardPanel.itemChoice);
-		PlaySound(SOUNDKIT.IG_QUEST_LIST_COMPLETE);
 	end
 end
 
@@ -1282,13 +1287,16 @@ function EveryQuest:QuestTurnedIn(questName, questid)
 		local savedQuestID, zoneid, daily = EveryQuest:AddQuestByID(questid, category, 2)
 		if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
 			self:Debug("QuestTurnedIn - questid:"..concat(savedQuestID).." zoneid:"..concat(zoneid))
-			self.db.char.history[zoneid][savedQuestID].status = 2
-			self.db.char.history[zoneid][savedQuestID].completed = time()
+			local history = self.db.char.history[zoneid][savedQuestID]
+			history.status = 2
+			history.completed = time()
+			history.abandoned = nil
+			history.failed = nil
 			if daily then
-				if self.db.char.history[zoneid][savedQuestID].count ~= nil then
-					self.db.char.history[zoneid][savedQuestID].count = self.db.char.history[zoneid][savedQuestID].count +1
+				if history.count ~= nil then
+					history.count = history.count +1
 				else
-					self.db.char.history[zoneid][savedQuestID].count = 1
+					history.count = 1
 				end
 			end
 		else
@@ -1325,6 +1333,10 @@ function EveryQuest:UpdateStatus(displayid, queststatus)
 		self.db.char.history[zoneid][questid] = quest
 	end
 	self.db.char.history[zoneid][questid].status = queststatus
+	if queststatus == 2 then
+		self.db.char.history[zoneid][questid].abandoned = nil
+		self.db.char.history[zoneid][questid].failed = nil
+	end
 	self:UpdateFrame()
 end
 
@@ -1555,8 +1567,8 @@ function EveryQuest:ButtonEnter(frame)
 			end
 			completedline = completedline .. ": "..EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].completed)
 			GameTooltip:AddLine(completedline,self:GetColor("FFFFFF"))
-			
-		else
+
+		elseif status == -1 then
 			if self.db.char.history[zoneid][quest.id].failed then
 				GameTooltip:AddLine(L["Failed: "] .. EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].failed),self:GetColor("FFFFFF"))
 			end
