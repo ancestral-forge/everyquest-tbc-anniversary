@@ -63,16 +63,26 @@ function EveryQuest:OnDisable()
 	end
 end
 
-local function copyDefaults(value)
+local function copyTable(value, seen)
 	if type(value) ~= "table" then
 		return value
 	end
 
+	seen = seen or {}
+	if seen[value] then
+		return seen[value]
+	end
+
 	local target = {}
+	seen[value] = target
 	for key, child in pairs(value) do
-		target[key] = copyDefaults(child)
+		target[key] = copyTable(child, seen)
 	end
 	return target
+end
+
+local function copyDefaults(value)
+	return copyTable(value)
 end
 
 local function applyDefaults(target, defaults)
@@ -85,10 +95,49 @@ local function applyDefaults(target, defaults)
 	end
 end
 
+local function copyRootData(source, skipKeys)
+	local target = {}
+	for key, value in pairs(source) do
+		if not skipKeys[key] then
+			target[key] = copyTable(value)
+		end
+	end
+	return target
+end
+
 local function clearTable(target)
 	for key in pairs(target) do
 		target[key] = nil
 	end
+end
+
+local function getProfileDatabase()
+	if EveryQuestDB.schemaVersion == SAVED_VARIABLES_SCHEMA and type(EveryQuestDB.profile) == "table" then
+		return EveryQuestDB.profile
+	end
+	if type(EveryQuestDB.profile) == "table" and EveryQuestDB.profile ~= EveryQuestDB then
+		return EveryQuestDB.profile
+	end
+	if type(EveryQuestDB.profiles) == "table" and type(EveryQuestDB.profiles.Default) == "table" then
+		return copyTable(EveryQuestDB.profiles.Default)
+	end
+	if next(EveryQuestDB) then
+		return copyRootData(EveryQuestDB, { schemaVersion = true, profile = true, profiles = true })
+	end
+	return {}
+end
+
+local function getCharacterDatabase()
+	if EveryQuestDBPC.schemaVersion == SAVED_VARIABLES_SCHEMA and type(EveryQuestDBPC.char) == "table" then
+		return EveryQuestDBPC.char
+	end
+	if type(EveryQuestDBPC.char) == "table" and EveryQuestDBPC.char ~= EveryQuestDBPC then
+		return EveryQuestDBPC.char
+	end
+	if next(EveryQuestDBPC) then
+		return copyRootData(EveryQuestDBPC, { schemaVersion = true, char = true })
+	end
+	return {}
 end
 
 function EveryQuest:SetupDatabase()
@@ -99,15 +148,8 @@ function EveryQuest:SetupDatabase()
 		EveryQuestDBPC = {}
 	end
 
-	local profile = EveryQuestDB.schemaVersion == SAVED_VARIABLES_SCHEMA and EveryQuestDB.profile
-	if type(profile) ~= "table" then
-		profile = {}
-	end
-
-	local char = EveryQuestDBPC.schemaVersion == SAVED_VARIABLES_SCHEMA and EveryQuestDBPC.char
-	if type(char) ~= "table" then
-		char = {}
-	end
+	local profile = getProfileDatabase()
+	local char = getCharacterDatabase()
 
 	clearTable(EveryQuestDB)
 	EveryQuestDB.schemaVersion = SAVED_VARIABLES_SCHEMA

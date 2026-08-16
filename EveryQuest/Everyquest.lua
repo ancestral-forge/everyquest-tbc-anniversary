@@ -371,12 +371,28 @@ local function loadQuestDataAddon(addon)
 end
 
 local function getQuestLogInfo(index)
-	return C_QuestLog.GetInfo(index)
+	if C_QuestLog and C_QuestLog.GetInfo then
+		return C_QuestLog.GetInfo(index)
+	end
+	if GetQuestLogTitle then
+		local title, _, _, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
+		return {
+			title = title,
+			isHeader = isHeader,
+			isComplete = isComplete,
+			frequency = frequency,
+			questID = questID,
+		}
+	end
 end
 
 local function getQuestLogQuestID(index)
 	local info = getQuestLogInfo(index)
 	return info and tonumber(info.questID)
+end
+
+local function reportRuntimeError(context, err)
+	EveryQuest:Error(context .. ": " .. tostring(err))
 end
 
 local function isDailyQuest(frequency)
@@ -452,10 +468,45 @@ local function selectZone(group, zone)
 	setZoneListText(zone[2])
 end
 
+local currentZoneAliases = {
+	["City of Ironforge"] = "Ironforge",
+	["City of Stormwind"] = "Stormwind City",
+	["City of Silvermoon"] = "Silvermoon City",
+	["The Undercity"] = "Undercity",
+}
+
+local function zoneNameMatches(menuZone, currentZone)
+	if menuZone == currentZone then
+		return true
+	end
+	local alias = currentZoneAliases[currentZone]
+	if alias and menuZone == alias then
+		return true
+	end
+	local cityName = currentZone and string.match(currentZone, "^City of (.+)$")
+	return cityName ~= nil and (menuZone == cityName or menuZone == cityName .. " City")
+end
+
+function EveryQuest:SelectCurrentZone()
+	local currentZone = GetRealZoneText and GetRealZoneText()
+	if currentZone and currentZone ~= "" then
+		for group, zones in pairs(zonemenu) do
+			for _, zone in pairs(zones) do
+				if zoneNameMatches(zone[2], currentZone) then
+					selectZone(group, zone)
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
 function EveryQuest:EveryQuestInit()
 	if sessionvars.initialized then
-		return
+		return true
 	end
+
 	self:RegisterEvents()
 
 	EveryQuestTitleText:SetText(L["EveryQuest Log"])
@@ -478,6 +529,15 @@ function EveryQuest:EveryQuestInit()
 	EveryQuest.ListToggleButton:ClearAllPoints()
 	EveryQuest.ListToggleButton:SetPoint("BOTTOMLEFT",EveryQuestFrame, "BOTTOMLEFT",18,5)
 	EveryQuest.ListToggleButton:SetScript("OnClick", function() EveryQuest:List("toggle") end)
+
+	EveryQuest.CurrentZoneButton = EveryQuest.CurrentZoneButton or _G.EveryQuestCurrentZoneButton or CreateFrame("Button", "EveryQuestCurrentZoneButton", EveryQuestFrame, "UIPanelButtonTemplate")
+	EveryQuest.CurrentZoneButton:SetSize(108, 21)
+	EveryQuest.CurrentZoneButton:SetText("Current Zone")
+	EveryQuest.CurrentZoneButton:Show()
+	raiseFrame(EveryQuest.CurrentZoneButton)
+	EveryQuest.CurrentZoneButton:ClearAllPoints()
+	EveryQuest.CurrentZoneButton:SetPoint("BOTTOMLEFT", EveryQuestFrame, "BOTTOMLEFT", 145, 5)
+	EveryQuest.CurrentZoneButton:SetScript("OnClick", function() EveryQuest:ShowCurrentZone() end)
 
 	if QuestLogFrame then
 		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
@@ -530,22 +590,15 @@ function EveryQuest:EveryQuestInit()
 	-- Load the saved view
 	EveryQuest:List(self.db.profile.view)
 	sessionvars.initialized = true
+	return true
 end
 
 function EveryQuest:SelectInitialZone()
 	if sessionvars.zoneid and sessionvars.zonegroup then
 		return
 	end
-	local currentZone = GetRealZoneText()
-	if currentZone and currentZone ~= "" then
-		for group, zones in pairs(zonemenu) do
-			for _, zone in pairs(zones) do
-				if zone[2] == currentZone then
-					selectZone(group, zone)
-					return
-				end
-			end
-		end
+	if self:SelectCurrentZone() then
+		return
 	end
 
 	local fallbackGroup, fallbackID = "Eastern Kingdoms", 12
@@ -649,6 +702,19 @@ function EveryQuest:Toggle()
 	else
 		EveryQuestFrame:Show()
 	end
+end
+
+function EveryQuest:ShowCurrentZone()
+	local currentZone = GetRealZoneText and GetRealZoneText()
+	if not self:SelectCurrentZone() then
+		self:Print("EveryQuest: current zone is not available: " .. concat(currentZone))
+		return
+	end
+	self.db.profile.view = "zone"
+	if EveryQuest.ListToggleButton then
+		EveryQuest.ListToggleButton:SetText("Show Quest History")
+	end
+	self:NewZone()
 end
 
 function EveryQuest:SavePosition()
@@ -916,7 +982,7 @@ function EveryQuest:LoadQuestData(group)
 		return false
 	end
 
-	local varname = "EveryQuest_"..gsub(group, " ", "_")
+	local varname = "EveryQuest_"..string.gsub(group, " ", "_")
 	--local varname = "EveryQuest_"..group.." Quests"
 	self:Debug("Loading single module: "..concat(varname))
 	--local addonname = ("EveryQuest__%s%s_Data"):format(faction:sub(1,1), questtype)
@@ -961,7 +1027,12 @@ function EveryQuest:GetStatus(displayid, queststatus)
 end
 
 local function getNumQuestLogEntries()
-	local numEntries = C_QuestLog.GetNumQuestLogEntries()
+	local numEntries
+	if C_QuestLog and C_QuestLog.GetNumQuestLogEntries then
+		numEntries = C_QuestLog.GetNumQuestLogEntries()
+	elseif GetNumQuestLogEntries then
+		numEntries = GetNumQuestLogEntries()
+	end
 	return numEntries or 0
 end
 
@@ -1099,45 +1170,61 @@ function EveryQuest:MarkQuestByName(questName, status, timestampField)
 end
 
 function EveryQuest:ScanQuestLog(reportStatus)
-	local category
-	local scanned, added, changed, missing = 0, 0, 0, 0
-	local missingQuests = {}
 	local flushFrameUpdate = not sessionvars.suppressFrameUpdates
 	sessionvars.suppressFrameUpdates = true
-	if reportStatus then
-		self:Print("EveryQuest: updating quest history from the quest log...")
-	end
-	for index = 1, getNumQuestLogEntries() do
-		local info = getQuestLogInfo(index)
-		if info and info.title then
-			if info.isHeader then
-				category = info.title
-			else
-				local questid = tonumber(info.questID)
-				if questid then
-					scanned = scanned + 1
-					local status = statusFromQuestLog(info.isComplete)
-					local history = self:GetHistoryByQuestID(questid)
-					local oldStatus = history and history.status
-					local savedQuestID, zoneid = self:AddQuestByID(questid, category, status)
-					if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
-						if history == nil then
-							added = added + 1
-						elseif oldStatus ~= status then
-							changed = changed + 1
+
+	local ok, scannedResult, addedResult, changedResult, missingResult = pcall(function()
+		local category
+		local scanned, added, changed, missing = 0, 0, 0, 0
+		local missingQuests = {}
+		if reportStatus then
+			self:Print("EveryQuest: updating quest history from the quest log...")
+		end
+		for index = 1, getNumQuestLogEntries() do
+			local info = getQuestLogInfo(index)
+			if info and info.title then
+				if info.isHeader then
+					category = info.title
+				else
+					local questid = tonumber(info.questID)
+					if questid then
+						scanned = scanned + 1
+						local status = statusFromQuestLog(info.isComplete)
+						local history = self:GetHistoryByQuestID(questid)
+						local oldStatus = history and history.status
+						local savedQuestID, zoneid = self:AddQuestByID(questid, category, status)
+						if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+							if history == nil then
+								added = added + 1
+							elseif oldStatus ~= status then
+								changed = changed + 1
+							end
+						else
+							missing = missing + 1
+							table.insert(missingQuests, {
+								id = questid,
+								title = info.title,
+								category = category,
+							})
 						end
-					else
-						missing = missing + 1
-						table.insert(missingQuests, {
-							id = questid,
-							title = info.title,
-							category = category,
-						})
 					end
 				end
 			end
 		end
+		if reportStatus then
+			self:Print(("EveryQuest: quest history updated: %d active, %d added, %d changed, %d missing from database."):format(scanned, added, changed, missing))
+			for _, missingQuest in ipairs(missingQuests) do
+				local categoryText = missingQuest.category and (" (" .. missingQuest.category .. ")") or ""
+				self:Print(("EveryQuest: missing quest %d - %s%s"):format(missingQuest.id, missingQuest.title or L["Unknown"], categoryText))
+			end
+		end
+		return scanned, added, changed, missing
+	end)
+
+	if not ok then
+		reportRuntimeError("EveryQuest quest log sync failed", scannedResult)
 	end
+
 	if flushFrameUpdate then
 		sessionvars.suppressFrameUpdates = nil
 		if sessionvars.frameUpdatePending then
@@ -1145,14 +1232,11 @@ function EveryQuest:ScanQuestLog(reportStatus)
 			self:UpdateFrame()
 		end
 	end
-	if reportStatus then
-		self:Print(("EveryQuest: quest history updated: %d active, %d added, %d changed, %d missing from database."):format(scanned, added, changed, missing))
-		for _, missingQuest in ipairs(missingQuests) do
-			local categoryText = missingQuest.category and (" (" .. missingQuest.category .. ")") or ""
-			self:Print(("EveryQuest: missing quest %d - %s%s"):format(missingQuest.id, missingQuest.title or L["Unknown"], categoryText))
-		end
+
+	if not ok then
+		return false
 	end
-	return scanned, added, changed, missing
+	return scannedResult, addedResult, changedResult, missingResult
 end
 
 function EveryQuest:QUEST_ACCEPTED(questLogIndex, questid)
@@ -1342,9 +1426,9 @@ function EveryQuest:UpdateFrame()
 			return
 		end
 		if self.db.profile.view == "zone" then
-			sort(questlist, function(a,b) return EveryQuest:SortTable(a,b) end)
+			table.sort(questlist, function(a,b) return EveryQuest:SortTable(a,b) end)
 		else
-			sort(historylist, function(a,b) return EveryQuest:SortTable(a,b,questlist) end)
+			table.sort(historylist, function(a,b) return EveryQuest:SortTable(a,b,questlist) end)
 		end
 		--self:Debug("QuestCount:"..questcount)
 		FauxScrollFrame_Update(EveryQuestListScrollFrame,questcount,27,16)
