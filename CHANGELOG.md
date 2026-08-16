@@ -6,6 +6,13 @@ This changelog covers the Ancestral Forge continuation. The original EveryQuest
 SVN changelog is preserved separately in
 `EveryQuest/Changelog-EveryQuest-release-5.txt`.
 
+## [Unreleased]
+
+### Fixed
+
+- Wait for the quest log to expose accepted quest categories before saving new
+  quest history, keeping newly accepted quests synced to the correct zone.
+
 ## [2026.3.2] - 2026-08-16
 
 ### Added
