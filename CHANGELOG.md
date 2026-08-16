@@ -8,6 +8,12 @@ SVN changelog is preserved separately in
 
 ## [2026.3.2] - 2026-08-16
 
+### Added
+
+- Add a `Current Zone` button that switches the EveryQuest browser to the
+  player's current zone on demand, including city-name aliases such as
+  `City of Ironforge` -> `Ironforge`.
+
 ### Changed
 
 - Scope quest-log and completed-quest runtime paths to the Anniversary
@@ -15,8 +21,8 @@ SVN changelog is preserved separately in
 - Remove unused legacy quest-counting code and empty XML script hooks.
 - Remove old optional integration hooks for `LightHeaded` and `beql`.
 - Remove the imported SVN `$Revision` runtime version fields.
-- Use a strict Anniversary SavedVariables schema instead of reading AceDB or
-  root-shaped legacy data.
+- Use a strict Anniversary SavedVariables schema while migrating root-shaped
+  legacy data.
 
 ### Fixed
 
@@ -30,6 +36,11 @@ SVN changelog is preserved separately in
   relies on the `QUEST_TURNED_IN` event.
 - Coalesce `QUEST_LOG_UPDATE` quest-log scans and batch frame refreshes.
 - Respect disabled quest data modules instead of enabling them during lazy load.
+- Preserve existing quest history when migrating old root-shaped SavedVariables
+  into the strict Anniversary schema.
+- Fall back to legacy quest-log APIs when `C_QuestLog` entry APIs are missing.
+- Replace legacy global `gsub` and `sort` calls with namespaced Lua APIs to
+  avoid login sync failures.
 
 ## [2026.3.1] - 2026-08-16
 
