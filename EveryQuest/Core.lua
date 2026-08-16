@@ -156,16 +156,21 @@ function EveryQuest:UnregisterEvent(event)
 	self.registeredEvents[event] = nil
 end
 
--- Hook escape key so it closes EveryQuestFrame.
-local orig_CloseSpecialWindows = _G.CloseSpecialWindows
-function _G.CloseSpecialWindows()
-	local found = orig_CloseSpecialWindows and orig_CloseSpecialWindows()
-	if EveryQuestFrame and EveryQuestFrame:IsShown() then
-		EveryQuestFrame:Hide()
-		return true
+local function registerSpecialFrame(frameName)
+	if not UISpecialFrames then
+		return
 	end
-	return found
+
+	for _, registeredFrameName in ipairs(UISpecialFrames) do
+		if registeredFrameName == frameName then
+			return
+		end
+	end
+
+	table.insert(UISpecialFrames, frameName)
 end
+
+registerSpecialFrame("EveryQuestFrame")
 
 EveryQuest.eventFrame:SetScript("OnEvent", function(_, event, ...)
 	local handler = EveryQuest[event]

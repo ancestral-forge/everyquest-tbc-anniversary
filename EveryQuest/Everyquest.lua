@@ -628,19 +628,7 @@ function EveryQuest:RegisterEvents()
 	self:RegisterEvent("QUEST_REMOVED")
 	self:RegisterEvent("QUEST_TURNED_IN")
 
-	-- fuax self:RegisterEvent("ABANDON_QUEST")
-	local function hookAbandonPopup(name)
-		local popup = StaticPopupDialogs and StaticPopupDialogs[name]
-		if not popup then return end
-		popup.OnAccept = function()
-			EveryQuest:QUEST_ABANDON(GetAbandonQuestName())
-			AbandonQuest()
-			PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST)
-		end
-	end
-	hookAbandonPopup("ABANDON_QUEST")
-	hookAbandonPopup("ABANDON_QUEST_WITH_ITEMS")
-
+	-- Quest abandon is tracked through QUEST_REMOVED; leave Blizzard popup handling intact.
 	-- Quest turn-in is tracked through QUEST_TURNED_IN; leave Blizzard reward handling intact.
 end
 

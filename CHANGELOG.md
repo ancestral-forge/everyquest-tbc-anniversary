@@ -12,6 +12,10 @@ SVN changelog is preserved separately in
 
 - Avoid false abandoned quest timestamps when the Anniversary client emits
   `QUEST_REMOVED` during quest turn-in.
+- Stop overriding Blizzard's `CloseSpecialWindows`; Esc closing now uses
+  `UISpecialFrames`.
+- Stop overriding Blizzard's quest abandon confirmation popup; quest abandon
+  tracking now relies on `QUEST_REMOVED`.
 - Stop overriding Blizzard's quest reward button; quest turn-in tracking now
   relies on the `QUEST_TURNED_IN` event.
 
