@@ -1108,6 +1108,15 @@ function EveryQuest:AddQuestByID(questid, category, qstatus)
 		qstatus = foundStatus
 	end
 
+	local history, historyZoneID = self:GetHistoryByQuestID(questid)
+	if history and not category then
+		if qstatus ~= nil then
+			history.status = qstatus
+		end
+		self:RequestFrameUpdate()
+		return questid, historyZoneID, history.d
+	end
+
 	local quest, zoneid = self:GetQuestData(questid, category)
 	if quest == false then
 		return false
@@ -1245,11 +1254,15 @@ function EveryQuest:QUEST_ACCEPTED(questLogIndex, questid)
 		questid = getQuestLogQuestID(questLogIndex) or tonumber(questLogIndex)
 	end
 	if not questid then
-		self:ScheduleQuestLogScan()
+		self:Debug("QUEST_ACCEPTED - waiting for QUEST_LOG_UPDATE")
 		return
 	end
 
 	local _, category = self:FindQuestLogEntryByID(questid)
+	if not category and not self:GetHistoryByQuestID(questid) then
+		self:Debug("QUEST_ACCEPTED - waiting for QUEST_LOG_UPDATE for questid:"..concat(questid))
+		return
+	end
 	local savedQuestID, zoneid = self:AddQuestByID(questid, category, 0)
 	if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
 		self:Debug("QUEST_ACCEPTED - questid:"..concat(savedQuestID).." zoneid:"..concat(zoneid))
