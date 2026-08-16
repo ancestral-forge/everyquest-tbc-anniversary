@@ -17,6 +17,8 @@ local MINUTE = 60
 local HOUR = 3600
 local DAY = 86400
 local QUEST_LOG_SCAN_DELAY = 0.2
+local ZONE_DROPDOWN_SUBMENU_Y_OFFSET = 14
+local ZONE_DROPDOWN_SCREEN_MARGIN = 12
 local clickedID
 local sessionvars = {}
 local QuestMenuFrame
@@ -468,6 +470,85 @@ local function selectZone(group, zone)
 	setZoneListText(zone[2])
 end
 
+local function getDropdownListFrame(level)
+	return _G["DropDownList" .. level] or _G["LibDropDownMenu_List" .. level]
+end
+
+local function getZoneDropdownSubmenuYOffset(button, listFrame)
+	local yOffset = ZONE_DROPDOWN_SUBMENU_Y_OFFSET
+	if not UIParent or not button.GetTop or not listFrame.GetHeight then
+		return yOffset
+	end
+
+	local anchorTop = button:GetTop()
+	local listHeight = listFrame:GetHeight()
+	local screenBottom = UIParent.GetBottom and UIParent:GetBottom()
+	local screenTop = UIParent.GetTop and UIParent:GetTop()
+	if not anchorTop or not listHeight or not screenBottom then
+		return yOffset
+	end
+
+	local bottom = anchorTop + yOffset - listHeight
+	local minBottom = screenBottom + ZONE_DROPDOWN_SCREEN_MARGIN
+	if bottom < minBottom then
+		yOffset = yOffset + (minBottom - bottom)
+	end
+
+	if screenTop then
+		local top = anchorTop + yOffset
+		local maxTop = screenTop - ZONE_DROPDOWN_SCREEN_MARGIN
+		if top > maxTop then
+			yOffset = yOffset - (top - maxTop)
+		end
+	end
+
+	return yOffset
+end
+
+local function positionZoneDropdownSubmenu(level, menuList, button)
+	if level ~= 2 or not button or not menuList or not zonemenu[menuList] then
+		return
+	end
+	local zoneListMenu = getZoneListMenu()
+	if UIDROPDOWNMENU_OPEN_MENU and UIDROPDOWNMENU_OPEN_MENU ~= zoneListMenu then
+		return
+	end
+
+	local listFrame = getDropdownListFrame(level)
+	if not listFrame or not listFrame:IsShown() then
+		return
+	end
+
+	local xPoint = "TOPLEFT"
+	local xRelativePoint = "TOPRIGHT"
+	local xOffset = 0
+	if GetScreenWidth and button.GetLeft and button.GetRight and listFrame.GetWidth then
+		local buttonLeft = button:GetLeft()
+		local buttonRight = button:GetRight()
+		local listWidth = listFrame:GetWidth()
+		if buttonLeft and buttonRight and listWidth and buttonRight + listWidth > GetScreenWidth() then
+			xPoint = "TOPRIGHT"
+			xRelativePoint = "TOPLEFT"
+			xOffset = -11
+		end
+	end
+
+	listFrame:ClearAllPoints()
+	listFrame.parentLevel = button:GetParent() and button:GetParent():GetID()
+	listFrame.parentID = button:GetID()
+	listFrame:SetPoint(xPoint, button, xRelativePoint, xOffset, getZoneDropdownSubmenuYOffset(button, listFrame))
+end
+
+local function hookZoneDropdownSubmenuPosition()
+	if sessionvars.zoneDropdownSubmenuHooked or not hooksecurefunc then
+		return
+	end
+	sessionvars.zoneDropdownSubmenuHooked = true
+	hooksecurefunc("ToggleDropDownMenu", function(level, _, _, _, _, _, menuList, button)
+		positionZoneDropdownSubmenu(level, menuList, button)
+	end)
+end
+
 local currentZoneAliases = {
 	["City of Ironforge"] = "Ironforge",
 	["City of Stormwind"] = "Stormwind City",
@@ -630,6 +711,7 @@ function EveryQuest:CreateZoneMenu()
 	end
 
 	setZoneListText(L["-- Select --"])
+	hookZoneDropdownSubmenuPosition()
 
 	UIDropDownMenu_Initialize(EveryQuest.ZoneListMenu, function(_, level, menuList)
 		EveryQuest:InitializeZoneDropdown(level, menuList)
