@@ -647,7 +647,7 @@ function EveryQuest:Toggle()
 	if EveryQuestFrame:IsShown() then
 		EveryQuestFrame:Hide()
 	else
-		EveryQuestFrame:Show()	
+		EveryQuestFrame:Show()
 	end
 end
 
@@ -693,11 +693,11 @@ function EveryQuest:timeDiff(timestamp)
     --If the difference is positive "ago" - negative "away"
 
 	--amount = amount + DAY + HOUR*5
-	
+
 	if amount >= (DAY * 10) then
 		return date("%m/%d/%y %I%p", timestamp)
 	end
-	
+
 	if (amount >= DAY) and (amount < (DAY * 10)) then
 		-- between one day and 30 days
 		days = math.floor(amount/DAY)
@@ -708,7 +708,7 @@ function EveryQuest:timeDiff(timestamp)
 		return days .. hours .. L["ago"]
 		--return "between one day and 30 days"
 	end
-  
+
 	if (amount < DAY) and (amount >= HOUR) then
 		-- between one hour and one day
 		--value = string.format("%H hr %M min ago", amount)
@@ -719,7 +719,7 @@ function EveryQuest:timeDiff(timestamp)
 		return hours .. L[" hr "] .. minutes .. L["ago"]
 		--return  .. " between one hour and one day"
 	end
-	
+
 	if (amount < HOUR and amount >= MINUTE) then
 		-- between one minute and one hour
 		if EveryQuest:round(amount / MINUTE) > 1 then
@@ -728,7 +728,7 @@ function EveryQuest:timeDiff(timestamp)
 			return L["1 minute ago"]
 		end
 	end
-	
+
 	if amount > 1 then
 		return amount .. L[" seconds ago"]
 	else
@@ -745,7 +745,7 @@ end
 function EveryQuest:GetQuestData(questid, category)
 	self:Debug("GetQuestData - questid:"..concat(questid).." category:"..concat(category))
 	local zonegroup, zoneid
-	
+
 	for k,v in pairs(zonemenu) do -- for each top level category
 		for ak,av in pairs(v) do -- for each category
 			if av[2] == category then
@@ -816,7 +816,7 @@ function EveryQuest:GetQuestData(questid, category)
 				end
 			end
 		end
-		
+
 	end
 	return false
 end
@@ -1273,7 +1273,7 @@ end
 
 function EveryQuest:AddQuest(questindex, category, qstatus)
 	if self.db.char.history == nil then
-		self.db.char.history = {} 
+		self.db.char.history = {}
 	end
 	if questindex then
 		local questid = self:GetQID(questindex)
@@ -1455,7 +1455,7 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 		local level
 		if quest["l"] then
 			level = quest["l"]
-		else 
+		else
 			if quest["r"] then
 				level = "r"..quest["r"]
 			else
@@ -1642,12 +1642,12 @@ function EveryQuest:CreateQuestLink(questid, questname, questlevel)
 end
 
 function EveryQuest:Debug(string)
-	if self.db.profile.debug then  
+	if self.db.profile.debug then
 		self:Print("EveryQuest: "..string)
 	end
 end
 
-function EveryQuest:Error(string)  
+function EveryQuest:Error(string)
 	self:Print("EveryQuest: "..string)
 end
 

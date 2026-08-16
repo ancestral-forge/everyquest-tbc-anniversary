@@ -8,7 +8,7 @@ EveryQuest_Locale = {
 	["Abandoned"] = true,
 	["Failed"] = true,
 	["Close"] = true,
-	
+
 	["EveryQuest Log"] = true,
 	["EveryQuest"] = true,
 	["Toggle Frame"] = true,
@@ -19,12 +19,12 @@ EveryQuest_Locale = {
 	["Loading "] = true,
 	["Could not load "] = true,
 	["Failed or Abandoned"] = true,
-	
+
 	["Failed: "] = true,
 	["Abandoned: "] = true,
 	["Completed: "] = true,
 	["Status: "] = true,
-	
+
 	[" days "] = true,
 	[" day "] = true,
 	[" hr "] = true,
@@ -35,7 +35,7 @@ EveryQuest_Locale = {
 	[" seconds ago"] = true,
 	[" second ago"] = true,
 	[" Quest Data"] = true,
-	
+
 	["Requires LOD Module: "] = true,
 	["Missing LOD Module: "] = true,
 	["Disabled LOD Module: "] = true,

@@ -81,12 +81,12 @@
 			<AbsDimension x="384" y="512"/>
 		</Size>
 		<Anchors>
- 			<Anchor point="TOPLEFT">
- 				<Offset>
- 					<AbsDimension x="0" y="-104"/>
- 				</Offset>
- 			</Anchor>
- 		</Anchors>
+			<Anchor point="TOPLEFT">
+				<Offset>
+					<AbsDimension x="0" y="-104"/>
+				</Offset>
+			</Anchor>
+		</Anchors>
 		<HitRectInsets>
 			<AbsInset left="0" right="35" top="0" bottom="75"/>
 		</HitRectInsets>
@@ -108,7 +108,7 @@
 							</Offset>
 						</Anchor>
 					</Anchors>
-				</Texture>		
+				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<Texture file="Interface\Addons\EveryQuest\Images\topleft">
@@ -118,7 +118,7 @@
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 					</Anchors>
-				</Texture>		
+				</Texture>
 				<Texture file="Interface\Addons\EveryQuest\Images\topmid_off2">
 					<Size>
 						<AbsDimension x="128" y="256"/>
