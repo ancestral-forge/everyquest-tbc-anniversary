@@ -45,6 +45,15 @@ GitHub releases are built from tags named `v<version>`, for example
 `v2026.3.1`. The release workflow packages only the addon folders into
 `EveryQuest-TBC-Anniversary-<version>.zip`.
 
+## Support
+
+If you like this addon or the work behind it, you can support Ancestral Forge
+through Lava. It is completely optional, and every bit is warmly appreciated.
+
+- Support on Lava: https://app.lava.top/ancestral-forge?tabId=donate
+
+No perks, no priority queue, no paid support; just a thank-you.
+
 ## Source and Issues
 
 - Source code: https://github.com/ancestral-forge/everyquest-tbc-anniversary
