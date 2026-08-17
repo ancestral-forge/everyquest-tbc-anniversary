@@ -19,6 +19,12 @@ local DAY = 86400
 local QUEST_LOG_SCAN_DELAY = 0.2
 local ZONE_DROPDOWN_SUBMENU_Y_OFFSET = 14
 local ZONE_DROPDOWN_SCREEN_MARGIN = 12
+local BOTTOM_BUTTON_Y_OFFSET = 5
+local BOTTOM_BUTTON_OVERLAP = 4
+local LIST_TOGGLE_BUTTON_WIDTH = 136
+local CURRENT_ZONE_BUTTON_WIDTH = 108
+local BOTTOM_BUTTON_HEIGHT = 21
+local QUEST_LOG_TOGGLE_TEXT_X_OFFSET = 2
 local clickedID
 local sessionvars = {}
 local QuestMenuFrame
@@ -598,30 +604,35 @@ function EveryQuest:EveryQuestInit()
 	EveryQuest.EveryQuestToggleButton = EveryQuest.EveryQuestToggleButton or CreateFrame("Button", nil, QuestLogFrame or UIParent, "UIPanelButtonTemplate")
 	EveryQuest.EveryQuestToggleButton:SetSize(28, 18)
 	EveryQuest.EveryQuestToggleButton:SetText("EQ")
+	local questLogToggleText = EveryQuest.EveryQuestToggleButton:GetFontString()
+	if questLogToggleText then
+		questLogToggleText:ClearAllPoints()
+		questLogToggleText:SetPoint("CENTER", EveryQuest.EveryQuestToggleButton, "CENTER", QUEST_LOG_TOGGLE_TEXT_X_OFFSET, 0)
+	end
 	EveryQuest.EveryQuestToggleButton:Show()
 	EveryQuest.EveryQuestToggleButton:ClearAllPoints()
 
 	-- Create the List toggle button to toggle between quest history and quests in a category
 	EveryQuest.ListToggleButton = EveryQuest.ListToggleButton or _G.EveryQuestListToggleButton or CreateFrame("Button", "EveryQuestListToggleButton", EveryQuestFrame, "UIPanelButtonTemplate")
-	EveryQuest.ListToggleButton:SetSize(122, 21)
+	EveryQuest.ListToggleButton:SetSize(LIST_TOGGLE_BUTTON_WIDTH + BOTTOM_BUTTON_OVERLAP, BOTTOM_BUTTON_HEIGHT)
 	EveryQuest.ListToggleButton:SetText(" ")
 	EveryQuest.ListToggleButton:Show()
 	raiseFrame(EveryQuest.ListToggleButton)
 	EveryQuest.ListToggleButton:ClearAllPoints()
-	EveryQuest.ListToggleButton:SetPoint("BOTTOMLEFT",EveryQuestFrame, "BOTTOMLEFT",18,5)
+	EveryQuest.ListToggleButton:SetPoint("BOTTOMLEFT", EveryQuestFrame, "BOTTOMLEFT", 18, BOTTOM_BUTTON_Y_OFFSET)
 	EveryQuest.ListToggleButton:SetScript("OnClick", function() EveryQuest:List("toggle") end)
 
 	EveryQuest.CurrentZoneButton = EveryQuest.CurrentZoneButton or _G.EveryQuestCurrentZoneButton or CreateFrame("Button", "EveryQuestCurrentZoneButton", EveryQuestFrame, "UIPanelButtonTemplate")
-	EveryQuest.CurrentZoneButton:SetSize(108, 21)
+	EveryQuest.CurrentZoneButton:SetSize(CURRENT_ZONE_BUTTON_WIDTH + BOTTOM_BUTTON_OVERLAP, BOTTOM_BUTTON_HEIGHT)
 	EveryQuest.CurrentZoneButton:SetText("Current Zone")
 	EveryQuest.CurrentZoneButton:Show()
 	raiseFrame(EveryQuest.CurrentZoneButton)
 	EveryQuest.CurrentZoneButton:ClearAllPoints()
-	EveryQuest.CurrentZoneButton:SetPoint("BOTTOMLEFT", EveryQuestFrame, "BOTTOMLEFT", 145, 5)
+	EveryQuest.CurrentZoneButton:SetPoint("BOTTOMRIGHT", EveryQuestExitButton, "BOTTOMLEFT", BOTTOM_BUTTON_OVERLAP, 0)
 	EveryQuest.CurrentZoneButton:SetScript("OnClick", function() EveryQuest:ShowCurrentZone() end)
 
 	if QuestLogFrame then
-		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",72,-15)
+		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",68,-15)
 	else
 		EveryQuest.EveryQuestToggleButton:Hide()
 	end
