@@ -2,9 +2,8 @@
 
 All notable changes to EveryQuest TBC Anniversary are documented in this file.
 
-This changelog covers the Ancestral Forge continuation. The original EveryQuest
-SVN changelog is preserved separately in
-`EveryQuest/Changelog-EveryQuest-release-5.txt`.
+This changelog covers the Ancestral Forge continuation. Original EveryQuest
+release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
@@ -14,6 +13,10 @@ SVN changelog is preserved separately in
   quest history, keeping newly accepted quests synced to the correct zone.
 - Keep the legacy zone dropdown under the selector while nudging long submenus
   upward just enough to keep their bottom edge on screen.
+
+### Removed
+
+- Remove the imported release-5 SVN changelog file from the addon tree.
 
 ## [2026.3.2] - 2026-08-16
 
