@@ -7,6 +7,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+## [2026.3.3] - 2026-08-18
+
 ### Fixed
 
 - Wait for the quest log to expose accepted quest categories before saving new
