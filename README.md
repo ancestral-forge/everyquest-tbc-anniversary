@@ -50,7 +50,7 @@ GitHub releases are built from tags named `v<version>`, for example
 If you like this addon or the work behind it, you can support Ancestral Forge
 through Lava. It is completely optional, and every bit is warmly appreciated.
 
-- Support on Lava: https://app.lava.top/ancestral-forge?tabId=donate
+[![Support on Lava](https://img.shields.io/badge/Support_on-Lava-FFB300?style=for-the-badge&labelColor=111111)](https://app.lava.top/ancestral-forge?tabId=donate)
 
 No perks, no priority queue, no paid support; just a thank-you.
 
