@@ -574,17 +574,43 @@ local function zoneNameMatches(menuZone, currentZone)
 	return cityName ~= nil and (menuZone == cityName or menuZone == cityName .. " City")
 end
 
-function EveryQuest:SelectCurrentZone()
+local function getCurrentZoneSelection()
 	local currentZone = GetRealZoneText and GetRealZoneText()
 	if currentZone and currentZone ~= "" then
 		for group, zones in pairs(zonemenu) do
 			for _, zone in pairs(zones) do
 				if zoneNameMatches(zone[2], currentZone) then
-					selectZone(group, zone)
-					return true
+					return group, zone
 				end
 			end
 		end
+	end
+	return nil, nil
+end
+
+local function updateCurrentZoneButtonState()
+	local button = EveryQuest.CurrentZoneButton
+	if not button then
+		return
+	end
+	if not self.db or not self.db.profile then
+		button:Enable()
+		return
+	end
+
+	local currentGroup, currentZone = getCurrentZoneSelection()
+	if currentGroup and currentZone and self.db.profile.view == "zone" and sessionvars.zonegroup == currentGroup and sessionvars.zoneid == currentZone[1] then
+		button:Disable()
+	else
+		button:Enable()
+	end
+end
+
+function EveryQuest:SelectCurrentZone()
+	local currentGroup, currentZone = getCurrentZoneSelection()
+	if currentGroup and currentZone then
+		selectZone(currentGroup, currentZone)
+		return true
 	end
 	return false
 end
@@ -630,6 +656,7 @@ function EveryQuest:EveryQuestInit()
 	EveryQuest.CurrentZoneButton:ClearAllPoints()
 	EveryQuest.CurrentZoneButton:SetPoint("BOTTOMRIGHT", EveryQuestExitButton, "BOTTOMLEFT", BOTTOM_BUTTON_OVERLAP, 0)
 	EveryQuest.CurrentZoneButton:SetScript("OnClick", function() EveryQuest:ShowCurrentZone() end)
+	updateCurrentZoneButtonState()
 
 	if QuestLogFrame then
 		EveryQuest.EveryQuestToggleButton:SetPoint("TOPLEFT",QuestLogFrame, "TOPLEFT",68,-15)
@@ -781,6 +808,7 @@ function EveryQuest:RegisterEvents()
 	self:RegisterEvent("QUEST_LOG_UPDATE")
 	self:RegisterEvent("QUEST_REMOVED")
 	self:RegisterEvent("QUEST_TURNED_IN")
+	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 
 	-- Quest abandon is tracked through QUEST_REMOVED; leave Blizzard popup handling intact.
 	-- Quest turn-in is tracked through QUEST_TURNED_IN; leave Blizzard reward handling intact.
@@ -1421,6 +1449,10 @@ function EveryQuest:QUEST_LOG_UPDATE()
 	self:ScheduleQuestLogScan()
 end
 
+function EveryQuest:ZONE_CHANGED_NEW_AREA()
+	updateCurrentZoneButtonState()
+end
+
 function EveryQuest:QUEST_PROGRESS()
 	local questtitle = GetTitleText()
 	if questtitle then
@@ -1497,6 +1529,7 @@ end
 
 function EveryQuest:UpdateFrame()
 	if EveryQuestFrame:IsShown() then
+		updateCurrentZoneButtonState()
 		--self:Debug("UpdateFrame")
 		local buttonid = 1
 		local controli = 0
