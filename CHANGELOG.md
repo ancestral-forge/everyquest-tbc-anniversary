@@ -13,6 +13,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
   quest history, keeping newly accepted quests synced to the correct zone.
 - Keep the legacy zone dropdown under the selector while nudging long submenus
   upward just enough to keep their bottom edge on screen.
+- Disable the `Current Zone` button when EveryQuest is already showing the
+  player's current zone.
 
 ### Removed
 
