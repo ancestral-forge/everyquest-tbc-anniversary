@@ -472,10 +472,31 @@ local function raiseFrame(frame)
 	end
 end
 
+local function saveSelectedZone()
+	if EveryQuest.db and EveryQuest.db.char and sessionvars.zoneid and sessionvars.zonegroup then
+		EveryQuest.db.char.zoneid = sessionvars.zoneid
+		EveryQuest.db.char.zonegroup = sessionvars.zonegroup
+	end
+end
+
 local function selectZone(group, zone)
 	sessionvars.zoneid = zone[1]
 	sessionvars.zonegroup = group
+	saveSelectedZone()
 	setZoneListText(zone[2])
+end
+
+local function getZoneByID(group, zoneID)
+	zoneID = tonumber(zoneID)
+	if not group or not zoneID or not zonemenu[group] then
+		return nil
+	end
+	for _, zone in pairs(zonemenu[group]) do
+		if zone[1] == zoneID then
+			return zone
+		end
+	end
+	return nil
 end
 
 local function getDropdownListFrame(level)
@@ -652,7 +673,7 @@ function EveryQuest:EveryQuestInit()
 
 	EveryQuest.CurrentZoneButton = EveryQuest.CurrentZoneButton or _G.EveryQuestCurrentZoneButton or CreateFrame("Button", "EveryQuestCurrentZoneButton", EveryQuestFrame, "UIPanelButtonTemplate")
 	EveryQuest.CurrentZoneButton:SetSize(CURRENT_ZONE_BUTTON_WIDTH + BOTTOM_BUTTON_OVERLAP, BOTTOM_BUTTON_HEIGHT)
-	EveryQuest.CurrentZoneButton:SetText("Current Zone")
+	EveryQuest.CurrentZoneButton:SetText(L["Current Zone"])
 	EveryQuest.CurrentZoneButton:Show()
 	raiseFrame(EveryQuest.CurrentZoneButton)
 	EveryQuest.CurrentZoneButton:ClearAllPoints()
@@ -718,7 +739,9 @@ function EveryQuest:SelectInitialZone()
 	if sessionvars.zoneid and sessionvars.zonegroup then
 		return
 	end
-	if self:SelectCurrentZone() then
+	local savedZone = getZoneByID(self.db.char.zonegroup, self.db.char.zoneid)
+	if savedZone then
+		selectZone(self.db.char.zonegroup, savedZone)
 		return
 	end
 
@@ -811,6 +834,7 @@ function EveryQuest:RegisterEvents()
 	self:RegisterEvent("QUEST_REMOVED")
 	self:RegisterEvent("QUEST_TURNED_IN")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+	self:RegisterEvent("PLAYER_LOGOUT")
 
 	-- Quest abandon is tracked through QUEST_REMOVED; leave Blizzard popup handling intact.
 	-- Quest turn-in is tracked through QUEST_TURNED_IN; leave Blizzard reward handling intact.
@@ -835,7 +859,7 @@ function EveryQuest:ShowCurrentZone()
 	end
 	self.db.profile.view = "zone"
 	if EveryQuest.ListToggleButton then
-		EveryQuest.ListToggleButton:SetText("Show Quest History")
+		EveryQuest.ListToggleButton:SetText(L["Show Quest History"])
 	end
 	self:NewZone()
 end
@@ -1457,6 +1481,10 @@ function EveryQuest:ZONE_CHANGED_NEW_AREA()
 	updateCurrentZoneButtonState()
 end
 
+function EveryQuest:PLAYER_LOGOUT()
+	saveSelectedZone()
+end
+
 function EveryQuest:QUEST_PROGRESS()
 	local questtitle = GetTitleText()
 	if questtitle then
@@ -1846,12 +1874,12 @@ function EveryQuest:List(value)
 	if value == "history" then
 		self.db.profile.view = "history"
 		self:Debug("ListToggle(history)")
-		EveryQuest.ListToggleButton:SetText("Show Zone Quests")
+		EveryQuest.ListToggleButton:SetText(L["Show Zone Quests"])
 		self:NewZone()
 	elseif value == "zone" then
 		self.db.profile.view = "zone"
 		self:Debug("ListToggle(zone)")
-		EveryQuest.ListToggleButton:SetText("Show Quest History")
+		EveryQuest.ListToggleButton:SetText(L["Show Quest History"])
 		self:NewZone()
 	end
 end

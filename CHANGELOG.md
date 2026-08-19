@@ -7,6 +7,13 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve the selected zone across reloads instead of resetting the browser to
+  the player's current zone.
+- Route the `Current Zone`, `Show Quest History`, and `Show Zone Quests` button
+  labels through the existing locale table.
+
 ## [2026.3.3] - 2026-08-18
 
 ### Fixed
