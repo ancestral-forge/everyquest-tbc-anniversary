@@ -13,6 +13,9 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
   the player's current zone.
 - Route the `Current Zone`, `Show Quest History`, and `Show Zone Quests` button
   labels through the existing locale table.
+- Record quest lifecycle updates from quest-log event data without lazy-loading
+  static quest data modules, and avoid double-counting repeated completions when
+  adjacent turn-in events report the same quest.
 
 ## [2026.3.3] - 2026-08-18
 
