@@ -23,7 +23,6 @@ local LIST_TOGGLE_BUTTON_WIDTH = 136
 local CURRENT_ZONE_BUTTON_WIDTH = 108
 local BOTTOM_BUTTON_HEIGHT = 21
 local QUEST_LOG_TOGGLE_TEXT_X_OFFSET = 2
-local clickedID
 local sessionvars = {}
 local QuestMenuFrame
 local zonemenu = { -- Dropdown Zone list
@@ -1954,14 +1953,14 @@ function EveryQuest:ButtonEnter(frame)
 	GameTooltip:Show()
 end
 
-function EveryQuest:BuildQuestMenu()
+function EveryQuest:BuildQuestMenu(displayID)
 	local function statusLine(text, status)
 		return {
 			text = text,
-			checked = self:GetStatus(clickedID, status),
+			checked = self:GetStatus(displayID, status),
 			isNotRadio = true,
 			func = function()
-				self:UpdateStatus(clickedID, status)
+				self:UpdateStatus(displayID, status)
 				CloseDropDownMenus()
 			end,
 		}
@@ -1988,13 +1987,13 @@ function EveryQuest:BuildQuestMenu()
 	}
 end
 
-function EveryQuest:OpenQuestMenu()
+function EveryQuest:OpenQuestMenu(displayID)
 	QuestMenuFrame = QuestMenuFrame or CreateFrame("Frame", "EveryQuestStatusMenu", UIParent, "UIDropDownMenuTemplate")
-	EasyMenu(self:BuildQuestMenu(), QuestMenuFrame, "cursor", 0, 0, "MENU")
+	EasyMenu(self:BuildQuestMenu(displayID), QuestMenuFrame, "cursor", 0, 0, "MENU")
 end
 
 function EveryQuest:ButtonClick(frame, button)
-	clickedID = frame:GetID()
+	local clickedID = frame:GetID()
 	local quest = questdisplay[clickedID]
 	if not quest or not quest.id then return end
 
@@ -2009,7 +2008,7 @@ function EveryQuest:ButtonClick(frame, button)
 			end
 		end
 	elseif button == "RightButton" then
-		self:OpenQuestMenu()
+		self:OpenQuestMenu(clickedID)
 	end
 end
 
