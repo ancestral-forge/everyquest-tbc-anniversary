@@ -54,9 +54,9 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 - Respect disabled quest data modules instead of enabling them during lazy load.
 - Preserve existing quest history when migrating old root-shaped SavedVariables
   into the strict Anniversary schema.
-- Handle the current Anniversary client's hybrid quest-log API by using the
-  still-present quest-log globals for active quest-log entries when
-  `C_QuestLog` entry methods are unavailable.
+- Handle TBC Anniversary's hybrid quest-log API: prefer `C_QuestLog`, but read
+  active quest-log entries through the still-present Blizzard globals where the
+  current client lacks equivalent `C_QuestLog` entry calls.
 - Replace legacy global `gsub` and `sort` calls with namespaced Lua APIs to
   avoid login sync failures.
 

@@ -1,7 +1,7 @@
-# EveryQuest Provenance Notes
+# EveryQuest SVN Import Notes
 
-Reference information for the original EveryQuest package and the current TBC
-Anniversary version.
+Reference information for the original EveryQuest package used as the import
+source.
 
 ## Original Package
 
@@ -15,27 +15,7 @@ Anniversary version.
 - CurseForge file id: `219312`
 - CurseForge supported game version: `2.4.3`
 
-## Current Package
-
-- Addon title: `EveryQuest TBC Anniversary`
-- Maintainer: `Ancestral Forge`
-- Target game version: WoW Anniversary `2.5.6.69110`
-- TOC interface: `20506`
-- Runtime compatibility target: TBC Anniversary only
-- License: `GPL-2.0-only`
-
-## Modernization Summary
-
-- Removed obsolete Ace2-era dependencies and compatibility shims
-- Removed `embeds.xml`
-- Removed unused `modules.xml`
-- Replaced legacy addon loading with `C_AddOns`
-- Replaced legacy quest checks with `C_QuestLog`
-- Uses native saved variables, slash commands, and event handling
-- Ignores old AceDB-shaped saved variables at runtime
-- Uses Blizzard `UIDropDownMenu` and `SOUNDKIT`
-
 ## Attribution
 
-EveryQuest was originally created by kandarz. This TBC Anniversary version is
-maintained and published under the Ancestral Forge label.
+EveryQuest was originally created by kandarz and distributed under the GNU
+General Public License version 2.

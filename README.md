@@ -8,6 +8,11 @@ This continuation targets the TBC Anniversary client only. The original TBC
 release is preserved as provenance and data history, not as a runtime
 compatibility target.
 
+TBC Anniversary exposes a hybrid quest-log API. EveryQuest prefers
+`C_QuestLog`, but uses still-present Blizzard quest-log globals where the
+Anniversary client has no equivalent `C_QuestLog` entry call. That bridge is
+part of the Anniversary runtime target, not support for older clients.
+
 Maintained by Ancestral Forge.
 
 ## Provenance
@@ -36,7 +41,8 @@ Modernization work in this repository includes:
 - Removal of obsolete Ace2-era dependencies and compatibility shims
 - Native saved-variable handling with a strict Anniversary schema
 - Native slash-command handling
-- Use of current Anniversary APIs such as `C_AddOns` and `C_QuestLog`
+- Use of current Anniversary APIs such as `C_AddOns` and `C_QuestLog`, with a
+  narrow bridge for the client's hybrid quest-log entry API
 - Runtime fixes for the modern TBC Anniversary client
 
 ## Releases

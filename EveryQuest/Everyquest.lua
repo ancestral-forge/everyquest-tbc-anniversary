@@ -379,6 +379,8 @@ local function loadQuestDataAddon(addon)
 end
 
 local function getQuestLogInfo(index)
+	-- TBC Anniversary is hybrid: prefer C_QuestLog, then use Blizzard globals
+	-- for active quest-log entry data the client still exposes there.
 	if C_QuestLog and C_QuestLog.GetInfo then
 		return C_QuestLog.GetInfo(index)
 	end
@@ -1149,6 +1151,8 @@ end
 
 local function getNumQuestLogEntries()
 	local numEntries
+	-- TBC Anniversary is hybrid: prefer C_QuestLog, then use the Blizzard
+	-- global when the client has no equivalent C_QuestLog entry-count call.
 	if C_QuestLog and C_QuestLog.GetNumQuestLogEntries then
 		numEntries = C_QuestLog.GetNumQuestLogEntries()
 	elseif GetNumQuestLogEntries then
