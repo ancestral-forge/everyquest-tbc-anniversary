@@ -95,16 +95,6 @@ local function applyDefaults(target, defaults)
 	end
 end
 
-local function copyRootData(source, skipKeys)
-	local target = {}
-	for key, value in pairs(source) do
-		if not skipKeys[key] then
-			target[key] = copyTable(value)
-		end
-	end
-	return target
-end
-
 local function clearTable(target)
 	for key in pairs(target) do
 		target[key] = nil
@@ -112,30 +102,15 @@ local function clearTable(target)
 end
 
 local function getProfileDatabase()
-	if EveryQuestDB.schemaVersion == SAVED_VARIABLES_SCHEMA and type(EveryQuestDB.profile) == "table" then
+	if EveryQuestDB.schemaVersion == SAVED_VARIABLES_SCHEMA and type(EveryQuestDB.profile) == "table" and EveryQuestDB.profile ~= EveryQuestDB then
 		return EveryQuestDB.profile
-	end
-	if type(EveryQuestDB.profile) == "table" and EveryQuestDB.profile ~= EveryQuestDB then
-		return EveryQuestDB.profile
-	end
-	if type(EveryQuestDB.profiles) == "table" and type(EveryQuestDB.profiles.Default) == "table" then
-		return copyTable(EveryQuestDB.profiles.Default)
-	end
-	if next(EveryQuestDB) then
-		return copyRootData(EveryQuestDB, { schemaVersion = true, profile = true, profiles = true })
 	end
 	return {}
 end
 
 local function getCharacterDatabase()
-	if EveryQuestDBPC.schemaVersion == SAVED_VARIABLES_SCHEMA and type(EveryQuestDBPC.char) == "table" then
+	if EveryQuestDBPC.schemaVersion == SAVED_VARIABLES_SCHEMA and type(EveryQuestDBPC.char) == "table" and EveryQuestDBPC.char ~= EveryQuestDBPC then
 		return EveryQuestDBPC.char
-	end
-	if type(EveryQuestDBPC.char) == "table" and EveryQuestDBPC.char ~= EveryQuestDBPC then
-		return EveryQuestDBPC.char
-	end
-	if next(EveryQuestDBPC) then
-		return copyRootData(EveryQuestDBPC, { schemaVersion = true, char = true })
 	end
 	return {}
 end

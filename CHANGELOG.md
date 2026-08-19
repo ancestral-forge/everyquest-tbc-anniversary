@@ -7,6 +7,11 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+### Changed
+
+- Ignore legacy/root-shaped SavedVariables unless they already use the current
+  Anniversary schema, starting incompatible saved data from fresh defaults.
+
 ### Fixed
 
 - Preserve the selected zone across reloads instead of resetting the browser to
