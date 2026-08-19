@@ -51,6 +51,18 @@ GitHub releases are built from tags named `v<version>`, for example
 `v2026.3.1`. The release workflow packages only the addon folders into
 `EveryQuest-TBC-Anniversary-<version>.zip`.
 
+## Development Checks
+
+Run the Lua 5.1 compatibility check before packaging or publishing changes:
+
+```sh
+tools/check-lua51-compat.sh
+```
+
+The check parses every `.lua` file with a Lua 5.1 compiler and rejects common
+Lua 5.2+ standard-library usage that is not available in the Anniversary
+client.
+
 ## Support
 
 If you like this addon or the work behind it, you can support Ancestral Forge
