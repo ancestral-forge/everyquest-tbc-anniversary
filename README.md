@@ -1,67 +1,16 @@
 # EveryQuest TBC Anniversary
 
-EveryQuest TBC Anniversary is a maintained version of EveryQuest for WoW TBC
-Anniversary. It keeps the original purpose of EveryQuest: tracking quest
+EveryQuest TBC Anniversary is a maintained continuation of EveryQuest for WoW
+TBC Anniversary. It keeps the original purpose of EveryQuest: tracking quest
 history and browsing zone quest lists in game.
 
-This continuation targets the TBC Anniversary client only. The original TBC
-release is preserved as provenance and data history, not as a runtime
-compatibility target.
-
-TBC Anniversary exposes a hybrid quest-log API. EveryQuest prefers
-`C_QuestLog`, but uses still-present Blizzard quest-log globals where the
-Anniversary client has no equivalent `C_QuestLog` entry call. That bridge is
-part of the Anniversary runtime target, not support for older clients.
+Target client: WoW Anniversary `2.5.6.69110` / TOC interface `20506`.
 
 Maintained by Ancestral Forge.
 
-## Provenance
-
-EveryQuest was originally created by kandarz and published through WowAce and
-CurseForge under the GNU General Public License version 2.
-
-This repository started from the original TBC-era release package:
-
-- WowAce SVN tag: `https://repos.wowace.com/wow/everyquest/tags/release-5`
-- CurseForge file: `EveryQuest-release-5.zip`
-- CurseForge file ID: `219312`
-- Original supported game version: `2.4.3`
-
-See `SVN_IMPORT_NOTES.md` for the import details.
-See `CHANGELOG.md` for changes in the Ancestral Forge continuation.
-
-## Current Maintainer
-
-This TBC Anniversary version is maintained and published under the Ancestral
-Forge label.
-
-Modernization work in this repository includes:
-
-- Direct support for WoW Anniversary `2.5.6.69110` / TOC interface `20506`
-- Removal of obsolete Ace2-era dependencies and compatibility shims
-- Native saved-variable handling with a strict Anniversary schema
-- Native slash-command handling
-- Use of current Anniversary APIs such as `C_AddOns` and `C_QuestLog`, with a
-  narrow bridge for the client's hybrid quest-log entry API
-- Runtime fixes for the modern TBC Anniversary client
-
-## Releases
-
-GitHub releases are built from tags named `v<version>`, for example
-`v2026.3.1`. The release workflow packages only the addon folders into
-`EveryQuest-TBC-Anniversary-<version>.zip`.
-
-## Development Checks
-
-Run the Lua 5.1 compatibility check before packaging or publishing changes:
-
-```sh
-tools/check-lua51-compat.sh
-```
-
-The check parses every `.lua` file with a Lua 5.1 compiler and rejects common
-Lua 5.2+ standard-library usage that is not available in the Anniversary
-client.
+See `SVN_IMPORT_NOTES.md` for original package provenance, `CHANGELOG.md` for
+release history, and `CONTRIBUTING.md` for development checks and release
+rules.
 
 ## Support
 
