@@ -10,8 +10,6 @@ Quest Status:
 local EveryQuest, self = EveryQuest, EveryQuest
 local L = EveryQuest_Locale
 local questdisplay = {}
-local sorta = {}
-local sortb = {}
 local SECOND = 1
 local MINUTE = 60
 local HOUR = 3600
@@ -1016,7 +1014,7 @@ function EveryQuest:GetQuestData(questid, category)
 	end
 	if zonegroup ~= nil or zoneid ~= nil then
 		self:Debug("1GetQuestData - zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-		quests = self:GetQuestZoneData(zonegroup, zoneid, "zone")
+		local quests = self:GetQuestZoneData(zonegroup, zoneid, "zone")
 		if quests == false then
 			return false
 		end
@@ -1055,7 +1053,7 @@ function EveryQuest:GetQuestData(questid, category)
 		end
 	else
 		self:Debug("Expanded Search")
-		groups = {"Battlegrounds", "Classes", "Dungeons", "Kalimdor", "Eastern Kingdoms", "Miscellaneous", "Outland", "Professions", "Raids", "Seasonal"}
+		local groups = {"Battlegrounds", "Classes", "Dungeons", "Kalimdor", "Eastern Kingdoms", "Miscellaneous", "Outland", "Professions", "Raids", "Seasonal"}
 		for k,v in pairs(groups) do
 			local moduledata = self:LoadQuestData(v)
 			if moduledata ~= false then
@@ -1085,7 +1083,7 @@ function EveryQuest:GetQuestZoneData(zonegroup, zoneid, view)
 		view = self.db.profile.view
 	end
 	if view == "zone" then
-		groupdata = self:LoadQuestData(zonegroup)
+		local groupdata = self:LoadQuestData(zonegroup)
 		if groupdata ~= false then
 			return groupdata[zoneid]
 		else
@@ -1793,13 +1791,14 @@ function EveryQuest:UpdateFrame()
 		end
 		for j = buttonid, 27 ,1 do
 			questdisplay[j] = nil
-	ListFrame = _G["EveryQuestTitle"..j]
-			ListFrame:Hide()
+			local listFrame = _G["EveryQuestTitle"..j]
+			listFrame:Hide()
 		end
 	end
 end
 
 function EveryQuest:SortTable(a,b,questlist)
+	local sorta, sortb
 	if questlist ~= nil then
 		--self:Debug("sort:history")
 		sorta = questlist[a]
@@ -1809,12 +1808,12 @@ function EveryQuest:SortTable(a,b,questlist)
 		sorta = a
 		sortb = b
 	end
-	if sorta.d == nil then adaily = 0 else adaily = sorta.d end
-	if sortb.d == nil then bdaily = 0 else bdaily = sortb.d end
-	if sorta.t == nil then atype = 9999 else atype = sorta.t end
-	if sortb.t == nil then btype = 9999 else btype = sortb.t end
-	if sorta.l == nil then if sorta.r == nil then alevel = 0 else alevel = sorta.r end else alevel = sorta.l end
-	if sortb.l == nil then if sortb.r == nil then blevel = 0 else blevel = sortb.r end else blevel = sortb.l end
+	local adaily = sorta.d or 0
+	local bdaily = sortb.d or 0
+	local atype = sorta.t or 9999
+	local btype = sortb.t or 9999
+	local alevel = sorta.l or sorta.r or 0
+	local blevel = sortb.l or sortb.r or 0
 	if adaily == bdaily then
 		if atype == btype then
 			if (alevel == blevel) then-- or (alevel == d.r) or (c.r == d.r) or (c.r == d.r) then
@@ -1843,13 +1842,15 @@ function EveryQuest:SortTable(a,b,questlist)
 end
 
 function EveryQuest:UpdateButton(buttonid, quest, arrayid)
-	if questtitle ~= "Collapsed" and self.db.profile.view == "history" or self.db.profile.view == "zone" then
-		ListFrame = _G["EveryQuestTitle"..buttonid]
-		clearButtonTexture(ListFrame)
-		setButtonText(ListFrame, "")
+	local view = self.db.profile.view
+	if view == "history" or view == "zone" then
+		local listFrame = _G["EveryQuestTitle"..buttonid]
+		clearButtonTexture(listFrame)
+		setButtonText(listFrame, "")
 		if not questdisplay[buttonid] then questdisplay[buttonid] = quest end
 		if questdisplay[buttonid].id ~= quest.id then questdisplay[buttonid] = nil questdisplay[buttonid] = quest end
 		--questdisplay[buttonid].arrayid = arrayid
+		local qTag
 		if quest["t"] then
 			--self:Debug("questtype:"..quest.t)
 			qTag = self:QuestType(quest["t"])
@@ -1870,30 +1871,30 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 				level = "--"
 			end
 		end
-		setButtonText(ListFrame, "["..level..qTag.."] "..quest["n"])
+		setButtonText(listFrame, "["..level..qTag.."] "..quest["n"])
 		--r,g,b = EveryQuest:GetQuestColor(zonelist.value, j)
 		if self.db.char.history and self.db.char.history[sessionvars.zoneid] and self.db.char.history[sessionvars.zoneid][quest["id"]] then
 			local history = self.db.char.history[sessionvars.zoneid][quest["id"]]
 			if history["status"] == 1 then -- Completed
-				setButtonTextColor(ListFrame, self:GetColor(1))
+				setButtonTextColor(listFrame, self:GetColor(1))
 			elseif history["status"] == -1 then -- Failed/Abandoned
-				setButtonTextColor(ListFrame, self:GetColor(-1))
+				setButtonTextColor(listFrame, self:GetColor(-1))
 			elseif history["status"] == 2 then -- Turned in
-				setButtonTextColor(ListFrame, self:GetColor(2))
+				setButtonTextColor(listFrame, self:GetColor(2))
 			elseif history["status"] == 0 then -- In Progress (Yellow)
-				setButtonTextColor(ListFrame, self:GetColor(0))
+				setButtonTextColor(listFrame, self:GetColor(0))
 			elseif history["status"] == nil and isQuestUnavailable(quest) then
-				setButtonTextColor(ListFrame, self:GetColor(-2))
+				setButtonTextColor(listFrame, self:GetColor(-2))
 			else
-				setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
+				setButtonTextColor(listFrame, self:GetColor("FFFFFF"))
 			end
 		elseif isQuestUnavailable(quest) then
-			setButtonTextColor(ListFrame, self:GetColor(-2))
+			setButtonTextColor(listFrame, self:GetColor(-2))
 		else
-			setButtonTextColor(ListFrame, self:GetColor("FFFFFF"))
+			setButtonTextColor(listFrame, self:GetColor("FFFFFF"))
 		end
 		--ListFrame:SetTextColor(r,g,b) --ListFrame:SetTextColor(GetDifficultyColor(history[j].Level).r,GetDifficultyColor(history[j].Level).g,GetDifficultyColor(history[j].Level).b)
-		ListFrame:Show()
+		listFrame:Show()
 	end
 end
 
@@ -1934,7 +1935,7 @@ function EveryQuest:ButtonEnter(frame)
 	GameTooltip:AddLine(L["Status: "] .. queststatus,self:GetColor(status))
 	if isCollected then
 		if self.db.char.history[zoneid][quest.id].completed then
-			completedline = L["Completed"]
+			local completedline = L["Completed"]
 			if self.db.char.history[zoneid][quest.id].count then
 				completedline = completedline .. " ("..self.db.char.history[zoneid][quest.id].count.." "..L["Times"]..")"
 			end
