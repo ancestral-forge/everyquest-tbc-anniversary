@@ -12,10 +12,13 @@ EveryQuest_Locale = {
 	["EveryQuest Log"] = true,
 	["EveryQuest"] = true,
 	["Toggle Frame"] = true,
+	["Current Zone"] = true,
 
 	["-- Select --"] = true,
 	["Select a zone to show quests"] = true,
 	["No quests to display"] = true,
+	["Show Quest History"] = true,
+	["Show Zone Quests"] = true,
 	["Loading "] = true,
 	["Could not load "] = true,
 	["Failed or Abandoned"] = true,
