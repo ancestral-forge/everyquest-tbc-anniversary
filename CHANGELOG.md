@@ -7,10 +7,23 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+## [2026.3.4] - 2026-08-20
+
+### Added
+
+- Add optional Lava support links and GitHub funding metadata for Ancestral
+  Forge.
+- Add maintainer-facing contribution and release documentation.
+- Add reusable Lua 5.1 compatibility checks for pull requests and releases.
+
 ### Changed
 
+- Clarify the current Anniversary hybrid quest-log API bridge in project
+  documentation.
 - Ignore legacy/root-shaped SavedVariables unless they already use the current
   Anniversary schema, starting incompatible saved data from fresh defaults.
+- Keep quest-list lookup, sorting, tooltip, and status-menu scratch state local
+  to EveryQuest functions, reducing accidental WoW global namespace leakage.
 
 ### Fixed
 
