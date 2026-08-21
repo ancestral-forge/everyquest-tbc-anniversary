@@ -7,10 +7,9 @@ Quest Status:
 2 = Turned In
 --]]
 
-local EveryQuest, self = EveryQuest, EveryQuest
+local EveryQuest = EveryQuest
 local L = EveryQuest_Locale
 local questdisplay = {}
-local SECOND = 1
 local MINUTE = 60
 local HOUR = 3600
 local DAY = 86400
@@ -659,13 +658,13 @@ local function updateCurrentZoneButtonState()
 	if not button then
 		return
 	end
-	if not self.db or not self.db.profile then
+	if not EveryQuest.db or not EveryQuest.db.profile then
 		button:Enable()
 		return
 	end
 
 	local currentGroup, currentZone = getCurrentZoneSelection()
-	if currentGroup and currentZone and self.db.profile.view == "zone" and sessionvars.zonegroup == currentGroup and sessionvars.zoneid == currentZone[1] then
+	if currentGroup and currentZone and EveryQuest.db.profile.view == "zone" and sessionvars.zonegroup == currentGroup and sessionvars.zoneid == currentZone[1] then
 		button:Disable()
 	else
 		button:Enable()
@@ -917,9 +916,9 @@ function EveryQuest:SavePosition()
 end
 
 function EveryQuest_OnShow()
-	if self.db.char.saved.eqlogposx and self.db.char.saved.eqlogposy then
+	if EveryQuest.db.char.saved.eqlogposx and EveryQuest.db.char.saved.eqlogposy then
 		EveryQuestFrame:ClearAllPoints()
-		EveryQuestFrame:SetPoint("TOPLEFT","UIParent", "BOTTOMLEFT", self.db.char.saved.eqlogposx, self.db.char.saved.eqlogposy)
+		EveryQuestFrame:SetPoint("TOPLEFT","UIParent", "BOTTOMLEFT", EveryQuest.db.char.saved.eqlogposx, EveryQuest.db.char.saved.eqlogposy)
 	end
 	EveryQuest:UpdateFrame()
 end
@@ -944,8 +943,7 @@ end
 function EveryQuest:timeDiff(timestamp)
     local now = time()
 	local amount = now - timestamp
-	local value
-	local seconds, minutes, hours, days
+	local minutes, hours, days
     --If the difference is positive "ago" - negative "away"
 
 	--amount = amount + DAY + HOUR*5
@@ -1003,7 +1001,7 @@ function EveryQuest:GetQuestData(questid, category)
 	local zonegroup, zoneid
 
 	for k,v in pairs(zonemenu) do -- for each top level category
-		for ak,av in pairs(v) do -- for each category
+		for _,av in pairs(v) do -- for each category
 			if av[2] == category then
 				zonegroup = k
 				zoneid = av[1]
@@ -1017,7 +1015,7 @@ function EveryQuest:GetQuestData(questid, category)
 		if quests == false then
 			return false
 		end
-		for k,quest in pairs(quests) do
+		for _,quest in pairs(quests) do
 			--for kt,vt in pairs(quest) do self:Print(kt .. " - " .. vt) end
 			if quest.id == questid then
 				if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
@@ -1036,8 +1034,8 @@ function EveryQuest:GetQuestData(questid, category)
 		if moduledata == false then
 			return false
 		end
-		for k,part in pairs(moduledata) do
-			for kt,quest in pairs(part) do
+		for _,part in pairs(moduledata) do
+			for _,quest in pairs(part) do
 				--for kt,vt in pairs(quest) do self:Print(kt .. " - " .. vt) end
 				if quest.id == questid then
 					if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
@@ -1053,11 +1051,11 @@ function EveryQuest:GetQuestData(questid, category)
 	else
 		self:Debug("Expanded Search")
 		local groups = {"Battlegrounds", "Classes", "Dungeons", "Kalimdor", "Eastern Kingdoms", "Miscellaneous", "Outland", "Professions", "Raids", "Seasonal"}
-		for k,v in pairs(groups) do
+		for _,v in pairs(groups) do
 			local moduledata = self:LoadQuestData(v)
 			if moduledata ~= false then
 				for k,part in pairs(moduledata) do
-					for kt,quest in pairs(part) do
+					for _,quest in pairs(part) do
 						--for kt,vt in pairs(quest) do self:Print(kt .. " - " .. vt) end
 						if quest.id == questid then
 							if self.db.char.history[k] and self.db.char.history[k][questid] then
@@ -1085,17 +1083,15 @@ function EveryQuest:GetQuestZoneData(zonegroup, zoneid, view)
 		local groupdata = self:LoadQuestData(zonegroup)
 		if groupdata ~= false then
 			return groupdata[zoneid]
-		else
-			return false
 		end
-	else
-		if self.db.char.history and self.db.char.history[zoneid] then
-			return self.db.char.history[zoneid]
-		else
-			return false
-		end
+		return false
 	end
-	return false
+
+	if self.db.char.history and self.db.char.history[zoneid] then
+		return self.db.char.history[zoneid]
+	else
+		return false
+	end
 end
 
 function EveryQuest:ShowListMessage(message)
@@ -1732,7 +1728,7 @@ function EveryQuest:UpdateFrame()
 		local questcount = 0
 		local historylist = {}
 		if questlist then
-			for k, v in pairs (questlist) do
+			for _, v in pairs (questlist) do
 				if v.s then
 					if v.s == sessionvars.faction or v.s == 3 or v.s == 0 then
 						questcount = questcount +1

@@ -24,15 +24,17 @@ changes narrow, traceable, and aligned with that runtime.
 
 ## Local Checks
 
-Run the Lua compatibility check before publishing changes:
+Run the Lua linter and compatibility check before publishing changes:
 
 ```sh
+luacheck --codes .
 tools/check-lua51-compat.sh
 ```
 
-The check parses every `.lua` file with a Lua 5.1 compiler and rejects common
-Lua 5.2+ standard-library usage that is not available in the Anniversary
-client.
+Luacheck uses `.luacheckrc` with Lua 5.1 semantics and a small whitelist of
+EveryQuest and WoW globals used by this addon. The compatibility check parses
+every addon `.lua` file with Lua 5.1 and rejects common Lua 5.2+
+standard-library usage that is not available in the Anniversary client.
 
 Also run lightweight repository checks when relevant:
 
@@ -44,9 +46,9 @@ xmllint --noout EveryQuest/Everyquest.xml EveryQuest/bindings.xml
 Static checks prove syntax and file hygiene only. They do not prove in-game
 behavior.
 
-The reusable linter workflow runs the Lua 5.1 compatibility check for branch
-pushes, pull requests, manual dispatches, and releases. The release workflow
-must depend on this linter gate before packaging.
+The reusable linter workflow runs Luacheck and the Lua 5.1 compatibility check
+for main pushes, pull requests, manual dispatches, and releases. The release
+workflow must depend on this linter gate before packaging.
 
 ## In-Game Verification
 
