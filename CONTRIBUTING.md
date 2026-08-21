@@ -79,6 +79,15 @@ proof.
   directories.
 - Release archives should not include repository docs, workflow files, or
   branding assets unless the packaging contract intentionally changes.
+- `tools/package-release.sh` is the shared packaging contract for GitHub and
+  GitLab. Keep its output deterministic so both platforms produce the same
+  archive from the same tag.
+- GitHub is the canonical repository. GitLab receives branches and tags through
+  a write-enabled project deploy key and independently publishes backup
+  releases from `v<TOC version>` tags.
+- Mirror automation must not force-push or propagate deletions. GitLab is a
+  backup and should preserve refs and releases if the GitHub source is removed
+  or rewritten accidentally.
 
 ## Pull Requests
 
