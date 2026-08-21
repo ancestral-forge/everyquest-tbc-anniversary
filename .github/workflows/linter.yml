@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Luacheck and Lua 5.1 compatibility checks
-        uses: BigWigsMods/luacheck@v1
+        uses: ancestral-forge/luacheck@v1
         with:
           args: --codes
           custom_script: tools/check-lua51-compat.lua
