@@ -1,5 +1,5 @@
 EveryQuest = EveryQuest or {}
-local EveryQuest, self = EveryQuest, EveryQuest
+local EveryQuest = EveryQuest
 EveryQuestData = {}
 EveryQuest.eventFrame = EveryQuest.eventFrame or CreateFrame("Frame")
 EveryQuest.registeredEvents = EveryQuest.registeredEvents or {}

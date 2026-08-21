@@ -12,21 +12,18 @@ permissions:
   contents: read
 
 jobs:
-  lua51-compat:
-    name: Lua 5.1 compatibility
+  lua:
+    name: Lua lint
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Lua 5.1
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y lua5.1
-
-      - name: Check Lua 5.1 compatibility
-        shell: bash
-        run: tools/check-lua51-compat.sh
+      - name: Run Luacheck and Lua 5.1 compatibility checks
+        uses: BigWigsMods/luacheck@v1
+        with:
+          args: --codes
+          custom_script: tools/check-lua51-compat.lua
+          custom_args: .
+          job_summary: true
