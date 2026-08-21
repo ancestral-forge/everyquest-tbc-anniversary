@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="${PACKAGE_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+repo_root="$(cd "$repo_root" && pwd)"
 dist_dir="$repo_root/dist"
 staging_dir="$dist_dir/package"
 
