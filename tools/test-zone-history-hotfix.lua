@@ -73,4 +73,14 @@ local maraudon = EveryQuest.db.char.history.unmapped[7070]
 assert(maraudon and maraudon.status == -1, "wrong-zone placeholders must be quarantined without losing runtime state")
 assert(EveryQuest.db.char.history[15][7070] == nil, "wrong-zone placeholders must not remain in the current zone")
 
-print("Quest type, unmapped history, and hydration tests passed.")
+local sortSource = assert(source:match("(function EveryQuest:SortTable.-\nend)\n\nfunction EveryQuest:UpdateButton"))
+assert(loadstring(sortSource))()
+assert(EveryQuest:SortTable({t = 84, n = "Escort"}, {n = "Normal"}) == true)
+assert(EveryQuest:SortTable({n = "Normal"}, {t = 84, n = "Escort"}) == false, "type sorting must be symmetric")
+
+local updateFrameSource = assert(source:match("(function EveryQuest:UpdateFrame.-)\nfunction EveryQuest:SortTable"))
+local resetPosition = assert(updateFrameSource:find("questdisplay[j] = nil", 1, true))
+local dataPosition = assert(updateFrameSource:find("questlist = self:GetQuestZoneData", 1, true))
+assert(resetPosition < dataPosition, "stale rows must be cleared before quest data is rendered")
+
+print("Zone/history hotfix tests passed.")

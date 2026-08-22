@@ -1763,6 +1763,13 @@ end
 function EveryQuest:UpdateFrame()
 	if EveryQuestFrame:IsShown() then
 		updateCurrentZoneButtonState()
+		for j = 1, 27, 1 do
+			questdisplay[j] = nil
+			local listFrame = _G["EveryQuestTitle"..j]
+			if listFrame then
+				listFrame:Hide()
+			end
+		end
 		--self:Debug("UpdateFrame")
 		local buttonid = 1
 		local controli = 0
@@ -1881,7 +1888,7 @@ function EveryQuest:SortTable(a,b,questlist)
 			end
 		elseif atype < btype then
 			return true
-		elseif btype > atype then
+		elseif atype > btype then
 			return false
 		end
 	elseif adaily > bdaily then
