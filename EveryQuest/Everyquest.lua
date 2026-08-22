@@ -4,8 +4,8 @@ Quest Status:
 -2 = Unavailable
 -1 = Failed
 0 = In Progress
-1 = Completed
-2 = Turned In
+1 = Ready to Turn In
+2 = Completed
 --]]
 
 local EveryQuest = EveryQuest
@@ -2125,9 +2125,9 @@ function EveryQuest:ButtonEnter(frame)
 	elseif status == 0 then
 		queststatus = L["In Progress"]
 	elseif status == 1 then
-		queststatus = L["Completed"]
+		queststatus = L["Ready to Turn In"]
 	elseif status == 2 then
-		queststatus = L["Turned In"]
+		queststatus = L["Completed"]
 	else
 		status = 99
 	end
@@ -2175,8 +2175,8 @@ function EveryQuest:BuildQuestMenu(displayID)
 			isTitle = true,
 			notCheckable = true,
 		},
-		statusLine(L["Turned In"], 2),
-		statusLine(L["Completed"], 1),
+		statusLine(L["Completed"], 2),
+		statusLine(L["Ready to Turn In"], 1),
 		statusLine(L["In Progress"], 0),
 		statusLine(L["Unavailable"], -2),
 		statusLine(L["Abandoned"], -3),

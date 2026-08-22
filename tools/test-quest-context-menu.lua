@@ -12,7 +12,7 @@ function EveryQuest:BuildQuestMenu(displayID)
 	return {
 		{text = "Change Status", isTitle = true},
 		{},
-		{text = "Turned In", checked = true},
+		{text = "Completed", checked = true},
 	}
 end
 
