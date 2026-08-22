@@ -7,8 +7,12 @@ context: |
   Code style: prefer small local changes, native Anniversary APIs and events,
   Blizzard-owned secure UI behavior, preserved SavedVariables, attribution,
   and data provenance. Avoid speculative compatibility layers and dependencies.
-  Workflow: inspect state, plan first, and implement in a clean separate
+  AI workflow: inspect state, plan first, and implement in a clean separate
   worktree on a task-named branch from current origin/main.
+  Human workflow: normal branch, focused change, local gate when available, and
+  pull request. Humans do not need AI tools, OpenSpec, or a separate worktree.
+  OpenSpec threshold: require it before merge for high-risk or durable contract
+  changes; ordinary focused work can use an issue or pull-request description.
   Required local gate: tools/verify-addon.sh
   Evidence model: report static checks, tests, packaging, install parity, live
   client behavior, Git/PR/CI state, and release state independently.
@@ -26,7 +30,7 @@ rules:
     - Explain event ownership, data migration, UI ownership, and rollback when any is affected.
     - Prefer the smallest design that satisfies the requirements and identify rejected broad alternatives.
   tasks:
-    - Start with repository state, worktree, and relevant-spec inspection tasks before implementation.
+    - For AI implementation, start with repository state, worktree, and relevant-spec inspection tasks.
     - Include tools/verify-addon.sh after implementation and focused regression tests when feasible.
     - Keep package, install parity, live WoW, remote CI, merge, tag, and release tasks separate.
     - Leave evidence-dependent tasks unchecked until their exact command or runtime path succeeds.
