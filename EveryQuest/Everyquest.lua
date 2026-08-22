@@ -1848,7 +1848,7 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 		local qTag
 		if quest["t"] then
 			--self:Debug("questtype:"..quest.t)
-			qTag = self:QuestType(quest["t"])
+			qTag = self:QuestType(quest["t"]) or ""
 		else
 			qTag = ""
 		end
@@ -2085,4 +2085,5 @@ function EveryQuest:QuestType(qtype)
 	elseif qtype == 41 then
 		return L["P"], L["PvP"]
 	end
+	return ""
 end

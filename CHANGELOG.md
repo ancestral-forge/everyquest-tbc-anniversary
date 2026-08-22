@@ -7,6 +7,11 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevent zone quest lists from failing to render when a legacy quest type lacks
+  a display tag.
+
 ## [2026.3.4] - 2026-08-20
 
 ### Added
