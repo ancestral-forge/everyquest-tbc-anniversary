@@ -11,6 +11,11 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 - Keep Failed and Abandoned mutually exclusive, allow quests to be marked
   Unavailable, and provide an option to clear a manually stored status.
+- Append `(Failed)` or `(Abandoned)` to affected quest rows without changing
+  their existing status colors.
+- When Questie is enabled, mark a quest Unavailable if its next quest in the
+  chain is already active or completed; an explicit manual status overrides
+  that automatic result.
 - Open the quest status menu on right-click without relying on the unavailable
   global `EasyMenu` helper.
 - Prevent zone quest lists from failing to render when a legacy quest type lacks
