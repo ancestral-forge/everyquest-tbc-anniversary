@@ -11,6 +11,7 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 - Prevent zone quest lists from failing to render when a legacy quest type lacks
   a display tag.
+- Display legacy Escort quest type `84` with the `E` tag.
 - Restore missing names, levels, faction, and quest-type metadata in saved quest
   history when the matching static data module is loaded.
 - Keep unknown quest lifecycle events unmapped until quest-log or loaded static
