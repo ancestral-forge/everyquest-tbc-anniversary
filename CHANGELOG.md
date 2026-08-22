@@ -9,10 +9,15 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ### Fixed
 
+- Open the quest status menu on right-click without relying on the unavailable
+  global `EasyMenu` helper.
 - Prevent zone quest lists from failing to render when a legacy quest type lacks
   a display tag.
+- Display legacy Escort quest type `84` with the `E` tag.
 - Restore missing names, levels, faction, and quest-type metadata in saved quest
   history when the matching static data module is loaded.
+- Keep unknown quest lifecycle events unmapped until quest-log or loaded static
+  data can resolve their canonical zone.
 
 ## [2026.3.4] - 2026-08-20
 

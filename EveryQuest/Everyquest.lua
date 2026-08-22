@@ -381,7 +381,7 @@ local function getQuestLogInfo(index)
 		return C_QuestLog.GetInfo(index)
 	end
 	if GetQuestLogTitle then
-		local title, _, _, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
+		local title, _, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
 		return {
 			title = title,
 			isHeader = isHeader,
@@ -1126,6 +1126,53 @@ local function applyStaticQuestMetadata(history, quest)
 	return changed
 end
 
+local function copyMissingQuestHistoryFields(target, source)
+	for field, value in pairs(source) do
+		if target[field] == nil then
+			target[field] = value
+		end
+	end
+end
+
+local function resolveQuestHistoryZone(historyRoot, questid, canonicalZoneID)
+	local canonicalHistory = historyRoot[canonicalZoneID]
+	if type(canonicalHistory) ~= "table" then
+		canonicalHistory = nil
+	end
+	local canonicalQuest = canonicalHistory and canonicalHistory[questid]
+	local misplaced = {}
+	local changed = false
+
+	for savedZoneID, zoneHistory in pairs(historyRoot) do
+		if type(zoneHistory) == "table" then
+			local savedQuest = zoneHistory[questid]
+			if savedQuest then
+				if savedZoneID == canonicalZoneID then
+					canonicalQuest = savedQuest
+				else
+					table.insert(misplaced, {zoneid = savedZoneID, quest = savedQuest})
+				end
+			end
+		end
+	end
+
+	for _, entry in ipairs(misplaced) do
+		if not canonicalQuest then
+			if type(historyRoot[canonicalZoneID]) ~= "table" then
+				historyRoot[canonicalZoneID] = {}
+			end
+			historyRoot[canonicalZoneID][questid] = entry.quest
+			canonicalQuest = entry.quest
+		else
+			copyMissingQuestHistoryFields(canonicalQuest, entry.quest)
+		end
+		historyRoot[entry.zoneid][questid] = nil
+		changed = true
+	end
+
+	return canonicalQuest, changed
+end
+
 function EveryQuest:HydrateQuestHistoryForGroup(group)
 	if not group or not EveryQuestData or not EveryQuestData[group] or not self.db.char.history then
 		return 0
@@ -1133,12 +1180,18 @@ function EveryQuest:HydrateQuestHistoryForGroup(group)
 
 	local hydrated = 0
 	for zoneid, quests in pairs(EveryQuestData[group]) do
-		local history = self.db.char.history[zoneid]
-		if type(quests) == "table" and type(history) == "table" then
+		if type(quests) == "table" then
 			for _, quest in pairs(quests) do
 				local questid = tonumber(quest and quest.id)
-				local savedQuest = questid and history[questid]
+				local savedQuest, moved
+				if questid then
+					savedQuest, moved = resolveQuestHistoryZone(self.db.char.history, questid, zoneid)
+				end
+				local changed = moved
 				if savedQuest and applyStaticQuestMetadata(savedQuest, quest) then
+					changed = true
+				end
+				if savedQuest and changed then
 					hydrated = hydrated + 1
 				end
 			end
@@ -1318,6 +1371,27 @@ function EveryQuest:GetHistoryByQuestID(questid)
 	end
 end
 
+local function getLoadedQuestDataByID(questid)
+	if not EveryQuestData then
+		return nil
+	end
+
+	for _, groupData in pairs(EveryQuestData) do
+		if type(groupData) == "table" then
+			for zoneid, quests in pairs(groupData) do
+				if type(quests) == "table" then
+					for _, quest in pairs(quests) do
+						if tonumber(quest and quest.id) == questid then
+							return quest, zoneid
+						end
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+
 function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle, daily, questLevel)
 	if self.db.char.history == nil then
 		self.db.char.history = {}
@@ -1340,6 +1414,10 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 	end
 	rememberQuestContext(questid, category, questTitle, daily, questLevel)
 	local categoryZoneID = getZoneIDByCategory(category)
+	local staticQuest, staticZoneID = getLoadedQuestDataByID(questid)
+	if not categoryZoneID and staticZoneID then
+		categoryZoneID = staticZoneID
+	end
 
 	if categoryZoneID and self.db.char.history[categoryZoneID] and self.db.char.history[categoryZoneID][questid] then
 		if history and historyZoneID and historyZoneID ~= categoryZoneID and self.db.char.history[historyZoneID] then
@@ -1367,14 +1445,6 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 	if not history then
 		local zoneid = categoryZoneID
 		if not zoneid then
-			local _, currentZone = getCurrentZoneSelection()
-			if currentZone then
-				zoneid = currentZone[1]
-				category = category or currentZone[2]
-				rememberQuestContext(questid, category, questTitle, daily, questLevel)
-			end
-		end
-		if not zoneid then
 			return false
 		end
 		if self.db.char.history[zoneid] == nil then
@@ -1385,11 +1455,17 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 			n = questTitle or ("Quest " .. questid),
 			s = 3,
 		}
+		if staticQuest then
+			applyStaticQuestMetadata(history, staticQuest)
+		end
 		self.db.char.history[zoneid][questid] = history
 		historyZoneID = zoneid
 		added = true
 	end
 
+	if staticQuest and applyStaticQuestMetadata(history, staticQuest) then
+		changed = not added
+	end
 	if questTitle and questTitle ~= "" then
 		history.n = questTitle
 	end
@@ -2018,9 +2094,23 @@ function EveryQuest:BuildQuestMenu(displayID)
 	}
 end
 
+local function initializeQuestDropdown(frame, level, menuItems)
+	menuItems = menuItems or frame.menuItems
+	for index, item in ipairs(menuItems or {}) do
+		if item.text then
+			item.index = index
+			UIDropDownMenu_AddButton(item, level)
+		end
+	end
+end
+
 function EveryQuest:OpenQuestMenu(displayID)
 	QuestMenuFrame = QuestMenuFrame or CreateFrame("Frame", "EveryQuestStatusMenu", UIParent, "UIDropDownMenuTemplate")
-	EasyMenu(self:BuildQuestMenu(displayID), QuestMenuFrame, "cursor", 0, 0, "MENU")
+	local menuItems = self:BuildQuestMenu(displayID)
+	QuestMenuFrame.displayMode = "MENU"
+	QuestMenuFrame.menuItems = menuItems
+	UIDropDownMenu_Initialize(QuestMenuFrame, initializeQuestDropdown, "MENU", nil, menuItems)
+	ToggleDropDownMenu(1, nil, QuestMenuFrame, "cursor", 0, 0, menuItems)
 end
 
 function EveryQuest:ButtonClick(frame, button)
@@ -2119,6 +2209,8 @@ function EveryQuest:QuestType(qtype)
 		return L["D"], L["Dungeon"]
 	elseif qtype == 41 then
 		return L["P"], L["PvP"]
+	elseif qtype == 84 then
+		return L["E"], L["Escort"]
 	end
 	return ""
 end

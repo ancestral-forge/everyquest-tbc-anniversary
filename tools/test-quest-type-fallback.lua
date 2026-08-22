@@ -22,5 +22,6 @@ setfenv(loader, { EveryQuest = EveryQuest })
 loader(L)
 
 assert(EveryQuest:QuestType(1) == "G", "group quest type must keep its display tag")
-assert(EveryQuest:QuestType(84) == "", "legacy quest type 84 must fall back to an empty display tag")
+local escortTag, escortName = EveryQuest:QuestType(84)
+assert(escortTag == "E" and escortName == "Escort", "escort quest type 84 must have an explicit display tag")
 assert(EveryQuest:QuestType(9999) == "", "future unknown quest types must use an empty display tag")
