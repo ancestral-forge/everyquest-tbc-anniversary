@@ -1113,6 +1113,68 @@ function EveryQuest:ShowListMessage(message)
 	end
 end
 
+local questMetadataFields = {"id", "n", "l", "r", "s", "t", "d"}
+
+local function applyStaticQuestMetadata(history, quest)
+	local changed = false
+	for _, field in ipairs(questMetadataFields) do
+		if quest[field] ~= nil and history[field] ~= quest[field] then
+			history[field] = quest[field]
+			changed = true
+		end
+	end
+	return changed
+end
+
+function EveryQuest:HydrateQuestHistoryForGroup(group)
+	if not group or not EveryQuestData or not EveryQuestData[group] or not self.db.char.history then
+		return 0, 0
+	end
+
+	local hydrated, moved = 0, 0
+	local groupQuestIDs = {}
+	for zoneid, quests in pairs(EveryQuestData[group]) do
+		if type(quests) == "table" then
+			groupQuestIDs[zoneid] = {}
+			for _, quest in pairs(quests) do
+				local questid = tonumber(quest and quest.id)
+				if questid then
+					groupQuestIDs[zoneid][questid] = true
+					local history, historyZoneID = self:GetHistoryByQuestID(questid)
+					if history then
+						if historyZoneID ~= zoneid then
+							self.db.char.history[zoneid] = self.db.char.history[zoneid] or {}
+							self.db.char.history[zoneid][questid] = history
+							self.db.char.history[historyZoneID][questid] = nil
+							moved = moved + 1
+						end
+						if applyStaticQuestMetadata(history, quest) then
+							hydrated = hydrated + 1
+						end
+					end
+				end
+			end
+		end
+	end
+
+	for zoneid, knownQuestIDs in pairs(groupQuestIDs) do
+		local misplaced = {}
+		for questid, history in pairs(self.db.char.history[zoneid] or {}) do
+			local numericQuestID = tonumber(questid)
+			if numericQuestID and history.n == "Quest " .. numericQuestID and not knownQuestIDs[numericQuestID] then
+				table.insert(misplaced, questid)
+			end
+		end
+		for _, questid in ipairs(misplaced) do
+			self.db.char.history.unmapped = self.db.char.history.unmapped or {}
+			self.db.char.history.unmapped[questid] = self.db.char.history[zoneid][questid]
+			self.db.char.history[zoneid][questid] = nil
+			moved = moved + 1
+		end
+	end
+	return hydrated, moved
+end
+
 function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 	if not group or not EveryQuestData or not EveryQuestData[group] then
 		return 0, 0, 0, 0
@@ -1195,6 +1257,7 @@ function EveryQuest:LoadQuestData(group)
 	else
 		self:Debug("Module "..concat(group).." is loaded")
 	end
+	self:HydrateQuestHistoryForGroup(group)
 	self:SyncCompletedQuestFlagsForGroup(group, true)
 	--for k,v in pairs(EveryQuestData) do self:Debug(k) end
 	return EveryQuestData[group] --questdata[varname] and varname
@@ -1332,15 +1395,7 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 	if not history then
 		local zoneid = categoryZoneID
 		if not zoneid then
-			local _, currentZone = getCurrentZoneSelection()
-			if currentZone then
-				zoneid = currentZone[1]
-				category = category or currentZone[2]
-				rememberQuestContext(questid, category, questTitle, daily, questLevel)
-			end
-		end
-		if not zoneid then
-			return false
+			zoneid = "unmapped"
 		end
 		if self.db.char.history[zoneid] == nil then
 			self.db.char.history[zoneid] = {}
@@ -1489,7 +1544,7 @@ function EveryQuest:ScanQuestLog(reportStatus)
 							daily,
 							tonumber(info.level)
 						)
-						if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+						if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil and zoneid ~= "unmapped" then
 							if wasAdded then
 								added = added + 1
 							elseif wasChanged then
@@ -1708,6 +1763,13 @@ end
 function EveryQuest:UpdateFrame()
 	if EveryQuestFrame:IsShown() then
 		updateCurrentZoneButtonState()
+		for j = 1, 27, 1 do
+			questdisplay[j] = nil
+			local listFrame = _G["EveryQuestTitle"..j]
+			if listFrame then
+				listFrame:Hide()
+			end
+		end
 		--self:Debug("UpdateFrame")
 		local buttonid = 1
 		local controli = 0
@@ -1826,7 +1888,7 @@ function EveryQuest:SortTable(a,b,questlist)
 			end
 		elseif atype < btype then
 			return true
-		elseif btype > atype then
+		elseif atype > btype then
 			return false
 		end
 	elseif adaily > bdaily then
@@ -1848,7 +1910,7 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 		local qTag
 		if quest["t"] then
 			--self:Debug("questtype:"..quest.t)
-			qTag = self:QuestType(quest["t"])
+			qTag = self:QuestType(quest["t"]) or ""
 		else
 			qTag = ""
 		end
@@ -2084,5 +2146,8 @@ function EveryQuest:QuestType(qtype)
 		return L["D"], L["Dungeon"]
 	elseif qtype == 41 then
 		return L["P"], L["PvP"]
+	elseif qtype == 84 then
+		return L["E"], L["Escort"]
 	end
+	return ""
 end
