@@ -11,6 +11,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 - Render quests with unknown legacy type IDs without interrupting the zone
   quest list.
+- Keep lifecycle events without a known category in an unmapped history bucket
+  instead of assigning them to the player's current zone.
 
 ## [2026.3.4] - 2026-08-20
 

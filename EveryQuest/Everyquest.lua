@@ -1332,15 +1332,7 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 	if not history then
 		local zoneid = categoryZoneID
 		if not zoneid then
-			local _, currentZone = getCurrentZoneSelection()
-			if currentZone then
-				zoneid = currentZone[1]
-				category = category or currentZone[2]
-				rememberQuestContext(questid, category, questTitle, daily, questLevel)
-			end
-		end
-		if not zoneid then
-			return false
+			zoneid = "unmapped"
 		end
 		if self.db.char.history[zoneid] == nil then
 			self.db.char.history[zoneid] = {}
@@ -1489,7 +1481,7 @@ function EveryQuest:ScanQuestLog(reportStatus)
 							daily,
 							tonumber(info.level)
 						)
-						if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
+						if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil and zoneid ~= "unmapped" then
 							if wasAdded then
 								added = added + 1
 							elseif wasChanged then
