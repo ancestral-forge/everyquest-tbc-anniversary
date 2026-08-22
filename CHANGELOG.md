@@ -9,8 +9,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ### Fixed
 
-- Render quests with unknown legacy type IDs without interrupting the zone
-  quest list.
+- Display Escort quest type `84` and render quests with unknown legacy type IDs
+  without interrupting the zone quest list.
 
 ## [2026.3.4] - 2026-08-20
 
