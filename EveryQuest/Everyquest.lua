@@ -349,16 +349,6 @@ local function isQuestFlaggedCompleted(questid)
 	return false
 end
 
-local function isQuestUnavailable(quest)
-	local requiredLevel = tonumber(quest and quest.r)
-	if not requiredLevel or requiredLevel <= 0 or not UnitLevel then
-		return false
-	end
-
-	local playerLevel = UnitLevel("player") or 0
-	return playerLevel > 0 and playerLevel < requiredLevel
-end
-
 local function getStoredQuestStatus(quest)
 	if not quest then
 		return nil
@@ -375,6 +365,86 @@ local function getStoredQuestStatus(quest)
 	end
 
 	return quest.status
+end
+
+local nextQuestInChainCache = {}
+
+local function getNextQuestInChainID(quest)
+	local questid = tonumber(quest and quest.id)
+	if not questid then
+		return nil
+	end
+
+	local embeddedNextQuestID = tonumber(quest.nextQuestInChain)
+	if embeddedNextQuestID and embeddedNextQuestID > 0 then
+		return embeddedNextQuestID
+	end
+
+	local cached = nextQuestInChainCache[questid]
+	if cached ~= nil then
+		return cached or nil
+	end
+
+	-- Questie already maintains corrected TBC chain relationships. Use that
+	-- data when Questie is enabled without making it a required dependency.
+	local questieLoader = _G.QuestieLoader
+	if not questieLoader or not questieLoader.ImportModule then
+		return nil
+	end
+	local ok, questieDB = pcall(questieLoader.ImportModule, questieLoader, "QuestieDB")
+	if not ok or not questieDB or not questieDB.QueryQuestSingle then
+		return nil
+	end
+
+	local queryOK, nextQuestID = pcall(questieDB.QueryQuestSingle, questid, "nextQuestInChain")
+	nextQuestID = queryOK and tonumber(nextQuestID) or nil
+	if nextQuestID and nextQuestID > 0 then
+		nextQuestInChainCache[questid] = nextQuestID
+		return nextQuestID
+	end
+
+	nextQuestInChainCache[questid] = false
+	return nil
+end
+
+local function isQuestUnavailable(quest)
+	local requiredLevel = tonumber(quest and quest.r)
+	if requiredLevel and requiredLevel > 0 and UnitLevel then
+		local playerLevel = UnitLevel("player") or 0
+		if playerLevel > 0 and playerLevel < requiredLevel then
+			return true
+		end
+	end
+
+	local nextQuestID = getNextQuestInChainID(quest)
+	if not nextQuestID then
+		return false
+	end
+
+	local nextQuestHistory = EveryQuest:GetHistoryByQuestID(nextQuestID)
+	local nextQuestStatus = getStoredQuestStatus(nextQuestHistory)
+	return nextQuestStatus == 0 or nextQuestStatus == 1 or nextQuestStatus == 2
+		or isQuestFlaggedCompleted(nextQuestID)
+end
+
+local function getDisplayedQuestStatus(quest, history)
+	local storedStatus = getStoredQuestStatus(history or quest)
+	if storedStatus ~= nil then
+		return storedStatus
+	end
+	if isQuestUnavailable(quest) then
+		return -2
+	end
+	return nil
+end
+
+local function addQuestStatusLabel(text, status)
+	if status == -3 then
+		return text .. " (" .. L["Abandoned"] .. ")"
+	elseif status == -1 then
+		return text .. " (" .. L["Failed"] .. ")"
+	end
+	return text
 end
 
 local function loadQuestDataAddon(addon)
@@ -1311,9 +1381,9 @@ function EveryQuest:GetStatus(displayid, queststatus)
 	local quest = displayid and questdisplay[displayid]
 	local zoneid = sessionvars.zoneid
 	if quest and zoneid and self.db.char.history[zoneid] and self.db.char.history[zoneid][quest.id] then
-		return getStoredQuestStatus(self.db.char.history[zoneid][quest.id]) == queststatus
+		return getDisplayedQuestStatus(quest, self.db.char.history[zoneid][quest.id]) == queststatus
 	end
-	return quest ~= nil and getStoredQuestStatus(quest) == queststatus
+	return quest ~= nil and getDisplayedQuestStatus(quest) == queststatus
 end
 
 local function getNumQuestLogEntries()
@@ -2015,27 +2085,13 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 				level = "--"
 			end
 		end
-		setButtonText(listFrame, "["..level..qTag.."] "..quest["n"])
-		--r,g,b = EveryQuest:GetQuestColor(zonelist.value, j)
-		if self.db.char.history and self.db.char.history[sessionvars.zoneid] and self.db.char.history[sessionvars.zoneid][quest["id"]] then
-			local history = self.db.char.history[sessionvars.zoneid][quest["id"]]
-			if history["status"] == 1 then -- Completed
-				setButtonTextColor(listFrame, self:GetColor(1))
-			elseif history["status"] == -1 or history["status"] == -3 then -- Failed/Abandoned
-				setButtonTextColor(listFrame, self:GetColor(-1))
-			elseif history["status"] == 2 then -- Turned in
-				setButtonTextColor(listFrame, self:GetColor(2))
-			elseif history["status"] == 0 then -- In Progress (Yellow)
-				setButtonTextColor(listFrame, self:GetColor(0))
-			elseif history["status"] == -2 then -- Unavailable
-				setButtonTextColor(listFrame, self:GetColor(-2))
-			elseif history["status"] == nil and isQuestUnavailable(quest) then
-				setButtonTextColor(listFrame, self:GetColor(-2))
-			else
-				setButtonTextColor(listFrame, self:GetColor("FFFFFF"))
-			end
-		elseif isQuestUnavailable(quest) then
-			setButtonTextColor(listFrame, self:GetColor(-2))
+		local history = self.db.char.history and self.db.char.history[sessionvars.zoneid]
+			and self.db.char.history[sessionvars.zoneid][quest.id]
+		local status = getDisplayedQuestStatus(quest, history)
+		local text = addQuestStatusLabel("["..level..qTag.."] "..quest["n"], status)
+		setButtonText(listFrame, text)
+		if status ~= nil then
+			setButtonTextColor(listFrame, self:GetColor(status))
 		else
 			setButtonTextColor(listFrame, self:GetColor("FFFFFF"))
 		end
@@ -2055,30 +2111,25 @@ function EveryQuest:ButtonEnter(frame)
 	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
 	GameTooltip:SetHyperlink("quest:"..quest.id)
 	local queststatus = L["Unknown"]
-	local status = 99
-	if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
+	local history = self.db.char.history[zoneid] and self.db.char.history[zoneid][questid]
+	if history then
 		isCollected = true
-		if self.db.char.history[zoneid][questid].status then
-			--self:Debug("ButtonEnter - in history buttonid:"..index.." zoneid:"..zoneid.." questid:"..questid)
-			status = getStoredQuestStatus(self.db.char.history[zoneid][questid])
-			if status == -1 then
-				queststatus = L["Failed"]
-			elseif status == -3 then
-				queststatus = L["Abandoned"]
-			elseif status == -2 then
-				queststatus = L["Unavailable"]
-			elseif status == 0 then
-				queststatus = L["In Progress"]
-			elseif status == 1 then
-				queststatus = L["Completed"]
-			elseif status == 2 then
-				queststatus = L["Turned In"]
-			end
-		end
 	end
-	if status == 99 and isQuestUnavailable(quest) then
+	local status = getDisplayedQuestStatus(quest, history)
+	if status == -1 then
+		queststatus = L["Failed"]
+	elseif status == -3 then
+		queststatus = L["Abandoned"]
+	elseif status == -2 then
 		queststatus = L["Unavailable"]
-		status = -2
+	elseif status == 0 then
+		queststatus = L["In Progress"]
+	elseif status == 1 then
+		queststatus = L["Completed"]
+	elseif status == 2 then
+		queststatus = L["Turned In"]
+	else
+		status = 99
 	end
 	GameTooltip:AddLine(" ", self:GetColor("FFFFFF"))
 	--self:Debug("ButtonEnter - buttonid:"..index.." queststatus:"..queststatus.." status:"..status)
