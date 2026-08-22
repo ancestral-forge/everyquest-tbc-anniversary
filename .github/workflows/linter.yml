@@ -20,10 +20,33 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Run Luacheck and Lua 5.1 compatibility checks
+      - name: Run Luacheck
         uses: ancestral-forge/luacheck@v1
         with:
           args: --codes
-          custom_script: tools/check-lua51-compat.lua
-          custom_args: .
           job_summary: true
+
+      - name: Install validation dependencies
+        run: sudo apt-get update && sudo apt-get install --yes lua5.1 libxml2-utils
+
+      - name: Run repository validation gate
+        run: tools/verify-addon.sh --skip-luacheck
+
+  openspec:
+    name: OpenSpec validation
+    runs-on: ubuntu-latest
+    env:
+      OPENSPEC_TELEMETRY: "0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Validate OpenSpec artifacts
+        run: npx --yes @fission-ai/openspec@1.10.0 validate --all

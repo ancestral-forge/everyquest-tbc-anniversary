@@ -1,10 +1,11 @@
 EveryQuest_Locale = {
 		["Change Status"] = true,
-		["Turned In"] = true,
 		["Completed"] = true,
+		["Ready to Turn In"] = true,
 		["In Progress"] = true,
 		["Unavailable"] = true,
 		["Unknown"] = true,
+	["Clear Status"] = true,
 	["Abandoned"] = true,
 	["Failed"] = true,
 	["Close"] = true,

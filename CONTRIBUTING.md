@@ -3,6 +3,19 @@
 EveryQuest TBC Anniversary targets the WoW TBC Anniversary client only. Keep
 changes narrow, traceable, and aligned with that runtime.
 
+## Quick Contribution Path
+
+Human contributors do not need AI tooling, OpenSpec, or a separate worktree:
+
+1. Create a normal branch in your clone or fork.
+2. Make one focused change with reviewable rationale.
+3. Run `tools/verify-addon.sh` when the local toolchain is available. If it is
+   not, open the pull request and let the required CI gate run the same checks.
+4. Open a pull request using the checklist below.
+
+Do not claim a local or in-game check that was not run. A missing local toolchain
+is not, by itself, a reason to avoid submitting a contribution.
+
 ## Runtime Target
 
 - Target WoW Anniversary `2.5.6.69110` / TOC interface `20506`.
@@ -24,24 +37,15 @@ changes narrow, traceable, and aligned with that runtime.
 
 ## Local Checks
 
-Run the Lua linter and compatibility check before publishing changes:
+Run the complete local validation gate before publishing changes:
 
 ```sh
-luacheck --codes .
-tools/check-lua51-compat.sh
+tools/verify-addon.sh
 ```
 
-Luacheck uses `.luacheckrc` with Lua 5.1 semantics and a small whitelist of
-EveryQuest and WoW globals used by this addon. The compatibility check parses
-every addon `.lua` file with Lua 5.1 and rejects common Lua 5.2+
-standard-library usage that is not available in the Anniversary client.
-
-Also run lightweight repository checks when relevant:
-
-```sh
-git diff --check
-xmllint --noout EveryQuest/Everyquest.xml EveryQuest/bindings.xml
-```
+The gate runs Luacheck, parses addon Lua with Lua 5.1, rejects common Lua 5.2+
+standard-library usage, parses XML, verifies TOC metadata and file references,
+checks repository whitespace, and runs the checked-in Lua regression tests.
 
 Static checks prove syntax and file hygiene only. They do not prove in-game
 behavior.
@@ -97,3 +101,20 @@ Include:
 - which client/runtime path was affected;
 - which checks were run;
 - which in-game behavior was tested, or why live verification was not done.
+
+## Maintainer, AI, and OpenSpec Workflow
+
+Repository-aware agents must follow `AGENTS.md` and the project-local
+`everyquest-addon-development` skill. These AI-specific rules do not apply to a
+human contributor's local Git workflow.
+
+Before merge, maintainers capture high-risk or durable contract changes in
+OpenSpec. These include SavedVariables migrations, quest lifecycle or Blizzard
+UI ownership, architecture and dependencies, CI and validation contracts,
+packaging, installation, backup, and release behavior. A contributor can supply
+the intent through an issue or pull request; installing or invoking OpenSpec is
+not a submission requirement.
+
+Ordinary focused bug fixes, small features, documentation, localization, and
+reviewable quest-data corrections can use the issue or pull-request description
+as their planning record when they do not change those durable contracts.
