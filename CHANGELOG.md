@@ -9,8 +9,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ### Fixed
 
-- Render quests with unknown legacy type IDs without interrupting the zone
-  quest list.
+- Display Escort quest type `84` and render quests with unknown legacy type IDs
+  without interrupting the zone quest list.
 - Keep lifecycle events without a known category in an unmapped history bucket
   instead of assigning them to the player's current zone.
 - Hydrate saved quest placeholders from loaded static data and move misplaced

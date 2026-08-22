@@ -2146,6 +2146,8 @@ function EveryQuest:QuestType(qtype)
 		return L["D"], L["Dungeon"]
 	elseif qtype == 41 then
 		return L["P"], L["PvP"]
+	elseif qtype == 84 then
+		return L["E"], L["Escort"]
 	end
 	return ""
 end

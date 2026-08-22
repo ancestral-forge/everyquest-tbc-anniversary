@@ -12,7 +12,9 @@ _G.L = setmetatable({}, {
 
 local questTypeSource = assert(source:match("(function EveryQuest:QuestType.-\nend)\n"))
 assert(loadstring(questTypeSource))()
-assert(EveryQuest:QuestType(84) == "", "unknown quest types must use an empty display tag")
+local escortTag, escortName = EveryQuest:QuestType(84)
+assert(escortTag == "E" and escortName == "Escort", "escort quest type 84 must have an explicit display tag")
+assert(EveryQuest:QuestType(9999) == "", "unknown quest types must use an empty display tag")
 
 _G.getQuestContext = function() end
 _G.rememberQuestContext = function() end
