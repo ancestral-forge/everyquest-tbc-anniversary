@@ -381,7 +381,7 @@ local function getQuestLogInfo(index)
 		return C_QuestLog.GetInfo(index)
 	end
 	if GetQuestLogTitle then
-		local title, _, _, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
+		local title, _, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
 		return {
 			title = title,
 			isHeader = isHeader,
