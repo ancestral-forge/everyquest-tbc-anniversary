@@ -78,4 +78,102 @@ environment._G.QuestieLoader = nil
 local unrelatedQuest = {id = 300, r = 1}
 assert(not isQuestUnavailable(unrelatedQuest), "missing optional chain data must fail open")
 
+local function questieLoaderReturning(result)
+	return {
+		ImportModule = function()
+			return {
+				QueryQuestSingle = function()
+					return result
+				end,
+			}
+		end,
+	}
+end
+
+environment._G.QuestieLoader = false
+assert(getNextQuestInChainID({id = 301}) == nil, "a disabled Questie loader must fail open")
+
+environment._G.QuestieLoader = "invalid loader"
+assert(getNextQuestInChainID({id = 302}) == nil, "a non-table Questie loader must fail open")
+
+environment._G.QuestieLoader = {
+	ImportModule = function()
+		error("Questie import failure")
+	end,
+}
+assert(getNextQuestInChainID({id = 303}) == nil, "a Questie import error must fail open")
+environment._G.QuestieLoader = questieLoaderReturning(304)
+assert(getNextQuestInChainID({id = 303}) == 304, "a Questie import error must not be cached")
+
+environment._G.QuestieLoader = {ImportModule = function() return "invalid module" end}
+assert(getNextQuestInChainID({id = 305}) == nil, "a non-table Questie module must fail open")
+
+environment._G.QuestieLoader = {ImportModule = function() return {QueryQuestSingle = true} end}
+assert(getNextQuestInChainID({id = 306}) == nil, "a non-function Questie query must fail open")
+
+environment._G.QuestieLoader = {
+	ImportModule = function()
+		return {
+			QueryQuestSingle = function()
+				error("Questie query failure")
+			end,
+		}
+	end,
+}
+assert(getNextQuestInChainID({id = 307}) == nil, "a Questie query error must fail open")
+environment._G.QuestieLoader = questieLoaderReturning(308)
+assert(getNextQuestInChainID({id = 307}) == 308, "a Questie query error must not be cached")
+
+local retryResult
+environment._G.QuestieLoader = {
+	ImportModule = function()
+		return {
+			QueryQuestSingle = function()
+				return retryResult
+			end,
+		}
+	end,
+}
+assert(getNextQuestInChainID({id = 309}) == nil, "a nil Questie answer must fail open")
+retryResult = 310
+assert(getNextQuestInChainID({id = 309}) == 310, "a nil Questie answer must not be cached")
+
+local invalidQuestIDs = {
+	"308",
+	{},
+	false,
+	0,
+	-1,
+	1.5,
+	0 / 0,
+	math.huge,
+	16777216,
+}
+for index, invalidQuestID in ipairs(invalidQuestIDs) do
+	environment._G.QuestieLoader = questieLoaderReturning(invalidQuestID)
+	assert(
+		getNextQuestInChainID({id = 400 + index}) == nil,
+		"garbage and out-of-range Questie IDs must fail open"
+	)
+end
+
+environment._G.QuestieLoader = questieLoaderReturning(501)
+assert(getNextQuestInChainID({id = "500"}) == nil, "the current quest ID must also be validated")
+assert(getNextQuestInChainID({id = 500.5}) == nil, "fractional current quest IDs must be rejected")
+
+local garbageThenValid = {}
+environment._G.QuestieLoader = {
+	ImportModule = function()
+		return {
+			QueryQuestSingle = function()
+				return garbageThenValid[1]
+			end,
+		}
+	end,
+}
+garbageThenValid[1] = "invalid"
+assert(getNextQuestInChainID({id = 600}) == nil, "a garbage Questie answer must fail open")
+garbageThenValid[1] = 601
+assert(getNextQuestInChainID({id = 600}) == 601, "a garbage Questie answer must not be cached")
+
 print("Quest chain status tests passed.")
