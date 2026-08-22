@@ -1,26 +1,4 @@
-# Development Workflow Specification
-
-## Purpose
-
-Define a lightweight human contribution path alongside stricter AI planning,
-isolation, validation, and evidence rules for EveryQuest changes.
-
-## Requirements
-
-### Requirement: Isolated implementation state
-AI-agent implementation SHALL start from a recorded repository state and SHALL
-preserve unrelated work by using a clean, separate worktree on a task-named
-branch based on the current canonical main branch. Human contributors SHALL NOT
-be required to use a separate worktree.
-
-#### Scenario: AI agent starts an implementation task
-- **WHEN** an AI agent is authorized to modify the repository
-- **THEN** it records the branch, SHA, worktree list, and dirty state before editing
-- **AND** it performs implementation outside the primary checkout on a task-named branch
-
-#### Scenario: Human uses a normal clone
-- **WHEN** a human contributor starts from a clean task branch in a normal repository clone
-- **THEN** the contribution workflow accepts that branch without requiring another worktree
+## ADDED Requirements
 
 ### Requirement: Lightweight human contribution path
 Human contributors SHALL be able to propose and deliver a focused change using
@@ -36,6 +14,23 @@ installing AI or OpenSpec tooling.
 - **WHEN** a contributor does not have the local Lua or XML toolchain
 - **THEN** the contributor can submit the pull request and rely on the required CI gate
 - **AND** the pull request does not claim local validation that did not occur
+
+## MODIFIED Requirements
+
+### Requirement: Isolated implementation state
+AI-agent implementation SHALL start from a recorded repository state and SHALL
+preserve unrelated work by using a clean, separate worktree on a task-named
+branch based on the current canonical main branch. Human contributors SHALL NOT
+be required to use a separate worktree.
+
+#### Scenario: AI agent starts an implementation task
+- **WHEN** an AI agent is authorized to modify the repository
+- **THEN** it records the branch, SHA, worktree list, and dirty state before editing
+- **AND** it performs implementation outside the primary checkout on a task-named branch
+
+#### Scenario: Human uses a normal clone
+- **WHEN** a human contributor starts from a clean task branch in a normal repository clone
+- **THEN** the contribution workflow accepts that branch without requiring another worktree
 
 ### Requirement: Spec-first material changes
 The project SHALL capture high-risk or durable contract changes in OpenSpec
@@ -66,31 +61,3 @@ unless they expose an unresolved product or architectural decision.
 #### Scenario: Request is read-only or mechanical
 - **WHEN** work is limited to investigation or a typo with no changed behavior or acceptance criteria
 - **THEN** no new OpenSpec change is required
-
-### Requirement: Mandatory local verification gate
-Every implementation SHALL pass `tools/verify-addon.sh` before it is described
-as locally validated.
-
-#### Scenario: Implementation is ready for review
-- **WHEN** source edits are complete
-- **THEN** the gate checks repository whitespace, Luacheck, Lua 5.1 compatibility, XML, TOC consistency and references, and checked-in regression tests
-- **AND** any failing check prevents a locally validated claim
-
-### Requirement: Evidence is not conflated
-Reports and OpenSpec tasks SHALL distinguish source inspection, static checks,
-automated tests, package verification, installed-file parity, live-client
-behavior, Git delivery, remote CI, merge, tag, and release state.
-
-#### Scenario: No live client test occurred
-- **WHEN** static checks and install parity pass without exercising the WoW client
-- **THEN** live-client verification remains explicitly pending
-- **AND** no gameplay or rendered-UI success is claimed
-
-### Requirement: Evidence-backed task completion
-An evidence-dependent OpenSpec task SHALL remain unchecked until its exact
-command or runtime path succeeds.
-
-#### Scenario: Required environment is unavailable
-- **WHEN** a required package, client, credential, CI run, or external service cannot be exercised
-- **THEN** the task remains incomplete and the blocker is reported
-- **AND** the agent does not substitute intention, inference, or a weaker evidence layer

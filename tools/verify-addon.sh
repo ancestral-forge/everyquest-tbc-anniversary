@@ -80,7 +80,17 @@ while IFS= read -r toc; do
 done < <(find EveryQuest* -maxdepth 1 -name '*.toc' -type f | sort)
 
 echo "==> Lua regression tests"
-run_lua51 tools/test-history-hydration.lua
-run_lua51 tools/test-quest-type-fallback.lua
+test_count=0
+while IFS= read -r test_file; do
+  run_lua51 "$test_file"
+  test_count=$((test_count + 1))
+done < <(find tools -maxdepth 1 -type f -name 'test-*.lua' | sort)
+
+if [[ "$test_count" -eq 0 ]]; then
+  echo "No Lua regression tests found under tools/test-*.lua." >&2
+  exit 1
+fi
+
+echo "Ran $test_count Lua regression tests."
 
 echo "EveryQuest validation passed."

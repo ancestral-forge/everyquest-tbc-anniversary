@@ -23,16 +23,25 @@ relevant files under `openspec/specs/` as the project contract.
 
 ## Decide whether OpenSpec is required
 
-Use `$openspec-propose` before code when the request changes addon behavior,
-data contracts, architecture, CI gates, packaging, installation, or release
-behavior. Update the artifacts when implementation reveals a changed decision.
+Use `$openspec-propose` before code for high-risk or durable contract changes:
 
-OpenSpec may be skipped for read-only investigation and a truly mechanical
-typo or formatting-only edit. State the reason for the skip. If expected
-behavior, acceptance criteria, or validation scope needs judgment, do not skip.
+- SavedVariables schema, compatibility, or migration;
+- quest lifecycle or Blizzard-owned UI boundaries;
+- architecture or external dependency boundaries;
+- CI and validation contracts;
+- packaging, installation, backup, or release behavior.
 
-During apply, read every context file reported by OpenSpec. Do not mark a task
-complete until its stated command or runtime path has produced evidence.
+For an ordinary focused bug fix, small feature, documentation or localization
+edit, or reviewable quest-data correction, use the issue or pull-request
+description as the plan when durable contracts and acceptance criteria are
+clear. State why OpenSpec is not needed. Read-only investigation and mechanical
+edits also do not need a change.
+
+If implementation exposes an unresolved product or architectural decision,
+stop and create or update an OpenSpec change before broadening the work.
+
+When OpenSpec applies, read every context file reported by it. Do not mark a
+task complete until its stated command or runtime path has produced evidence.
 
 ## Implement within the runtime contract
 

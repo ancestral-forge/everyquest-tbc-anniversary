@@ -3,6 +3,19 @@
 EveryQuest TBC Anniversary targets the WoW TBC Anniversary client only. Keep
 changes narrow, traceable, and aligned with that runtime.
 
+## Quick Contribution Path
+
+Human contributors do not need AI tooling, OpenSpec, or a separate worktree:
+
+1. Create a normal branch in your clone or fork.
+2. Make one focused change with reviewable rationale.
+3. Run `tools/verify-addon.sh` when the local toolchain is available. If it is
+   not, open the pull request and let the required CI gate run the same checks.
+4. Open a pull request using the checklist below.
+
+Do not claim a local or in-game check that was not run. A missing local toolchain
+is not, by itself, a reason to avoid submitting a contribution.
+
 ## Runtime Target
 
 - Target WoW Anniversary `2.5.6.69110` / TOC interface `20506`.
@@ -89,14 +102,19 @@ Include:
 - which checks were run;
 - which in-game behavior was tested, or why live verification was not done.
 
-## AI and OpenSpec workflow
+## Maintainer, AI, and OpenSpec Workflow
 
 Repository-aware agents must follow `AGENTS.md` and the project-local
-`everyquest-addon-development` skill. Material behavior, data-contract,
-architecture, CI, packaging, installation, and release changes use OpenSpec so
-scope, requirements, design decisions, tasks, and evidence remain reviewable.
+`everyquest-addon-development` skill. These AI-specific rules do not apply to a
+human contributor's local Git workflow.
 
-Start a change with `$openspec-propose`, implement it with
-`$openspec-apply-change`, and archive it only after the required tasks and
-evidence are complete. Read-only investigation and mechanical typo fixes may
-skip a new OpenSpec change when the reason is stated explicitly.
+Before merge, maintainers capture high-risk or durable contract changes in
+OpenSpec. These include SavedVariables migrations, quest lifecycle or Blizzard
+UI ownership, architecture and dependencies, CI and validation contracts,
+packaging, installation, backup, and release behavior. A contributor can supply
+the intent through an issue or pull request; installing or invoking OpenSpec is
+not a submission requirement.
+
+Ordinary focused bug fixes, small features, documentation, localization, and
+reviewable quest-data corrections can use the issue or pull-request description
+as their planning record when they do not change those durable contracts.
