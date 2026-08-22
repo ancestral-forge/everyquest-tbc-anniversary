@@ -20,5 +20,5 @@
 ## 5. Delivery and Runtime Evidence
 
 - [ ] 5.1 Verify accept, complete, turn-in, abandon, fail, clear, simultaneous-chain, skipped-chain, and faulty/disabled Questie behavior in the live TBC Anniversary client with script errors enabled.
-- [ ] 5.2 Push `fix-quest-status-model` and create a draft pull request to `main` with `Closes #31`, then verify the remote head SHA and issue linkage.
+- [x] 5.2 Push `fix-quest-status-model` and create a draft pull request to `main` with `Closes #31`, then verify the remote head SHA and issue linkage.
 - [ ] 5.3 Verify the pull request's remote CI result separately from local and live-client evidence.
