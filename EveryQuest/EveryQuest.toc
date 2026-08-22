@@ -4,7 +4,7 @@
 ## Author: Ancestral Forge
 ## SavedVariables: EveryQuestDB
 ## SavedVariablesPerCharacter: EveryQuestDBPC
-## Version: 2026.3.4
+## Version: 2026.3.5
 ## X-Maintainer: Ancestral Forge
 ## X-Original-Title: EveryQuest
 ## X-Original-Author: kandarz

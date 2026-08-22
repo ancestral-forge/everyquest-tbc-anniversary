@@ -7,8 +7,12 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+## [2026.3.5] - 2026-08-22
+
 ### Fixed
 
+- Read active quest-log headers, completion state, frequency, and quest IDs from
+  the correct `GetQuestLogTitle` return positions on the Anniversary client.
 - Open the quest status menu on right-click without relying on the unavailable
   global `EasyMenu` helper.
 - Prevent zone quest lists from failing to render when a legacy quest type lacks
