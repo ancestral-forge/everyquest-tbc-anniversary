@@ -9,8 +9,9 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ### Fixed
 
-- Display Escort quest type `84` and render quests with unknown legacy type IDs
-  without interrupting the zone quest list.
+- Prevent zone quest lists from failing to render when a legacy quest type lacks
+  a display tag.
+- Display legacy Escort quest type `84` with the `E` tag.
 
 ## [2026.3.4] - 2026-08-20
 
