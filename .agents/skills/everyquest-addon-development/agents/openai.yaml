@@ -1,0 +1,4 @@
+interface:
+  display_name: "EveryQuest Addon Development"
+  short_description: "Guardrails for safe EveryQuest addon changes"
+  default_prompt: "Use $everyquest-addon-development to plan, implement, and verify this EveryQuest change without skipping required evidence."

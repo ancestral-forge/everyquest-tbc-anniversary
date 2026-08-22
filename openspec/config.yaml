@@ -1,0 +1,43 @@
+schema: spec-driven
+
+context: |
+  Project: EveryQuest TBC Anniversary, a maintained GPL-2.0-only WoW addon.
+  Runtime: WoW TBC Anniversary only, Interface 20506, Lua 5.1.
+  Repository: GitHub is canonical; GitLab is a non-destructive backup.
+  Code style: prefer small local changes, native Anniversary APIs and events,
+  Blizzard-owned secure UI behavior, preserved SavedVariables, attribution,
+  and data provenance. Avoid speculative compatibility layers and dependencies.
+  Workflow: inspect state, plan first, and implement in a clean separate
+  worktree on a task-named branch from current origin/main.
+  Required local gate: tools/verify-addon.sh
+  Evidence model: report static checks, tests, packaging, install parity, live
+  client behavior, Git/PR/CI state, and release state independently.
+
+rules:
+  proposal:
+    - Include a Non-goals section that prevents broad refactors and unrelated compatibility work.
+    - Name affected addon modules, SavedVariables, workflows, packaging, or client behavior.
+    - State which evidence layers are required and which require a human WoW client.
+  specs:
+    - Write observable requirements with at least one WHEN/THEN scenario each.
+    - Treat Lua 5.1, Interface 20506, licensing, provenance, and SavedVariables compatibility as explicit constraints when affected.
+    - Never define static checks or install parity as proof of live gameplay behavior.
+  design:
+    - Explain event ownership, data migration, UI ownership, and rollback when any is affected.
+    - Prefer the smallest design that satisfies the requirements and identify rejected broad alternatives.
+  tasks:
+    - Start with repository state, worktree, and relevant-spec inspection tasks before implementation.
+    - Include tools/verify-addon.sh after implementation and focused regression tests when feasible.
+    - Keep package, install parity, live WoW, remote CI, merge, tag, and release tasks separate.
+    - Leave evidence-dependent tasks unchecked until their exact command or runtime path succeeds.
+
+operations:
+  apply:
+    guidance:
+      - Work through tasks in order and update a checkbox immediately after its evidence exists.
+      - Stop and update the change artifacts when implementation would broaden or contradict the approved scope.
+      - Inspect the final diff and report every evidence layer separately before calling implementation complete.
+  archive:
+    guidance:
+      - Do not archive with missing required evidence unless the user explicitly accepts the named gaps.
+      - Preserve unresolved live-client verification as an explicit pending requirement rather than silently treating static checks as sufficient.
