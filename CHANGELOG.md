@@ -13,6 +13,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
   quest list.
 - Keep lifecycle events without a known category in an unmapped history bucket
   instead of assigning them to the player's current zone.
+- Hydrate saved quest placeholders from loaded static data and move misplaced
+  records to their canonical zone without losing completion history.
 
 ## [2026.3.4] - 2026-08-20
 
