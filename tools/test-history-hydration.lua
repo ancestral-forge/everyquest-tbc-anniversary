@@ -45,6 +45,11 @@ EveryQuestData.Kalimdor = {
 		{id = 11137, n = "Defias in Dustwallow?", l = 37, r = 32, s = 1},
 	},
 }
+EveryQuestData.Dungeons = {
+	[2100] = {
+		{id = 7070, n = "Shadowshard Fragments", l = 42, r = 39, s = 1, t = 81},
+	},
+}
 
 assert(EveryQuest:HydrateQuestHistoryForGroup("Kalimdor") == 2)
 
@@ -62,6 +67,15 @@ local misplaced = EveryQuest.db.char.history[15][7070]
 assert(misplaced.n == "Quest 7070" and misplaced.l == nil and misplaced.s == 3)
 assert(misplaced.status == -1 and misplaced.abandoned == 1787344511)
 
+assert(EveryQuest:HydrateQuestHistoryForGroup("Dungeons") == 1)
+assert(EveryQuest.db.char.history[15][7070] == nil, "misplaced quest history must move out of Dustwallow")
+
+local shadowshards = EveryQuest.db.char.history[2100][7070]
+assert(shadowshards.n == "Shadowshard Fragments")
+assert(shadowshards.l == 42 and shadowshards.r == 39 and shadowshards.s == 1 and shadowshards.t == 81)
+assert(shadowshards.status == -1 and shadowshards.abandoned == 1787344511)
+
 assert(EveryQuest:HydrateQuestHistoryForGroup("Kalimdor") == 0, "hydration must be idempotent")
+assert(EveryQuest:HydrateQuestHistoryForGroup("Dungeons") == 0, "relocation must be idempotent")
 
 print("History hydration tests passed.")

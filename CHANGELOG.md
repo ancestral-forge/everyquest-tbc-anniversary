@@ -13,6 +13,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
   a display tag.
 - Restore missing names, levels, faction, and quest-type metadata in saved quest
   history when the matching static data module is loaded.
+- Keep unknown quest lifecycle events unmapped until quest-log or loaded static
+  data can resolve their canonical zone.
 
 ## [2026.3.4] - 2026-08-20
 
