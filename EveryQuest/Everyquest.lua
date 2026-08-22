@@ -1113,6 +1113,40 @@ function EveryQuest:ShowListMessage(message)
 	end
 end
 
+local questMetadataFields = {"id", "n", "l", "r", "s", "t", "d"}
+
+local function applyStaticQuestMetadata(history, quest)
+	local changed = false
+	for _, field in ipairs(questMetadataFields) do
+		if quest[field] ~= nil and history[field] ~= quest[field] then
+			history[field] = quest[field]
+			changed = true
+		end
+	end
+	return changed
+end
+
+function EveryQuest:HydrateQuestHistoryForGroup(group)
+	if not group or not EveryQuestData or not EveryQuestData[group] or not self.db.char.history then
+		return 0
+	end
+
+	local hydrated = 0
+	for zoneid, quests in pairs(EveryQuestData[group]) do
+		local history = self.db.char.history[zoneid]
+		if type(quests) == "table" and type(history) == "table" then
+			for _, quest in pairs(quests) do
+				local questid = tonumber(quest and quest.id)
+				local savedQuest = questid and history[questid]
+				if savedQuest and applyStaticQuestMetadata(savedQuest, quest) then
+					hydrated = hydrated + 1
+				end
+			end
+		end
+	end
+	return hydrated
+end
+
 function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 	if not group or not EveryQuestData or not EveryQuestData[group] then
 		return 0, 0, 0, 0
@@ -1195,6 +1229,7 @@ function EveryQuest:LoadQuestData(group)
 	else
 		self:Debug("Module "..concat(group).." is loaded")
 	end
+	self:HydrateQuestHistoryForGroup(group)
 	self:SyncCompletedQuestFlagsForGroup(group, true)
 	--for k,v in pairs(EveryQuestData) do self:Debug(k) end
 	return EveryQuestData[group] --questdata[varname] and varname
