@@ -67,6 +67,7 @@ assert(not EveryQuest:GetStatus(8, -1), "legacy abandoned records must not also 
 
 local menu = EveryQuest:BuildQuestMenu(8)
 assert(#menu == 9, "status menu must include Unavailable and Clear Status")
+assert(menu[2].text == "Completed" and menu[3].text == "Ready to Turn In")
 assert(menu[5].text == "Unavailable" and menu[6].text == "Abandoned" and menu[7].text == "Failed")
 assert(menu[8].text == "Clear Status")
 assert(menu[6].checked and not menu[7].checked, "only Abandoned must be selected")

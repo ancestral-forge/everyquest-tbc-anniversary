@@ -11,6 +11,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 - Keep Failed and Abandoned mutually exclusive, allow quests to be marked
   Unavailable, and provide an option to clear a manually stored status.
+- Call an objective-complete quest `Ready to Turn In` and reserve `Completed`
+  for a quest that has actually been turned in.
 - Append `(Failed)` or `(Abandoned)` to affected quest rows without changing
   their existing status colors.
 - When Questie is enabled, mark a quest Unavailable if its next quest in the
