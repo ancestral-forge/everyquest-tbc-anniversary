@@ -1,7 +1,8 @@
 --[[
 Quest Status:
--2 = Unavailable (display-only)
--1 = Failed, Abandoned
+-3 = Abandoned
+-2 = Unavailable
+-1 = Failed
 0 = In Progress
 1 = Completed
 2 = Turned In
@@ -356,6 +357,24 @@ local function isQuestUnavailable(quest)
 
 	local playerLevel = UnitLevel("player") or 0
 	return playerLevel > 0 and playerLevel < requiredLevel
+end
+
+local function getStoredQuestStatus(quest)
+	if not quest then
+		return nil
+	end
+
+	-- Older EveryQuest versions stored Failed and Abandoned as -1. Preserve
+	-- those records while using the event timestamps to distinguish them.
+	if quest.status == -1 and quest.abandoned then
+		local abandonedAt = tonumber(quest.abandoned) or 0
+		local failedAt = tonumber(quest.failed) or 0
+		if not quest.failed or abandonedAt > failedAt then
+			return -3
+		end
+	end
+
+	return quest.status
 end
 
 local function loadQuestDataAddon(addon)
@@ -1292,12 +1311,9 @@ function EveryQuest:GetStatus(displayid, queststatus)
 	local quest = displayid and questdisplay[displayid]
 	local zoneid = sessionvars.zoneid
 	if quest and zoneid and self.db.char.history[zoneid] and self.db.char.history[zoneid][quest.id] then
-		return self.db.char.history[zoneid][quest.id].status == queststatus
-	elseif quest and quest.status and quest.status == queststatus then
-		return true
-	else
-		return false
+		return getStoredQuestStatus(self.db.char.history[zoneid][quest.id]) == queststatus
 	end
+	return quest ~= nil and getStoredQuestStatus(quest) == queststatus
 end
 
 local function getNumQuestLogEntries()
@@ -1540,6 +1556,11 @@ function EveryQuest:MarkQuestByID(questid, status, timestampField, category, que
 	if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
 		local history = self.db.char.history[zoneid][savedQuestID]
 		history.status = status
+		if timestampField == "failed" then
+			history.abandoned = nil
+		elseif timestampField == "abandoned" then
+			history.failed = nil
+		end
 		if timestampField then
 			history[timestampField] = time()
 		end
@@ -1559,6 +1580,11 @@ function EveryQuest:MarkQuestByName(questName, status, timestampField)
 		if savedQuestID and zoneid then
 			local history = self.db.char.history[zoneid][savedQuestID]
 			history.status = status
+			if timestampField == "failed" then
+				history.abandoned = nil
+			elseif timestampField == "abandoned" then
+				history.failed = nil
+			end
 			if timestampField then
 				history[timestampField] = time()
 			end
@@ -1710,7 +1736,7 @@ function EveryQuest:QUEST_REMOVED(questid)
 		return
 	end
 
-	self:MarkQuestByID(questid, -1, "abandoned")
+	self:MarkQuestByID(questid, -3, "abandoned")
 end
 
 function EveryQuest:QUEST_TURNED_IN(questid)
@@ -1797,21 +1823,33 @@ function EveryQuest:AddQuest(questindex, category, qstatus)
 end
 
 function EveryQuest:UpdateStatus(displayid, queststatus)
-	--questdisplay[displayid]
 	local quest = questdisplay[displayid]
 	if not quest then return end
 	local questid = quest.id
 	local zoneid = sessionvars.zoneid
+	if queststatus == nil then
+		quest.status = nil
+		quest.abandoned = nil
+		quest.failed = nil
+		quest.completed = nil
+		if self.db.char.history[zoneid] then
+			self.db.char.history[zoneid][questid] = nil
+		end
+		self:UpdateFrame()
+		return
+	end
 	if not self.db.char.history[zoneid] then
 		self.db.char.history[zoneid] = {}
 	end
 	if not self.db.char.history[zoneid][questid] then
 		self.db.char.history[zoneid][questid] = quest
 	end
-	self.db.char.history[zoneid][questid].status = queststatus
-	if queststatus == 2 then
-		self.db.char.history[zoneid][questid].abandoned = nil
-		self.db.char.history[zoneid][questid].failed = nil
+	local history = self.db.char.history[zoneid][questid]
+	history.status = queststatus
+	history.abandoned = nil
+	history.failed = nil
+	if queststatus ~= 2 then
+		history.completed = nil
 	end
 	self:UpdateFrame()
 end
@@ -1983,12 +2021,14 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 			local history = self.db.char.history[sessionvars.zoneid][quest["id"]]
 			if history["status"] == 1 then -- Completed
 				setButtonTextColor(listFrame, self:GetColor(1))
-			elseif history["status"] == -1 then -- Failed/Abandoned
+			elseif history["status"] == -1 or history["status"] == -3 then -- Failed/Abandoned
 				setButtonTextColor(listFrame, self:GetColor(-1))
 			elseif history["status"] == 2 then -- Turned in
 				setButtonTextColor(listFrame, self:GetColor(2))
 			elseif history["status"] == 0 then -- In Progress (Yellow)
 				setButtonTextColor(listFrame, self:GetColor(0))
+			elseif history["status"] == -2 then -- Unavailable
+				setButtonTextColor(listFrame, self:GetColor(-2))
 			elseif history["status"] == nil and isQuestUnavailable(quest) then
 				setButtonTextColor(listFrame, self:GetColor(-2))
 			else
@@ -2020,9 +2060,13 @@ function EveryQuest:ButtonEnter(frame)
 		isCollected = true
 		if self.db.char.history[zoneid][questid].status then
 			--self:Debug("ButtonEnter - in history buttonid:"..index.." zoneid:"..zoneid.." questid:"..questid)
-			status = self.db.char.history[zoneid][questid].status
+			status = getStoredQuestStatus(self.db.char.history[zoneid][questid])
 			if status == -1 then
-				queststatus = L["Failed or Abandoned"]
+				queststatus = L["Failed"]
+			elseif status == -3 then
+				queststatus = L["Abandoned"]
+			elseif status == -2 then
+				queststatus = L["Unavailable"]
 			elseif status == 0 then
 				queststatus = L["In Progress"]
 			elseif status == 1 then
@@ -2052,6 +2096,7 @@ function EveryQuest:ButtonEnter(frame)
 			if self.db.char.history[zoneid][quest.id].failed then
 				GameTooltip:AddLine(L["Failed: "] .. EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].failed),self:GetColor("FFFFFF"))
 			end
+		elseif status == -3 then
 			if self.db.char.history[zoneid][quest.id].abandoned then
 				GameTooltip:AddLine(L["Abandoned: "] .. EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].abandoned),self:GetColor("FFFFFF"))
 			end
@@ -2065,7 +2110,7 @@ function EveryQuest:BuildQuestMenu(displayID)
 		return {
 			text = text,
 			checked = self:GetStatus(displayID, status),
-			isNotRadio = true,
+			isNotRadio = false,
 			func = function()
 				self:UpdateStatus(displayID, status)
 				CloseDropDownMenus()
@@ -2082,8 +2127,10 @@ function EveryQuest:BuildQuestMenu(displayID)
 		statusLine(L["Turned In"], 2),
 		statusLine(L["Completed"], 1),
 		statusLine(L["In Progress"], 0),
-		statusLine(L["Abandoned"], -1),
+		statusLine(L["Unavailable"], -2),
+		statusLine(L["Abandoned"], -3),
 		statusLine(L["Failed"], -1),
+		statusLine(L["Clear Status"], nil),
 		{
 			text = L["Close"],
 			notCheckable = true,
@@ -2186,6 +2233,8 @@ function EveryQuest:GetColor(hex)
 	elseif hex == -2 then
 		return .5,.5,.5
 	elseif hex == -1 then
+		return 1,0,0
+	elseif hex == -3 then
 		return 1,0,0
 	elseif hex == 2 then
 		return 0,.807,.019

@@ -9,6 +9,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ### Fixed
 
+- Keep Failed and Abandoned mutually exclusive, allow quests to be marked
+  Unavailable, and provide an option to clear a manually stored status.
 - Open the quest status menu on right-click without relying on the unavailable
   global `EasyMenu` helper.
 - Prevent zone quest lists from failing to render when a legacy quest type lacks
