@@ -24,24 +24,15 @@ changes narrow, traceable, and aligned with that runtime.
 
 ## Local Checks
 
-Run the Lua linter and compatibility check before publishing changes:
+Run the complete local validation gate before publishing changes:
 
 ```sh
-luacheck --codes .
-tools/check-lua51-compat.sh
+tools/verify-addon.sh
 ```
 
-Luacheck uses `.luacheckrc` with Lua 5.1 semantics and a small whitelist of
-EveryQuest and WoW globals used by this addon. The compatibility check parses
-every addon `.lua` file with Lua 5.1 and rejects common Lua 5.2+
-standard-library usage that is not available in the Anniversary client.
-
-Also run lightweight repository checks when relevant:
-
-```sh
-git diff --check
-xmllint --noout EveryQuest/Everyquest.xml EveryQuest/bindings.xml
-```
+The gate runs Luacheck, parses addon Lua with Lua 5.1, rejects common Lua 5.2+
+standard-library usage, parses XML, verifies TOC metadata and file references,
+checks repository whitespace, and runs the checked-in Lua regression tests.
 
 Static checks prove syntax and file hygiene only. They do not prove in-game
 behavior.
@@ -97,3 +88,15 @@ Include:
 - which client/runtime path was affected;
 - which checks were run;
 - which in-game behavior was tested, or why live verification was not done.
+
+## AI and OpenSpec workflow
+
+Repository-aware agents must follow `AGENTS.md` and the project-local
+`everyquest-addon-development` skill. Material behavior, data-contract,
+architecture, CI, packaging, installation, and release changes use OpenSpec so
+scope, requirements, design decisions, tasks, and evidence remain reviewable.
+
+Start a change with `$openspec-propose`, implement it with
+`$openspec-apply-change`, and archive it only after the required tasks and
+evidence are complete. Read-only investigation and mechanical typo fixes may
+skip a new OpenSpec change when the reason is stated explicitly.
