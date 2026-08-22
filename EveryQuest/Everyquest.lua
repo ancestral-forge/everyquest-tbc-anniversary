@@ -367,16 +367,29 @@ local function getStoredQuestStatus(quest)
 	return quest.status
 end
 
+local MAX_QUEST_ID = 16777215
+
+local function normalizeQuestID(value)
+	if type(value) ~= "number"
+		or value ~= value
+		or value < 1
+		or value > MAX_QUEST_ID
+		or value ~= math.floor(value) then
+		return nil
+	end
+	return value
+end
+
 local nextQuestInChainCache = {}
 
 local function getNextQuestInChainID(quest)
-	local questid = tonumber(quest and quest.id)
+	local questid = normalizeQuestID(quest and quest.id)
 	if not questid then
 		return nil
 	end
 
-	local embeddedNextQuestID = tonumber(quest.nextQuestInChain)
-	if embeddedNextQuestID and embeddedNextQuestID > 0 then
+	local embeddedNextQuestID = normalizeQuestID(quest.nextQuestInChain)
+	if embeddedNextQuestID then
 		return embeddedNextQuestID
 	end
 
@@ -388,22 +401,40 @@ local function getNextQuestInChainID(quest)
 	-- Questie already maintains corrected TBC chain relationships. Use that
 	-- data when Questie is enabled without making it a required dependency.
 	local questieLoader = _G.QuestieLoader
-	if not questieLoader or not questieLoader.ImportModule then
-		return nil
-	end
-	local ok, questieDB = pcall(questieLoader.ImportModule, questieLoader, "QuestieDB")
-	if not ok or not questieDB or not questieDB.QueryQuestSingle then
+	if type(questieLoader) ~= "table" then
 		return nil
 	end
 
-	local queryOK, nextQuestID = pcall(questieDB.QueryQuestSingle, questid, "nextQuestInChain")
-	nextQuestID = queryOK and tonumber(nextQuestID) or nil
-	if nextQuestID and nextQuestID > 0 then
+	local importLookupOK, importModule = pcall(function()
+		return questieLoader.ImportModule
+	end)
+	if not importLookupOK or type(importModule) ~= "function" then
+		return nil
+	end
+
+	local importOK, questieDB = pcall(importModule, questieLoader, "QuestieDB")
+	if not importOK or type(questieDB) ~= "table" then
+		return nil
+	end
+
+	local queryLookupOK, queryQuestSingle = pcall(function()
+		return questieDB.QueryQuestSingle
+	end)
+	if not queryLookupOK or type(queryQuestSingle) ~= "function" then
+		return nil
+	end
+
+	local queryOK, nextQuestID = pcall(queryQuestSingle, questid, "nextQuestInChain")
+	if not queryOK then
+		return nil
+	end
+
+	nextQuestID = normalizeQuestID(nextQuestID)
+	if nextQuestID then
 		nextQuestInChainCache[questid] = nextQuestID
 		return nextQuestID
 	end
 
-	nextQuestInChainCache[questid] = false
 	return nil
 end
 
