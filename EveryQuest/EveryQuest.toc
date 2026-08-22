@@ -19,4 +19,4 @@ localization.lua
 Core.lua
 Options.lua
 
-EveryQuest.xml
+Everyquest.xml

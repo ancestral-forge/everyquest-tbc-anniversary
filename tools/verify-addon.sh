@@ -72,8 +72,14 @@ while IFS= read -r toc; do
   while IFS= read -r entry; do
     entry="${entry%$'\r'}"
     [[ -z "$entry" || "$entry" == '## '* ]] && continue
-    if [[ ! -f "$toc_dir/$entry" ]]; then
+    entry_path="$toc_dir/$entry"
+    if [[ ! -f "$entry_path" ]]; then
       echo "$toc references missing file: $entry" >&2
+      exit 1
+    fi
+    tracked_path="$(git ls-files -- "$entry_path")"
+    if [[ "$tracked_path" != "$entry_path" ]]; then
+      echo "$toc references a path with incorrect case: $entry" >&2
       exit 1
     fi
   done < "$toc"
