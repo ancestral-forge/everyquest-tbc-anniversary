@@ -2094,9 +2094,23 @@ function EveryQuest:BuildQuestMenu(displayID)
 	}
 end
 
+local function initializeQuestDropdown(frame, level, menuItems)
+	menuItems = menuItems or frame.menuItems
+	for index, item in ipairs(menuItems or {}) do
+		if item.text then
+			item.index = index
+			UIDropDownMenu_AddButton(item, level)
+		end
+	end
+end
+
 function EveryQuest:OpenQuestMenu(displayID)
 	QuestMenuFrame = QuestMenuFrame or CreateFrame("Frame", "EveryQuestStatusMenu", UIParent, "UIDropDownMenuTemplate")
-	EasyMenu(self:BuildQuestMenu(displayID), QuestMenuFrame, "cursor", 0, 0, "MENU")
+	local menuItems = self:BuildQuestMenu(displayID)
+	QuestMenuFrame.displayMode = "MENU"
+	QuestMenuFrame.menuItems = menuItems
+	UIDropDownMenu_Initialize(QuestMenuFrame, initializeQuestDropdown, "MENU", nil, menuItems)
+	ToggleDropDownMenu(1, nil, QuestMenuFrame, "cursor", 0, 0, menuItems)
 end
 
 function EveryQuest:ButtonClick(frame, button)
