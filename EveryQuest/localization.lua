@@ -5,6 +5,7 @@ EveryQuest_Locale = {
 		["In Progress"] = true,
 		["Unavailable"] = true,
 		["Unknown"] = true,
+	["Clear Status"] = true,
 	["Abandoned"] = true,
 	["Failed"] = true,
 	["Close"] = true,
