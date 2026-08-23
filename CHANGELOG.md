@@ -11,6 +11,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ### Fixed
 
+- Make quest-type sorting return an explicit result in both comparison
+  directions for zone and history lists.
 - Clear visible quest rows before drawing a replacement list so a rendering
   error cannot leave stale history and zone entries mixed together.
 - Read active quest-log headers, completion state, frequency, and quest IDs from
