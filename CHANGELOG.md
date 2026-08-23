@@ -7,8 +7,12 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+## [2026.3.5] - 2026-08-22
+
 ### Fixed
 
+- Read active quest-log headers, completion state, frequency, and quest IDs from
+  the correct `GetQuestLogTitle` return positions on the Anniversary client.
 - Keep Failed and Abandoned mutually exclusive, allow quests to be marked
   Unavailable, and provide an option to clear a manually stored status.
 - Call an objective-complete quest `Ready to Turn In` and reserve `Completed`
