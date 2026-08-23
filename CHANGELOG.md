@@ -7,15 +7,12 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
-### Fixed
-
-- Clear visible quest rows before drawing a replacement list so a rendering
-  error cannot leave stale history and zone entries mixed together.
-
 ## [2026.3.5] - 2026-08-22
 
 ### Fixed
 
+- Clear visible quest rows before drawing a replacement list so a rendering
+  error cannot leave stale history and zone entries mixed together.
 - Read active quest-log headers, completion state, frequency, and quest IDs from
   the correct `GetQuestLogTitle` return positions on the Anniversary client.
 - Keep Failed and Abandoned mutually exclusive, allow quests to be marked
