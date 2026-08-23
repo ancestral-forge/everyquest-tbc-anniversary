@@ -7,6 +7,11 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Clear visible quest rows before drawing a replacement list so a rendering
+  error cannot leave stale history and zone entries mixed together.
+
 ## [2026.3.5] - 2026-08-22
 
 ### Fixed
