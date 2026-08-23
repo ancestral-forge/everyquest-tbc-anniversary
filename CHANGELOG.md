@@ -7,7 +7,7 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
-## [2026.3.5] - 2026-08-22
+## [2026.3.5] - 2026-08-23
 
 ### Fixed
 
