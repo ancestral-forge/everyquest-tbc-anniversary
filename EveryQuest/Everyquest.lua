@@ -2083,7 +2083,7 @@ function EveryQuest:SortTable(a,b,questlist)
 			end
 		elseif atype < btype then
 			return true
-		elseif btype > atype then
+		elseif atype > btype then
 			return false
 		end
 	elseif adaily > bdaily then
