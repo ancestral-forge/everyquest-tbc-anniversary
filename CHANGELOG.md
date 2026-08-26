@@ -7,6 +7,14 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Route quest-log history for known quest IDs through EveryQuest's canonical
+  quest bucket, keeping profession quests such as Alliance Trauma out of
+  unrelated city headers like Ironforge.
+- Preserve legacy quest-log levels and clear stale daily markers when history is
+  refreshed from quest-log or static metadata.
+
 ## [2026.3.5] - 2026-08-23
 
 ### Fixed

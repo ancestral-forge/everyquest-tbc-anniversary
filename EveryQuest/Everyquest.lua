@@ -501,13 +501,15 @@ local function getQuestLogInfo(index)
 		return C_QuestLog.GetInfo(index)
 	end
 	if GetQuestLogTitle then
-		local title, _, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
+		local title, level, _, isHeader, _, isComplete, frequency, questID = GetQuestLogTitle(index)
 		return {
 			title = title,
+			level = level,
 			isHeader = isHeader,
 			isComplete = isComplete,
 			frequency = frequency,
 			questID = questID,
+			usesLegacyFrequency = true,
 		}
 	end
 end
@@ -521,10 +523,10 @@ local function getZoneIDByCategory(category)
 	if not category then
 		return nil
 	end
-	for _, zones in pairs(zonemenu) do
+	for group, zones in pairs(zonemenu) do
 		for _, zone in pairs(zones) do
 			if zone[2] == category then
-				return zone[1]
+				return zone[1], group
 			end
 		end
 	end
@@ -567,8 +569,32 @@ local function reportRuntimeError(context, err)
 	EveryQuest:Error(context .. ": " .. tostring(err))
 end
 
+local function isLegacyDailyQuest(frequency)
+	if frequency == nil then
+		return nil
+	end
+	local dailyFrequency = rawget(_G, "LE_QUEST_FREQUENCY_DAILY") or 2
+	return frequency == dailyFrequency
+end
+
 local function isDailyQuest(frequency)
+	if frequency == nil then
+		return nil
+	end
+	if not Enum or not Enum.QuestFrequency then
+		return nil
+	end
 	return frequency == Enum.QuestFrequency.Daily
+end
+
+local function isQuestLogInfoDaily(info)
+	if not info then
+		return nil
+	end
+	if info.usesLegacyFrequency then
+		return isLegacyDailyQuest(info.frequency)
+	end
+	return isDailyQuest(info.frequency)
 end
 
 function EveryQuest:RequestFrameUpdate()
@@ -1241,6 +1267,9 @@ local function applyStaticQuestMetadata(history, quest)
 		if quest[field] ~= nil and history[field] ~= quest[field] then
 			history[field] = quest[field]
 			changed = true
+		elseif field == "d" and quest[field] == nil and history[field] ~= nil then
+			history[field] = nil
+			changed = true
 		end
 	end
 	return changed
@@ -1451,8 +1480,10 @@ function EveryQuest:FindQuestLogEntryByID(questid)
 			else
 				local currentQuestID = tonumber(info.questID)
 				if currentQuestID == questid then
-					rememberQuestContext(currentQuestID, category, info.title, isDailyQuest(info.frequency), tonumber(info.level))
-					return index, category, info.title, statusFromQuestLog(info.isComplete), isDailyQuest(info.frequency), tonumber(info.level)
+					local daily = isQuestLogInfoDaily(info)
+					local level = tonumber(info.level)
+					rememberQuestContext(currentQuestID, category, info.title, daily, level)
+					return index, category, info.title, statusFromQuestLog(info.isComplete), daily, level
 				end
 			end
 		end
@@ -1470,8 +1501,10 @@ function EveryQuest:FindQuestLogEntryByName(questName)
 				category = info.title
 			elseif info.title == questName then
 				local questid = tonumber(info.questID)
-				rememberQuestContext(questid, category, info.title, isDailyQuest(info.frequency), tonumber(info.level))
-				return index, category, questid, statusFromQuestLog(info.isComplete), isDailyQuest(info.frequency), tonumber(info.level)
+				local daily = isQuestLogInfoDaily(info)
+				local level = tonumber(info.level)
+				rememberQuestContext(questid, category, info.title, daily, level)
+				return index, category, questid, statusFromQuestLog(info.isComplete), daily, level
 			end
 		end
 	end
@@ -1488,25 +1521,125 @@ function EveryQuest:GetHistoryByQuestID(questid)
 	end
 end
 
-local function getLoadedQuestDataByID(questid)
-	if not EveryQuestData then
+local canonicalQuestSearchGroups = {
+	"Classes",
+	"Professions",
+	"Dungeons",
+	"Raids",
+	"Battlegrounds",
+	"Seasonal",
+	"Miscellaneous",
+	"Eastern Kingdoms",
+	"Kalimdor",
+	"Outland",
+}
+
+local function getQuestDataByIDInGroup(group, questid)
+	local groupData = EveryQuestData and EveryQuestData[group]
+	if type(groupData) ~= "table" then
 		return nil
 	end
 
-	for _, groupData in pairs(EveryQuestData) do
-		if type(groupData) == "table" then
-			for zoneid, quests in pairs(groupData) do
-				if type(quests) == "table" then
-					for _, quest in pairs(quests) do
-						if tonumber(quest and quest.id) == questid then
-							return quest, zoneid
-						end
-					end
+	for zoneid, quests in pairs(groupData) do
+		if type(quests) == "table" then
+			for _, quest in pairs(quests) do
+				if tonumber(quest and quest.id) == questid then
+					return quest, zoneid
 				end
 			end
 		end
 	end
 	return nil
+end
+
+local function getLoadedQuestDataByID(questid)
+	if not EveryQuestData then
+		return nil
+	end
+
+	for group in pairs(EveryQuestData) do
+		local quest, zoneid = getQuestDataByIDInGroup(group, questid)
+		if quest then
+			return quest, zoneid
+		end
+	end
+	return nil
+end
+
+local function loadQuestDataForStaticLookup(group)
+	if not group then
+		return false
+	end
+	if EveryQuestData and EveryQuestData[group] then
+		return true
+	end
+
+	local varname = "EveryQuest_"..string.gsub(group, " ", "_")
+	local succ = loadQuestDataAddon(varname)
+	return succ and EveryQuestData and EveryQuestData[group] ~= nil
+end
+
+local function getCanonicalQuestDataByID(questid, categoryGroup)
+	local quest, zoneid = getLoadedQuestDataByID(questid)
+	if quest then
+		return quest, zoneid
+	end
+
+	local searchedGroups = {}
+	if categoryGroup then
+		searchedGroups[categoryGroup] = true
+		if loadQuestDataForStaticLookup(categoryGroup) then
+			quest, zoneid = getQuestDataByIDInGroup(categoryGroup, questid)
+			if quest then
+				return quest, zoneid
+			end
+		end
+	end
+
+	for _, group in ipairs(canonicalQuestSearchGroups) do
+		if not searchedGroups[group] and loadQuestDataForStaticLookup(group) then
+			searchedGroups[group] = true
+			quest, zoneid = getQuestDataByIDInGroup(group, questid)
+			if quest then
+				return quest, zoneid
+			end
+		end
+	end
+	return nil
+end
+
+function EveryQuest:ReconcileQuestHistoryForZone(group, zoneid)
+	if not zoneid or not self.db.char.history then
+		return 0
+	end
+	local zoneHistory = self.db.char.history[zoneid]
+	if type(zoneHistory) ~= "table" then
+		return 0
+	end
+
+	local questIDs = {}
+	for questid in pairs(zoneHistory) do
+		table.insert(questIDs, questid)
+	end
+
+	local reconciled = 0
+	for _, questid in ipairs(questIDs) do
+		questid = tonumber(questid)
+		if questid then
+			local staticQuest, staticZoneID = getCanonicalQuestDataByID(questid, group)
+			if staticZoneID then
+				local savedQuest, moved = resolveQuestHistoryZone(self.db.char.history, questid, staticZoneID)
+				local changed = moved
+				if savedQuest and staticQuest and applyStaticQuestMetadata(savedQuest, staticQuest) then
+					changed = true
+				end
+				if changed then
+					reconciled = reconciled + 1
+				end
+			end
+		end
+	end
+	return reconciled
 end
 
 function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle, daily, questLevel)
@@ -1530,9 +1663,9 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 		questLevel = questLevel or context.level
 	end
 	rememberQuestContext(questid, category, questTitle, daily, questLevel)
-	local categoryZoneID = getZoneIDByCategory(category)
-	local staticQuest, staticZoneID = getLoadedQuestDataByID(questid)
-	if not categoryZoneID and staticZoneID then
+	local categoryZoneID, categoryGroup = getZoneIDByCategory(category)
+	local staticQuest, staticZoneID = getCanonicalQuestDataByID(questid, categoryGroup)
+	if staticZoneID then
 		categoryZoneID = staticZoneID
 	end
 
@@ -1590,7 +1723,13 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 		history.l = questLevel
 	end
 	if daily then
-		history.d = 1
+		if history.d ~= 1 then
+			history.d = 1
+			changed = not added
+		end
+	elseif daily == false and history.d ~= nil then
+		history.d = nil
+		changed = not added
 	end
 	if qstatus ~= nil and history.status ~= qstatus then
 		history.status = qstatus
@@ -1717,15 +1856,16 @@ function EveryQuest:ScanQuestLog(reportStatus)
 					if questid then
 						scanned = scanned + 1
 						local status = statusFromQuestLog(info.isComplete)
-						local daily = isDailyQuest(info.frequency)
-						rememberQuestContext(questid, category, info.title, daily, tonumber(info.level))
+						local daily = isQuestLogInfoDaily(info)
+						local level = tonumber(info.level)
+						rememberQuestContext(questid, category, info.title, daily, level)
 						local savedQuestID, zoneid, _, wasAdded, wasChanged = self:SaveQuestHistoryByID(
 							questid,
 							category,
 							status,
 							info.title,
 							daily,
-							tonumber(info.level)
+							level
 						)
 						if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
 							if wasAdded then
@@ -1973,6 +2113,9 @@ function EveryQuest:UpdateFrame()
 			FauxScrollFrame_Update(EveryQuestListScrollFrame,0,27,16)
 			self:ShowListMessage(L["Select a zone to show quests"])
 			return
+		end
+		if self.db.profile.view == "history" then
+			self:ReconcileQuestHistoryForZone(sessionvars.zonegroup, sessionvars.zoneid)
 		end
 		--if self.db.profile.view == "zone" then
 			--self:Debug("GetQuestData - zone zoneid:"..sessionvars["zoneid"].." zonegroup:"..sessionvars.zonegroup)

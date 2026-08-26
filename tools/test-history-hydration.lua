@@ -16,6 +16,7 @@ EveryQuest.db = {
 					id = 11134,
 					n = "Quest 11134",
 					s = 3,
+					d = 1,
 					status = -1,
 					abandoned = 1787389502,
 				},
@@ -56,6 +57,7 @@ assert(EveryQuest:HydrateQuestHistoryForGroup("Kalimdor") == 2)
 local deserters = EveryQuest.db.char.history[15][11134]
 assert(deserters.n == "The End of the Deserters")
 assert(deserters.l == 37 and deserters.r == 32 and deserters.s == 1)
+assert(deserters.d == nil, "hydration must clear stale daily flags from non-daily static quests")
 assert(deserters.status == -1 and deserters.abandoned == 1787389502)
 
 local defias = EveryQuest.db.char.history[15][11137]
