@@ -7,6 +7,8 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 ## [Unreleased]
 
+## [2026.3.6] - 2026-08-27
+
 ### Fixed
 
 - Route quest-log history for known quest IDs through EveryQuest's canonical

@@ -13,7 +13,7 @@
 ## 3. Regression and Local Verification
 
 - [x] 3.1 Add or update focused Lua regression tests for canonical history routing, metadata hydration, and quest-log fallback behavior; verify the expected files under `tools/` changed.
-- [x] 3.2 Add an unreleased `CHANGELOG.md` entry for the user-visible history routing and metadata fixes; verify the entry appears under `[Unreleased]`.
+- [x] 3.2 Add a release-dated `CHANGELOG.md` entry for the user-visible history routing and metadata fixes; verify the entry appears under `2026.3.6`.
 - [x] 3.3 Run focused Lua regressions with `mise exec lua@5.1.5 -- lua tools/test-quest-log-fallback.lua`, `mise exec lua@5.1.5 -- lua tools/test-history-hydration.lua`, and `mise exec lua@5.1.5 -- lua tools/test-unmapped-quest-history.lua`.
 - [x] 3.4 Run the required local gate `tools/verify-addon.sh` and verify it exits successfully.
 

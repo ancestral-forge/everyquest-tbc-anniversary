@@ -50,7 +50,7 @@ None.
 - Data modules: static quest lookup may load existing EveryQuest data modules on
   demand for canonical lookup; no static data files are changed.
 - Tests: Lua regression coverage under `tools/`.
-- Documentation: unreleased entry in `CHANGELOG.md`.
+- Documentation: release-dated entry in `CHANGELOG.md`.
 - Evidence: local static/test evidence uses `tools/verify-addon.sh`; install
   parity and live WoW behavior require a human client run and are tracked
   separately from local verification.
