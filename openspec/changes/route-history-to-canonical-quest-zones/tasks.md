@@ -26,5 +26,5 @@
 ## 5. Publication
 
 - [x] 5.1 Inspect final diff and Git status before publication; verify only the intended runtime, test, and OpenSpec files are changed in the task worktree.
-- [ ] 5.2 Push a branch and open a pull request only after user authorization; verify remote CI separately from local checks.
+- [x] 5.2 Push a branch and open a pull request only after user authorization; verify remote CI separately from local checks.
 - [ ] 5.3 Merge, tag, package, or release only after explicit user authorization; verify each publication step separately.
