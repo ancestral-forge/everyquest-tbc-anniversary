@@ -17,6 +17,12 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 - Preserve legacy quest-log levels and clear stale daily markers when history is
   refreshed from quest-log or static metadata.
 
+### Links
+
+- Release: https://github.com/ancestral-forge/everyquest-tbc-anniversary/releases/tag/v2026.3.6
+- Full changelog: https://github.com/ancestral-forge/everyquest-tbc-anniversary/compare/v2026.3.5...v2026.3.6
+- Fix PR: https://github.com/ancestral-forge/everyquest-tbc-anniversary/pull/34
+
 ## [2026.3.5] - 2026-08-23
 
 ### Fixed
