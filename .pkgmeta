@@ -5,7 +5,6 @@ manual-changelog:
   markup-type: markdown
 
 wowi-create-changelog: no
-wowi-convert-changelog: no
 
 # The release workflow runs BigWigs in upload-only mode (-c -z). This entry lets
 # the packager discover the primary TOC without replacing tools/package-release.sh.

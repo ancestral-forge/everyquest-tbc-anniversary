@@ -88,11 +88,16 @@ proof.
   archive from the same tag.
 - `dist/release-notes.md`, generated from the current `CHANGELOG.md` version
   section, is the release changelog for GitHub, CurseForge, Wago, and
-  WoWInterface. Do not add platform-specific changelog files.
+  WoWInterface. The packaging script appends release and full-changelog links
+  to that generated file. Do not add platform-specific changelog files, and do
+  not add release links to `CHANGELOG.md`.
 - CurseForge, Wago, and WoWInterface uploads use the BigWigsMods packager in
   upload-only mode after `tools/package-release.sh` has created the archive.
   Keep the external platform uploads pointed at the existing `dist` ZIP rather
   than creating a second archive in the release workflow.
+- CurseForge and Wago release labels use `EveryQuest TBC <version>`;
+  WoWInterface receives a BigWigs-generated BBCode changelog converted from the
+  generated Markdown release notes.
 - Configure external publishing with repository variables
   `CURSEFORGE_PROJECT_ID`, `WAGO_PROJECT_ID`, and `WOWINTERFACE_ADDON_ID`, plus
   repository secrets `CURSEFORGE_API_TOKEN`, `WAGO_API_TOKEN`, and

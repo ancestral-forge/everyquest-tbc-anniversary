@@ -25,6 +25,16 @@ if [[ "$tag" != "$expected_tag" ]]; then
 fi
 
 asset="EveryQuest-TBC-Anniversary-${version}.zip"
+project_url="$(awk -F': ' '/^## X-Source:/ { print $2; exit }' "$repo_root/EveryQuest/EveryQuest.toc" | tr -d '\r')"
+project_url="${project_url%/}"
+if [[ -z "$project_url" ]]; then
+  project_url="https://github.com/ancestral-forge/everyquest-tbc-anniversary"
+fi
+
+previous_tag=""
+if command -v git >/dev/null 2>&1 && git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  previous_tag="$(git -C "$repo_root" tag --list 'v[0-9]*' --sort=-v:refname | awk -v tag="$tag" '$0 != tag { print; exit }')"
+fi
 addon_dirs=(
   EveryQuest
   EveryQuest_Battlegrounds
@@ -94,9 +104,18 @@ awk -v version="$version" '
   echo "## EveryQuest TBC Anniversary"
   echo
   if [[ -s "$notes_section" ]]; then
-    cat "$notes_section"
+    sed '${/^$/d;}' "$notes_section"
   else
     echo "See CHANGELOG.md for release details."
+  fi
+  echo
+  echo "### Links"
+  echo
+  echo "- Release: ${project_url}/releases/tag/${tag}"
+  if [[ -n "$previous_tag" ]]; then
+    echo "- Full changelog: ${project_url}/compare/${previous_tag}...${tag}"
+  else
+    echo "- Full changelog: ${project_url}/commits/${tag}"
   fi
 } > "$dist_dir/release-notes.md"
 

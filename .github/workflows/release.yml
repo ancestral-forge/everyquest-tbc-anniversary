@@ -46,6 +46,7 @@ jobs:
           echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           echo "asset=${RELEASE_ASSET}" >> "$GITHUB_OUTPUT"
+          echo "platform_label=EveryQuest TBC ${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub release
         env:
@@ -104,7 +105,7 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
           archive: ${{ github.workspace }}/dist/${{ steps.release.outputs.asset }}
           archive_name: ${{ steps.release.outputs.asset }}
-          archive_label: ${{ steps.release.outputs.version }}
+          archive_label: ${{ steps.release.outputs.platform_label }}
           archive_version: ${{ steps.release.outputs.version }}
 
       - name: Publish Wago release
@@ -117,7 +118,7 @@ jobs:
           WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
           archive: ${{ github.workspace }}/dist/${{ steps.release.outputs.asset }}
           archive_name: ${{ steps.release.outputs.asset }}
-          archive_label: ${{ steps.release.outputs.version }}
+          archive_label: ${{ steps.release.outputs.platform_label }}
           archive_version: ${{ steps.release.outputs.version }}
 
       - name: Publish WoWInterface release
@@ -125,10 +126,10 @@ jobs:
         uses: BigWigsMods/packager@36b4c3b7b7bd17c835ad8c83fed4976c067edfbe
         with:
           args: -c -z -u -m .pkgmeta -w ${{ vars.WOWINTERFACE_ADDON_ID }}
-          pandoc: false
+          pandoc: true
         env:
           WOWI_API_TOKEN: ${{ secrets.WOWINTERFACE_API_TOKEN }}
           archive: ${{ github.workspace }}/dist/${{ steps.release.outputs.asset }}
           archive_name: ${{ steps.release.outputs.asset }}
-          archive_label: ${{ steps.release.outputs.version }}
+          archive_label: ${{ steps.release.outputs.platform_label }}
           archive_version: ${{ steps.release.outputs.version }}
