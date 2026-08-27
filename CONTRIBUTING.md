@@ -86,6 +86,22 @@ proof.
 - `tools/package-release.sh` is the shared packaging contract for GitHub and
   GitLab. Keep its output deterministic so both platforms produce the same
   archive from the same tag.
+- `dist/release-notes.md`, generated from the current `CHANGELOG.md` version
+  section, is the release changelog for GitHub, CurseForge, Wago, and
+  WoWInterface. Do not add platform-specific changelog files.
+- CurseForge, Wago, and WoWInterface uploads use the BigWigsMods packager in
+  upload-only mode after `tools/package-release.sh` has created the archive.
+  Keep the external platform uploads pointed at the existing `dist` ZIP rather
+  than creating a second archive in the release workflow.
+- Configure external publishing with repository variables
+  `CURSEFORGE_PROJECT_ID`, `WAGO_PROJECT_ID`, and `WOWINTERFACE_ADDON_ID`, plus
+  repository secrets `CURSEFORGE_API_TOKEN`, `WAGO_API_TOKEN`, and
+  `WOWINTERFACE_API_TOKEN`. Leave both the ID and token empty to skip a
+  platform; setting only one of the pair fails the release.
+- `README.md` remains the canonical addon description. The release workflow
+  does not synchronize long project descriptions on CurseForge, Wago, or
+  WoWInterface; update those platform descriptions manually if they need to
+  change.
 - GitHub is the canonical repository. GitLab receives branches and tags through
   a write-enabled project deploy key and independently publishes backup
   releases from `v<TOC version>` tags.
