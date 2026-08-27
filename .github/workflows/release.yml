@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build release package
         id: release
@@ -66,3 +68,67 @@ jobs:
               --title "${version}" \
               --notes-file dist/release-notes.md
           fi
+
+      - name: Check addon distribution configuration
+        env:
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          WAGO_PROJECT_ID: ${{ vars.WAGO_PROJECT_ID }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          WOWINTERFACE_ADDON_ID: ${{ vars.WOWINTERFACE_ADDON_ID }}
+          WOWINTERFACE_API_TOKEN: ${{ secrets.WOWINTERFACE_API_TOKEN }}
+        shell: bash
+        run: |
+          [[ -z "$CURSEFORGE_PROJECT_ID" && -z "$CURSEFORGE_API_TOKEN" ]] || [[ -n "$CURSEFORGE_PROJECT_ID" && -n "$CURSEFORGE_API_TOKEN" ]] || {
+            echo "::error title=CurseForge configuration is incomplete::Set both vars.CURSEFORGE_PROJECT_ID and secrets.CURSEFORGE_API_TOKEN, or leave both empty to skip CurseForge."
+            exit 1
+          }
+
+          [[ -z "$WAGO_PROJECT_ID" && -z "$WAGO_API_TOKEN" ]] || [[ -n "$WAGO_PROJECT_ID" && -n "$WAGO_API_TOKEN" ]] || {
+            echo "::error title=Wago configuration is incomplete::Set both vars.WAGO_PROJECT_ID and secrets.WAGO_API_TOKEN, or leave both empty to skip Wago."
+            exit 1
+          }
+
+          [[ -z "$WOWINTERFACE_ADDON_ID" && -z "$WOWINTERFACE_API_TOKEN" ]] || [[ -n "$WOWINTERFACE_ADDON_ID" && -n "$WOWINTERFACE_API_TOKEN" ]] || {
+            echo "::error title=WoWInterface configuration is incomplete::Set both vars.WOWINTERFACE_ADDON_ID and secrets.WOWINTERFACE_API_TOKEN, or leave both empty to skip WoWInterface."
+            exit 1
+          }
+
+      - name: Publish CurseForge release
+        if: ${{ vars.CURSEFORGE_PROJECT_ID != '' }}
+        uses: BigWigsMods/packager@36b4c3b7b7bd17c835ad8c83fed4976c067edfbe
+        with:
+          args: -c -z -u -m .pkgmeta -p ${{ vars.CURSEFORGE_PROJECT_ID }}
+          pandoc: false
+        env:
+          CF_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          archive: ${{ github.workspace }}/dist/${{ steps.release.outputs.asset }}
+          archive_name: ${{ steps.release.outputs.asset }}
+          archive_label: ${{ steps.release.outputs.version }}
+          archive_version: ${{ steps.release.outputs.version }}
+
+      - name: Publish Wago release
+        if: ${{ vars.WAGO_PROJECT_ID != '' }}
+        uses: BigWigsMods/packager@36b4c3b7b7bd17c835ad8c83fed4976c067edfbe
+        with:
+          args: -c -z -u -m .pkgmeta -a ${{ vars.WAGO_PROJECT_ID }}
+          pandoc: false
+        env:
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          archive: ${{ github.workspace }}/dist/${{ steps.release.outputs.asset }}
+          archive_name: ${{ steps.release.outputs.asset }}
+          archive_label: ${{ steps.release.outputs.version }}
+          archive_version: ${{ steps.release.outputs.version }}
+
+      - name: Publish WoWInterface release
+        if: ${{ vars.WOWINTERFACE_ADDON_ID != '' }}
+        uses: BigWigsMods/packager@36b4c3b7b7bd17c835ad8c83fed4976c067edfbe
+        with:
+          args: -c -z -u -m .pkgmeta -w ${{ vars.WOWINTERFACE_ADDON_ID }}
+          pandoc: false
+        env:
+          WOWI_API_TOKEN: ${{ secrets.WOWINTERFACE_API_TOKEN }}
+          archive: ${{ github.workspace }}/dist/${{ steps.release.outputs.asset }}
+          archive_name: ${{ steps.release.outputs.asset }}
+          archive_label: ${{ steps.release.outputs.version }}
+          archive_version: ${{ steps.release.outputs.version }}
