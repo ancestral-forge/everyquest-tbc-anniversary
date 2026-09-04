@@ -4,6 +4,7 @@ sourceFile:close()
 
 EveryQuest = {}
 EveryQuestData = {}
+dofile("EveryQuest/QuestStore.lua")
 local harnessSessionVars = {}
 rawset(_G, "zonemenu", {
 	["Eastern Kingdoms"] = {
@@ -63,6 +64,7 @@ local function resetHarness(staticData)
 			history = {},
 		},
 	}
+	EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 	EveryQuest.requestFrameUpdates = 0
 	function EveryQuest:RequestFrameUpdate()
 		self.requestFrameUpdates = self.requestFrameUpdates + 1

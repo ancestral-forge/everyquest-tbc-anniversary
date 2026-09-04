@@ -30,7 +30,7 @@ local loader = assert(loadstring(table.concat({
 
 local now = 100
 local closeCount = 0
-local quest = {id = 42, n = "A Test Quest", s = 3}
+local quest = {id = 42, n = "A Test Quest", s = 3, relations = {followUps = {43}}}
 local questdisplay = {[8] = quest}
 local sessionvars = {zoneid = 15}
 local locale = setmetatable({}, {__index = function(_, key) return key end})
@@ -45,6 +45,12 @@ local EveryQuest = {
 		},
 	},
 }
+
+local previousEveryQuest = _G.EveryQuest
+_G.EveryQuest = EveryQuest
+dofile("EveryQuest/QuestStore.lua")
+_G.EveryQuest = previousEveryQuest
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 
 function EveryQuest:UpdateFrame()
 	self.frameUpdates = (self.frameUpdates or 0) + 1
@@ -75,6 +81,8 @@ assert(menu[5].isNotRadio == false, "status choices must use radio-button behavi
 
 menu[7].func()
 local history = EveryQuest.db.char.history[15][42]
+assert(history ~= quest, "manual status history must not alias static quest data")
+assert(history.relations == nil and quest.status == nil, "manual status must not copy relations or mutate static data")
 assert(history.status == -1, "Failed must use its own stored status")
 assert(history.abandoned == nil and history.failed == nil, "manual status changes must clear stale event timestamps")
 
