@@ -42,5 +42,5 @@
 
 - [ ] 7.1 In a human-run TBC Anniversary client with script errors enabled, verify addon load with Questie enabled and disabled plus existing zone/history rendering, manual statuses, Clear Status, accept, ready, complete, turn-in, abandon, and fail paths; record this separately from local checks.
 - [x] 7.2 If installation is explicitly authorized, sync only the `EveryQuest*` addon directories and prove repository/client parity separately from live gameplay; do not modify SavedVariables.
-- [ ] 7.3 Push or open a pull request only after explicit authorization, then verify the remote head SHA and remote CI separately from local and live-client evidence.
+- [x] 7.3 Push or open a pull request only after explicit authorization, then verify the remote head SHA and remote CI separately from local and live-client evidence.
 - [ ] 7.4 Merge, package, tag, publish, or release only after separate explicit authorization, verifying each resulting state independently.
