@@ -469,6 +469,20 @@ local function getDisplayedQuestStatus(quest, history)
 	return nil
 end
 
+-- Disable each phase label in the release that opens that phase.
+local FUTURE_PHASE_LABELS_ENABLED = {
+	[4] = true,
+	[5] = true,
+}
+
+local function getQuestPhaseLabel(quest)
+	local phase = quest and quest.p
+	if type(phase) == "number" and FUTURE_PHASE_LABELS_ENABLED[phase] then
+		return "[" .. L["Phase"] .. " " .. phase .. "]"
+	end
+	return ""
+end
+
 local function addQuestStatusLabel(text, status)
 	if status == -3 then
 		return text .. " (" .. L["Abandoned"] .. ")"
@@ -2269,7 +2283,8 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 		local history = self.db.char.history and self.db.char.history[sessionvars.zoneid]
 			and self.db.char.history[sessionvars.zoneid][quest.id]
 		local status = getDisplayedQuestStatus(quest, history)
-		local text = addQuestStatusLabel("["..level..qTag.."] "..quest["n"], status)
+		local text = "["..level..qTag.."]"..getQuestPhaseLabel(quest).." "..quest["n"]
+		text = addQuestStatusLabel(text, status)
 		setButtonText(listFrame, text)
 		if status ~= nil then
 			setButtonTextColor(listFrame, self:GetColor(status))
