@@ -185,11 +185,11 @@ EveryQuestData["Dungeons"] = {
 	{ ["id"] = 9575,["n"] = "Weaken the Ramparts",["l"] = 62,["r"] = 59,["s"] = 1,["t"] = 81,},
 },
 [4095] = {
-	{ ["id"] = 11500,["n"] = "\"Wanted\": Sisters of Torment",["l"] = 70,["r"] = 70,["s"] = 3,["d"] = 1,["t"] = 81,},
-	{ ["id"] = 11499,["n"] = "\"Wanted\": The Signet Ring of Prince Kael'thas",["l"] = 70,["r"] = 70,["s"] = 3,["d"] = 1,["t"] = 85,},
-	{ ["id"] = 11492,["n"] = "Hard to Kill",["l"] = 70,["r"] = 70,["s"] = 3,["t"] = 81,},
-	{ ["id"] = 11488,["n"] = "Magisters' Terrace",["l"] = 70,["r"] = 70,["s"] = 3,["t"] = 81,},
-	{ ["id"] = 11490,["n"] = "The Scryer's Scryer",["l"] = 70,["r"] = 70,["s"] = 3,["t"] = 81,},
+	{ ["id"] = 11500,["n"] = "\"Wanted\": Sisters of Torment",["l"] = 70,["r"] = 70,["s"] = 3,["d"] = 1,["t"] = 81,["p"] = 5,},
+	{ ["id"] = 11499,["n"] = "\"Wanted\": The Signet Ring of Prince Kael'thas",["l"] = 70,["r"] = 70,["s"] = 3,["d"] = 1,["t"] = 85,["p"] = 5,},
+	{ ["id"] = 11492,["n"] = "Hard to Kill",["l"] = 70,["r"] = 70,["s"] = 3,["t"] = 81,["p"] = 5,},
+	{ ["id"] = 11488,["n"] = "Magisters' Terrace",["l"] = 70,["r"] = 70,["s"] = 3,["t"] = 81,["p"] = 5,},
+	{ ["id"] = 11490,["n"] = "The Scryer's Scryer",["l"] = 70,["r"] = 70,["s"] = 3,["t"] = 81,["p"] = 5,},
 },
 [3792] = {
 	{ ["id"] = 11373,["n"] = "\"Wanted\": Shaffar's Wondrous Pendant",["l"] = 70,["r"] = 70,["s"] = 3,["d"] = 1,["t"] = 85,},
@@ -364,8 +364,8 @@ EveryQuestData["Dungeons"] = {
 	{ ["id"] = 9496,["n"] = "Pride of the Fel Horde",["l"] = 70,["r"] = 66,["s"] = 2,["t"] = 81,},
 	{ ["id"] = 9495,["n"] = "The Will of the Warchief",["l"] = 70,["r"] = 67,["s"] = 2,["t"] = 81,},
 	{ ["id"] = 9492,["n"] = "Turning the Tide",["l"] = 70,["r"] = 67,["s"] = 1,["t"] = 81,},
-	{ ["id"] = 9524,["n"] = "Imprisoned in the Citadel",["l"] = 70,["r"] = 70,["s"] = 1,["t"] = 85,},
-	{ ["id"] = 9525,["n"] = "Imprisoned in the Citadel",["l"] = 70,["r"] = 68,["s"] = 2,["t"] = 85,},
+	{ ["id"] = 9524,["n"] = "Imprisoned in the Citadel",["l"] = 70,["r"] = 70,["s"] = 1,["t"] = 85,["p"] = 4,},
+	{ ["id"] = 9525,["n"] = "Imprisoned in the Citadel",["l"] = 70,["r"] = 68,["s"] = 2,["t"] = 85,["p"] = 4,},
 },
 [3717] = {
 	{ ["id"] = 11368,["n"] = "\"Wanted\": The Heart of Quagmirran",["l"] = 70,["r"] = 70,["s"] = 3,["d"] = 1,["t"] = 85,},

@@ -8,6 +8,7 @@ EveryQuest_Locale = {
 	["Clear Status"] = true,
 	["Abandoned"] = true,
 	["Failed"] = true,
+	["Phase"] = true,
 	["Close"] = true,
 
 	["EveryQuest Log"] = true,
