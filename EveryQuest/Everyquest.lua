@@ -1376,6 +1376,7 @@ function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 
 	if self.db.char.history == nil then
 		self.db.char.history = {}
+		self.QuestStore:SetHistoryRoot(self.db.char.history)
 	end
 
 	local checked, completed, added, changed = 0, 0, 0, 0
@@ -1387,13 +1388,11 @@ function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 					checked = checked + 1
 					if isQuestFlaggedCompleted(questid) then
 						completed = completed + 1
-						if self.db.char.history[zoneid] == nil then
-							self.db.char.history[zoneid] = {}
-						end
-						local history = self.db.char.history[zoneid][questid]
-						if history == nil then
-							self.db.char.history[zoneid][questid] = quest
-							history = self.db.char.history[zoneid][questid]
+						local history, wasAdded = self.QuestStore:EnsureHistoryRecord(questid, {
+							zoneID = zoneid,
+							quest = quest,
+						})
+						if wasAdded then
 							added = added + 1
 						elseif history.status ~= 2 then
 							changed = changed + 1
@@ -1659,6 +1658,7 @@ end
 function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle, daily, questLevel)
 	if self.db.char.history == nil then
 		self.db.char.history = {}
+		self.QuestStore:SetHistoryRoot(self.db.char.history)
 	end
 	questid = tonumber(questid)
 	if not questid then
@@ -1711,20 +1711,16 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 		if not zoneid then
 			return false
 		end
-		if self.db.char.history[zoneid] == nil then
-			self.db.char.history[zoneid] = {}
-		end
-		history = {
+		local historySource = staticQuest or {
 			id = questid,
 			n = questTitle or ("Quest " .. questid),
 			s = 3,
 		}
-		if staticQuest then
-			applyStaticQuestMetadata(history, staticQuest)
-		end
-		self.db.char.history[zoneid][questid] = history
+		history, added = self.QuestStore:EnsureHistoryRecord(questid, {
+			zoneID = zoneid,
+			quest = historySource,
+		})
 		historyZoneID = zoneid
-		added = true
 	end
 
 	if staticQuest and applyStaticQuestMetadata(history, staticQuest) then
@@ -1757,6 +1753,7 @@ end
 function EveryQuest:AddQuestByID(questid, category, qstatus)
 	if self.db.char.history == nil then
 		self.db.char.history = {}
+		self.QuestStore:SetHistoryRoot(self.db.char.history)
 	end
 	questid = tonumber(questid)
 	if not questid then
@@ -1784,18 +1781,16 @@ function EveryQuest:AddQuestByID(questid, category, qstatus)
 	end
 	self:Debug("AddQuestByID - questid:"..concat(questid) .. " zoneid:"..concat(zoneid))
 	if zoneid ~= nil then
-		if self.db.char.history[zoneid] == nil then
-			self.db.char.history[zoneid] = {}
-		end
 		if quest ~= nil then
-			if self.db.char.history[zoneid][questid] == nil then
-				self.db.char.history[zoneid][questid] = quest
-			end
+			history = self.QuestStore:EnsureHistoryRecord(questid, {
+				zoneID = zoneid,
+				quest = quest,
+			})
 			if qstatus ~= nil then
-				self.db.char.history[zoneid][questid].status = qstatus
+				history.status = qstatus
 			end
 			self:RequestFrameUpdate()
-			return questid, zoneid, self.db.char.history[zoneid][questid].d
+			return questid, zoneid, history.d
 		else
 			return false
 		end
@@ -2064,9 +2059,6 @@ function EveryQuest:QuestTurnedIn(questName, questid)
 end
 
 function EveryQuest:AddQuest(questindex, category, qstatus)
-	if self.db.char.history == nil then
-		self.db.char.history = {}
-	end
 	if questindex then
 		local questid = self:GetQID(questindex)
 		if qstatus == nil then
@@ -2083,23 +2075,14 @@ function EveryQuest:UpdateStatus(displayid, queststatus)
 	local questid = quest.id
 	local zoneid = sessionvars.zoneid
 	if queststatus == nil then
-		quest.status = nil
-		quest.abandoned = nil
-		quest.failed = nil
-		quest.completed = nil
-		if self.db.char.history[zoneid] then
-			self.db.char.history[zoneid][questid] = nil
-		end
+		self.QuestStore:RemoveHistoryRecord(questid, zoneid)
 		self:UpdateFrame()
 		return
 	end
-	if not self.db.char.history[zoneid] then
-		self.db.char.history[zoneid] = {}
-	end
-	if not self.db.char.history[zoneid][questid] then
-		self.db.char.history[zoneid][questid] = quest
-	end
-	local history = self.db.char.history[zoneid][questid]
+	local history = self.QuestStore:EnsureHistoryRecord(questid, {
+		zoneID = zoneid,
+		quest = quest,
+	})
 	history.status = queststatus
 	history.abandoned = nil
 	history.failed = nil

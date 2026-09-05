@@ -18,6 +18,7 @@
 localization.lua
 
 Core.lua
+QuestStore.lua
 Options.lua
 
 Everyquest.xml

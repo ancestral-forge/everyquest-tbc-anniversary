@@ -158,6 +158,10 @@ function EveryQuest:SetupDefaults()
 
 		view = "zone",
 	})
+
+	if self.QuestStore then
+		self.QuestStore:SetHistoryRoot(self.db.char.history)
+	end
 end
 
 function EveryQuest:RegisterEvent(event)
