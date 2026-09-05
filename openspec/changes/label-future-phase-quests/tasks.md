@@ -24,7 +24,7 @@
 
 ## 5. Human client evidence
 
-- [ ] 5.1 With separate installation authorization, install the exact candidate into TBC Anniversary Interface 20506 and prove repository/install file parity independently of static tests.
+- [x] 5.1 With separate installation authorization, install the exact candidate into TBC Anniversary Interface 20506 and prove repository/install file parity independently of static tests.
 - [ ] 5.2 In the human-operated client, enable script errors, `/reload`, inspect representative short and long Phase 4/5 rows plus status-bearing rows, and verify marker/title/status order, clipping, colors, sorting, tooltip, links, and clicks; keep this task unchecked until the live path succeeds.
 
 Package publication, remote CI, commit/push, merge, tag, and release are outside this change's current authorization. If later requested, keep each delivery state separate from static validation, install parity, and live gameplay evidence.
