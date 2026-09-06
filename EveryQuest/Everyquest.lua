@@ -936,10 +936,19 @@ function EveryQuest:EveryQuestInit()
 
 	self:SelectInitialZone()
 
-	self:ScanQuestLog(true)
+	sessionvars.initializingQuestData = true
+	local dataSummary = self:InitializeAllQuestData()
+	local scanned, added, changed, missing = self:ScanQuestLog(false)
+	self:PrintInitializationSummary(dataSummary, {
+		scanned = scanned,
+		added = added,
+		changed = changed,
+		missing = missing,
+	})
 
 	-- Load the saved view
 	EveryQuest:List(self.db.profile.view)
+	sessionvars.initializingQuestData = nil
 	sessionvars.initialized = true
 	return true
 end
@@ -1188,6 +1197,11 @@ function EveryQuest:GetQuestZoneData(zonegroup, zoneid, view)
 		view = self.db.profile.view
 	end
 	if view == "zone" then
+		-- Initial rendering must not retry failed groups or consume their UI error.
+		if sessionvars.initializingQuestData then
+			local groupdata = EveryQuestData and EveryQuestData[zonegroup]
+			return groupdata and groupdata[zoneid] or false
+		end
 		local groupdata = self:LoadQuestData(zonegroup)
 		if groupdata ~= false then
 			return groupdata[zoneid]
@@ -1480,6 +1494,68 @@ local canonicalQuestSearchGroups = {
 	"Kalimdor",
 	"Outland",
 }
+
+function EveryQuest:InitializeAllQuestData()
+	local summary = {
+		totalGroups = #canonicalQuestSearchGroups,
+		preparedGroups = 0,
+		newlyLoadedGroups = 0,
+		alreadyPreparedGroups = 0,
+		failedGroups = 0,
+		failures = {},
+		hydrated = 0,
+		checked = 0,
+		completed = 0,
+		added = 0,
+		changed = 0,
+	}
+	for _, group in ipairs(canonicalQuestSearchGroups) do
+		local groupData, reason, stats = self:PrepareQuestDataGroup(group)
+		if groupData then
+			summary.preparedGroups = summary.preparedGroups + 1
+		else
+			reason = reason or "LOAD_FAILED"
+			summary.failedGroups = summary.failedGroups + 1
+			table.insert(summary.failures, {group = group, reason = reason})
+			self:Debug("Quest data preparation failed: " .. group .. ": " .. reason)
+		end
+		if stats.newlyLoaded then
+			summary.newlyLoadedGroups = summary.newlyLoadedGroups + 1
+		end
+		if stats.alreadyPrepared then
+			summary.alreadyPreparedGroups = summary.alreadyPreparedGroups + 1
+		end
+		summary.hydrated = summary.hydrated + stats.hydrated
+		summary.checked = summary.checked + stats.checked
+		summary.completed = summary.completed + stats.completed
+		summary.added = summary.added + stats.added
+		summary.changed = summary.changed + stats.changed
+		self:Debug(("Quest data preparation: %s; %d hydrated, %d checked, %d completed, %d added, %d changed."):format(
+			group, stats.hydrated, stats.checked, stats.completed, stats.added, stats.changed))
+	end
+	return summary
+end
+
+function EveryQuest:PrintInitializationSummary(dataSummary, questLogSummary)
+	local failed = dataSummary.failedGroups
+	local missing = questLogSummary.missing or 0
+	local scanFailed = questLogSummary.scanned == false
+	local status = (failed > 0 or missing > 0 or scanFailed) and "Ready with warnings" or "Ready"
+	local active = "quest log scan failed"
+	if not scanFailed then
+		local scanned = questLogSummary.scanned
+		active = ("%d active %s"):format(scanned, scanned == 1 and "quest" or "quests")
+	end
+	local message = ("EveryQuest: %s — %d/%d quest data groups; %s"):format(
+		status, dataSummary.preparedGroups, dataSummary.totalGroups, active)
+	if failed > 0 then
+		message = message .. ("; %d %s failed"):format(failed, failed == 1 and "group" or "groups")
+	end
+	if missing > 0 then
+		message = message .. ("; %d active %s unmapped"):format(missing, missing == 1 and "quest" or "quests")
+	end
+	self:Print(message .. ".")
+end
 
 local function loadQuestDataForStaticLookup(group)
 	if not group then

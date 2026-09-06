@@ -11,8 +11,9 @@ release-5 provenance is documented in `SVN_IMPORT_NOTES.md`.
 
 - Show existing phase labels in quest history even when the saved record has
   no phase metadata, while preserving the quest's status and color.
-- Reduce repetitive quest-data loading and completed-sync chat messages when
-  browsing zones by preparing each loaded quest-data group once per session.
+- Prepare quest-data groups once during login/reload and report one startup
+  summary, keeping later zone browsing free of repetitive loading and
+  completed-sync messages.
 
 ## [2026.3.6] - 2026-08-27
 
