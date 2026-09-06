@@ -22,7 +22,7 @@ The current TBC Anniversary Interface 20506 API exposes `C_QuestLog.GetQuestInfo
 
 ### 1. Ship one isolated scanner module and a dormant slash-command route
 
-Add `EveryQuest/QuestApiAudit.lua` after `Everyquest.xml` in the main TOC and route the exact `audit-api` command plus `status`, `cancel`, and `clear` subcommands from `Options.lua`. The scanner attaches its public command entry point to `EveryQuest`, but keeps run state private to the module. It is intentionally absent from the normal `/everyquest help` string and options UI; `CONTRIBUTING.md` is the discoverability surface for maintainers.
+Add `EveryQuest/QuestApiAudit.lua` after `Everyquest.xml` in the main TOC and route the exact `api audit` command plus `status`, `cancel`, and `clear` subcommands from `Options.lua`. The scanner attaches its public command entry point to `EveryQuest`, but keeps run state private to the module. It is intentionally absent from the normal `/everyquest help` string and options UI; `CONTRIBUTING.md` is the discoverability surface for maintainers.
 
 This keeps the capability available in a real client without maintaining a separate addon or development build. Rejected alternatives are an automatic login scan, a player-facing options button, and a separate companion addon; each adds lifecycle, UX, packaging, or synchronization cost that the maintenance task does not need.
 
@@ -79,6 +79,6 @@ Static tests can prove state transitions and mutation boundaries; only a real An
 1. Add the scanner module, command routing, tests, and maintainer documentation without changing schema version 1.
 2. Run strict OpenSpec validation and `tools/verify-addon.sh` in the isolated worktree.
 3. In a human-operated TBC Anniversary client, enable script errors, start and cancel one audit including during warm-up, rerun it to completion, inspect probe and warm-up status, reload to flush SavedVariables, and verify the stored metadata/counts and unchanged history/UI behavior.
-4. If rollback is needed, remove the scanner file, TOC entry, command route, tests, and documentation. The optional stored report can remain ignored or be removed with `audit-api clear` before rollback.
+4. If rollback is needed, remove the scanner file, TOC entry, command route, tests, and documentation. The optional stored report can remain ignored or be removed with `api audit clear` before rollback.
 
 No package publication, client installation, commit, push, merge, tag, or release is part of implementation unless separately authorized.
