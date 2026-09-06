@@ -87,20 +87,41 @@ never printing success messages.
 - **THEN** the ordinary chat failure message still identifies the matching
   failure meaning instead of collapsing every failure into a generic error
 
-### Requirement: Future startup preparation can be summarized
+### Requirement: Startup preparation is summarized
 EveryQuest SHALL be able to prepare all static quest-data groups during startup
 and report one aggregated startup summary instead of per-group synchronization
 messages, without changing SavedVariables schema or quest-data module contents.
 
 #### Scenario: Startup prepares available groups
-- **WHEN** the later startup checkpoint initializes all quest-data groups after
+- **WHEN** login or reload initializes all quest-data groups after
   normal addon setup
 - **THEN** each available group is loaded and prepared through the same
   one-time preparation boundary
 - **AND** missing, disabled, failed, or empty groups remain retryable
 
 #### Scenario: Startup summary is aggregated
-- **WHEN** the later startup checkpoint finishes attempting startup group
-  preparation
+- **WHEN** startup finishes all group attempts and the quiet active quest-log scan
 - **THEN** the user-facing status output summarizes the aggregate result once
   instead of printing repetitive per-group load or synchronization messages
+
+#### Scenario: Startup follows canonical precedence and isolates failures
+- **WHEN** startup prepares static quest-data groups
+- **THEN** each canonical group is attempted in the existing canonical order
+- **AND** a failed group does not prevent later attempts
+- **AND** returned statistics and normalized failures do not expose internal tables
+- **AND** startup does not populate compatibility failure-message deduplication
+
+#### Scenario: Active quest state follows completed synchronization
+- **WHEN** initial-zone selection finishes on login or reload
+- **THEN** all group preparation attempts precede one `ScanQuestLog(false)` call
+- **AND** active In Progress and Ready to Turn In states are applied afterward
+- **AND** one summary precedes saved-view rendering and the initialized marker
+- **AND** explicit callers of `ScanQuestLog(true)` retain detailed reporting
+
+#### Scenario: Startup warnings remain concise
+- **WHEN** groups fail or active quests cannot be mapped
+- **THEN** the single summary includes correctly pluralized failure/unmapped counts
+- **AND** no ordinary per-group or individual unmapped messages are printed
+- **AND** checked/completed static-record totals are not presented as unique quests
+- **AND** rendering a failed saved-zone group does not emit another failure line
+- **AND** later user-driven zone browsing can retry and report its normal failure
