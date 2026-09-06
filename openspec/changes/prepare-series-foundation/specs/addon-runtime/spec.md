@@ -2,8 +2,8 @@
 
 ### Requirement: Static quest and character history isolation
 EveryQuest SHALL treat bundled quest records as immutable source data and SHALL
-create new `EveryQuestDBPC.history` records by copying only the existing flat
-metadata fields `id`, `n`, `l`, `r`, `s`, `t`, and `d`. Mutating status,
+create new `EveryQuestDBPC.history` records by copying only the persisted flat
+history fields `id`, `n`, `l`, `r`, `s`, `t`, and `d`. Mutating status,
 timestamps, counts, or other character progress in history MUST NOT mutate the
 static record, and relationship metadata MUST NOT be persisted into character
 history.
@@ -27,11 +27,21 @@ history.
   or schema-version increment
 - **AND** existing progress and metadata fields remain available
 
+#### Scenario: History rendering uses static-only presentation metadata
+- **WHEN** a schema version 1 history record has no phase `p` field and its
+  corresponding static quest record has reviewed future-phase metadata
+- **THEN** a history row resolves the phase marker from the static quest record
+- **AND** phase `p` remains absent from the history record and SavedVariables
+- **AND** the row's stored status and lifecycle display remain unchanged
+
 ### Requirement: Quest lookup preserves load-on-demand behavior
 EveryQuest SHALL provide one quest-ID lookup boundary for loaded static data and
-character history. Repeated lookups for an indexed quest SHALL return its record
-and location without rescanning unrelated indexed zones, while quests in
-unloaded groups SHALL retain the existing load-on-demand fallback.
+character history. All loaded occurrences of a quest ID SHALL be indexed so
+selection is deterministic under group and zone hints rather than dependent on
+module registration order. Repeated lookups for an indexed quest SHALL return
+its selected record and location without rescanning unrelated indexed zones,
+while quests in unloaded groups SHALL retain the existing load-on-demand
+fallback.
 
 #### Scenario: Repeated lookup in an indexed group
 - **WHEN** a loaded quest group has been indexed and the same quest ID is looked
@@ -39,12 +49,29 @@ unloaded groups SHALL retain the existing load-on-demand fallback.
 - **THEN** each lookup returns the same static quest, group, and canonical zone
 - **AND** the later lookup does not enumerate unrelated zones to rediscover it
 
+#### Scenario: Duplicate static quest occurrences are indexed
+- **WHEN** the same quest ID is present in more than one loaded group or zone
+- **THEN** EveryQuest retains every loaded occurrence in the runtime index
+- **AND** an exact group or zone hint selects the matching occurrence when one
+  exists
+- **AND** an unhinted lookup uses the established canonical group precedence
+  rather than whichever data module happened to register first
+
 #### Scenario: Lookup in an unloaded group
 - **WHEN** a quest ID is not present in currently indexed groups and a hinted or
   fallback EveryQuest data group can be loaded
 - **THEN** EveryQuest loads that existing data module through the established
   load-on-demand path
 - **AND** registers the group so subsequent lookup uses the index
+
+#### Scenario: History root is rebound
+- **WHEN** database initialization or a compatibility path replaces the history
+  root table
+- **THEN** QuestStore rebuilds its history index from the new root
+- **AND** no indexed record from the previous root remains reachable
+- **AND** duplicate saved locations remain available through the indexed
+  occurrence set for canonical reconciliation rather than being silently
+  discarded during indexing
 
 #### Scenario: History moves to its canonical location
 - **WHEN** an existing history record is reconciled from a conflicting zone to

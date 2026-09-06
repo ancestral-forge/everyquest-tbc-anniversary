@@ -1,13 +1,17 @@
 ## Context
 
 See `proposal.md` for motivation and `specs/addon-runtime/spec.md` for the
-behavioral contract. On current `origin/main` (`89caf03`), static quest tables
-are assigned directly into character history in completed-flag sync,
-`AddQuestByID`, and manual `UpdateStatus` paths. Other save paths already build
-flat records but use separate scans for history, loaded static data, and
-loadable groups. Chain availability is implemented by local functions in
-`Everyquest.lua`, and the associated tests extract those functions from source
-text by matching their relative positions.
+behavioral contract. Checkpoint 1 was merged through PR #37; current
+`origin/main` is `7e872ee`, where new history records are fresh whitelisted
+tables owned by `QuestStore`. The old `prepare-series-foundation` source branch
+predates its squash merge and MUST NOT be reused for another checkpoint.
+
+History lookup, static lookup, hydration, and canonical movement still use
+parallel scans and direct root mutations. Chain availability is still
+implemented by local functions in `Everyquest.lua`, and the associated tests
+extract those functions from source text by matching their relative positions.
+PR #36 also introduced static-only future-phase metadata (`p`), which must remain
+outside history while continuing to render in both zone and history views.
 
 The addon remains a Lua 5.1, Interface `20506` application with ten existing
 load-on-demand quest-data groups. Static data, schema version 1 character
@@ -39,6 +43,19 @@ continue to work independently.
 - Do not change data-module ownership, quest-data provenance, or the Blizzard
   event and secure-UI boundary.
 
+### Continuation after checkpoint 1
+
+Every remaining checkpoint starts from the latest `origin/main` in a new clean
+worktree and task-named branch. The squash-merged
+`prepare-series-foundation` branch is historical evidence only; continuing it
+would reintroduce already merged commits and omit later main changes.
+
+Checkpoint 2 is limited to indexed `QuestStore` behavior and compatibility
+adapters. `QuestRelations`, `QuestState`, and Series UI remain separate later
+checkpoints. Before changing code, checkpoint 2 records the current main SHA,
+runs the unchanged baseline gate, and includes the future-phase history-render
+regression caused by the new static/history ownership boundary.
+
 ## Decisions
 
 ### Use three small factory-backed modules with production instances
@@ -58,34 +75,52 @@ not justify another dependency.
 
 ### Make QuestStore the only creator and location index for history
 
-`QuestStore` owns runtime-only `staticByID`, `historyByID`, and
-`indexedGroups` tables. It is bound to the schema version 1 history root after
-database defaults exist, indexes that root once, and exposes the following
-boundary:
+`QuestStore` owns runtime-only static occurrence indexes, history indexes, and
+`indexedGroups`. It is bound to the schema version 1 history root after database
+defaults exist, rebuilds its history index whenever that root is replaced, and
+exposes the following boundary:
 
-- `RegisterGroup(group, groupData)` indexes references to each valid static
-  quest together with its group and zone.
-- `GetStaticQuest(questID, groupHint)` checks the index first, then asks the
-  configured loader for the hinted group and the existing ordered fallback
-  groups, registering every successfully loaded group.
-- `GetHistory(questID)` returns the indexed history record and zone.
-- `GetQuestLocation(questID)` returns the indexed group and canonical zone.
-- `CreateHistoryRecord(quest)` copies only `id`, `n`, `l`, `r`, `s`, `t`, and
-  `d` into a fresh table.
+- `RegisterGroup(group, groupData)` indexes references to every valid static
+  quest occurrence together with its group and zone. Registration is
+  idempotent and never chooses canonical ownership from load order.
+- `GetStaticQuest(questID, groupHint, zoneHint)` checks indexed occurrences
+  first, prefers an exact valid hint, then asks the configured loader for the
+  hinted group and established ordered fallback groups. Unhinted selection uses
+  the existing canonical group precedence.
+- `GetHistory(questID, zoneHint)` returns the exact hinted saved occurrence
+  when available, otherwise a deterministic primary record and zone.
+- `GetHistoryOccurrences(questID)` returns every indexed saved occurrence so
+  canonical reconciliation cannot lose duplicate legacy locations.
+- `GetQuestLocation(questID, groupHint, zoneHint)` uses the same deterministic
+  occurrence selection as static lookup.
+- `CreateHistoryRecord(quest)` copies only persisted history fields `id`, `n`,
+  `l`, `r`, `s`, `t`, and `d` into a fresh table. Static-only `p` and all
+  relationship metadata remain excluded.
+- `ApplyStaticHistoryMetadata(history, quest)` owns whitelist hydration,
+  including the existing stale-daily clearing rule, so the whitelist is not
+  duplicated in `Everyquest.lua`.
 - `EnsureHistoryRecord(questID, context)` reuses existing history or creates a
-  fresh record at the static canonical zone or an explicit fallback zone from
-  current quest-log context.
-- `MoveHistoryToCanonicalLocation(questID)` preserves existing progress and
-  metadata while moving or merging the record, then atomically updates the
-  history index.
+  fresh record at the selected static location or an explicit fallback zone
+  from current quest-log context. The faction fallback is named `faction`, not
+  `source`, reserving `source` for relation/state provenance.
+- `MoveHistoryToCanonicalLocation(questID, hints)` preserves and merges existing
+  progress and metadata while moving all conflicting records, then atomically
+  updates the history index.
 - Explicit removal and reindex operations keep Clear Status and legacy record
   reconciliation from leaving stale runtime entries.
 
 The store indexes table references, not copies of the entire static database,
-so memory growth is one small location record per loaded static quest and one
-per saved history quest. `RegisterGroup` is idempotent. The existing ordered
-group list remains the fallback order; this change does not generate or load a
-global quest map at login.
+so memory growth is one small occurrence descriptor per loaded static record
+and one descriptor per saved history occurrence. The existing ordered group
+list remains the fallback order; this change does not generate or load a global
+quest map at login. Duplicate IDs are retained as occurrences and resolved by
+hints plus canonical precedence instead of being overwritten by registration
+order.
+
+History remains the source of character progress, while static records remain
+the source of current presentation and relation metadata. A history-view row
+therefore joins its saved status/timestamps with the matching static record for
+fields such as phase `p`; it does not copy `p` into SavedVariables.
 
 Current public methods such as `GetQuestData`, `GetHistoryByQuestID`,
 `SaveQuestHistoryByID`, and `ReconcileQuestHistoryForZone` remain compatibility
@@ -204,9 +239,15 @@ all `tools/test-*.lua` files under Lua 5.1.
   registration idempotent.
 - [Indexes add memory proportional to loaded data] → Store references and
   location scalars only, and preserve load-on-demand group loading.
-- [Duplicate static quest IDs make canonical ownership ambiguous] → Preserve
-  the current unique-ID assumption and ordered fallback; report any discovered
-  duplicate as a separate data correction rather than silently merging data.
+- [Duplicate static quest IDs make canonical ownership load-order dependent] →
+  Index all occurrences, prefer exact group/zone hints, use the established
+  canonical group precedence for unhinted lookup, and regression-test opposite
+  registration orders. Treat conflicting static metadata as a separate data
+  correction rather than silently merging records.
+- [Static-only phase metadata disappears in history view] → Keep `p` out of
+  SavedVariables and resolve it from the selected static occurrence during row
+  rendering; cover zone and history views with the same status-preservation
+  assertions.
 - [Questie changes its module API or returns corrupt values] → Guard member
   access and calls, validate IDs, cache successes only, and fail open.
 - [Structured state changes legacy precedence accidentally] → Keep one numeric
@@ -218,9 +259,10 @@ all `tools/test-*.lua` files under Lua 5.1.
 
 ## Migration Plan
 
-1. Add the store with fresh flat record creation and route all history creation
-   paths through it without changing schema version 1.
-2. Enable static/history indexes and replace the existing scans with public
+1. Completed in PR #37: add the store with fresh flat record creation and route
+   all history creation paths through it without changing schema version 1.
+2. From a fresh branch based on the latest main, enable static/history indexes
+   and replace the existing scans with public
    compatibility adapters while preserving load-on-demand fallback.
 3. Add normalized relationship providers and route current chain-derived
    Unavailable behavior through them.
