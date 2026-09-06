@@ -46,8 +46,8 @@
 ## 7. Checkpoint 2 Commit And Delivery
 
 - [x] 7.1 Create one local commit `feat: initialize all quest data on login` and verify its complete contents and final clean status.
-- [ ] 7.2 Push/open a PR only after separate authorization; verify remote branch and PR contents.
-- [ ] 7.3 Verify remote CI after authorized delivery.
+- [x] 7.2 Push/open a PR only after separate authorization; verify remote branch and PR contents.
+- [x] 7.3 Verify remote CI after authorized delivery.
 - [ ] 7.4 Merge only after separate authorization and required evidence; verify canonical main.
 
 No package, version bump, tag, publication, or release is in checkpoint 2 scope.
@@ -93,3 +93,15 @@ Do not archive this change while the required automated or live evidence is pend
   and recovery after reload.
 - Before PR delivery, checkpoint 2 was local only. Delivery evidence is tracked
   separately in section 7; this change remains active and unarchived.
+
+- Delivery, 2026-09-06 (user authorized): pushed
+  `initialize-all-quest-data-startup` over SSH and created
+  [PR #43](https://github.com/ancestral-forge/everyquest-tbc-anniversary/pull/43)
+  targeting `main`. Verified the open PR's branch, base, seven changed files,
+  body, and head `ca273cc719a830107e03bf15d634aea6416b888f` against the local
+  checkpoint. Addon code is unchanged from the installed/live-tested revision.
+- Remote CI: [Linter run 34054260715](https://github.com/ancestral-forge/everyquest-tbc-anniversary/actions/runs/34054260715)
+  passed both Lua lint and OpenSpec validation for the implementation checkpoint;
+  [GitLab mirror run 34054248303](https://github.com/ancestral-forge/everyquest-tbc-anniversary/actions/runs/34054248303)
+  also passed. Subsequent delivery-evidence edits affect this document only.
+  Merge and archive have not been performed.
