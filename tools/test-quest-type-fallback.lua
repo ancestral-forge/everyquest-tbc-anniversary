@@ -4,7 +4,7 @@ local source = file:read("*a")
 file:close()
 
 assert(
-	source:find('qTag = self:QuestType%(quest%["t"%]%) or ""'),
+	source:find('qTag = self:QuestType%(displayQuest%["t"%]%) or ""'),
 	"UpdateButton must fall back to an empty tag for unknown quest types"
 )
 

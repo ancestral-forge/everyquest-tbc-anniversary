@@ -74,7 +74,11 @@ proof.
 
 ## Releases
 
-- Update `CHANGELOG.md` for user-visible changes.
+- Update `CHANGELOG.md` under `[Unreleased]` in the same pull request as each
+  user-visible change, including bug fixes. Describe the actual player-facing
+  effect; do not defer the entry to release preparation. Purely internal
+  refactors do not require an entry. OpenSpec checkpoint scope must follow this
+  rule even when version bumps and release actions are out of scope.
 - Keep `EveryQuest/EveryQuest.toc` versions aligned across addon modules.
 - GitHub releases are built from tags named `v<TOC version>`, for example
   `v2026.3.1`.

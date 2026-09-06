@@ -104,6 +104,7 @@ assert(closeCount == 4 and EveryQuest.frameUpdates == 4)
 
 local lifecycle = {id = 42, status = -3, abandoned = 80}
 EveryQuest.db.char.history[15][42] = lifecycle
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 function EveryQuest:SaveQuestHistoryByID()
 	return 42, 15
 end

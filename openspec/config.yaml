@@ -14,6 +14,10 @@ context: |
   OpenSpec threshold: require it before merge for high-risk or durable contract
   changes; ordinary focused work can use an issue or pull-request description.
   Required local gate: tools/verify-addon.sh
+  Changelog: follow CONTRIBUTING.md; include user-visible changes and bug fixes
+  under CHANGELOG.md [Unreleased] in the same PR, even in refactor checkpoints.
+  Purely internal refactors need no entry; version bumps and release actions
+  remain separate.
   Evidence model: report static checks, tests, packaging, install parity, live
   client behavior, Git/PR/CI state, and release state independently.
 
@@ -33,6 +37,7 @@ rules:
     - For AI implementation, start with repository state, worktree, and relevant-spec inspection tasks.
     - Include tools/verify-addon.sh after implementation and focused regression tests when feasible.
     - Keep package, install parity, live WoW, remote CI, merge, tag, and release tasks separate.
+    - Include the same-PR CHANGELOG.md update for user-visible changes; do not exclude it with version bumps or release actions.
     - Leave evidence-dependent tasks unchecked until their exact command or runtime path succeeds.
 
 operations:

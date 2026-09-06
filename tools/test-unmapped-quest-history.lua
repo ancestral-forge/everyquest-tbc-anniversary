@@ -24,19 +24,15 @@ rawset(_G, "sessionvars", harnessSessionVars)
 
 local zoneSource = assert(source:match("(local function getZoneIDByCategory.-)\nlocal function rememberQuestContext"))
 local contextSource = assert(source:match("(local function rememberQuestContext.-)\nlocal function reportRuntimeError"))
-local metadataSource = assert(source:match("(local questMetadataFields.-)\nfunction EveryQuest:HydrateQuestHistoryForGroup"))
-local historySource = assert(source:match("(function EveryQuest:GetHistoryByQuestID.-)\nlocal function getLoadedQuestDataByID"))
-local loadedQuestSource = assert(source:match("(local function getLoadedQuestDataByID.-)\nfunction EveryQuest:SaveQuestHistoryByID"))
+local historySource = assert(source:match("(function EveryQuest:GetHistoryByQuestID.-)\nlocal canonicalQuestSearchGroups"))
+local reconcileSource = assert(source:match("(function EveryQuest:ReconcileQuestHistoryForZone.-)\nfunction EveryQuest:SaveQuestHistoryByID"))
 local saveSource = assert(source:match("(function EveryQuest:SaveQuestHistoryByID.-)\nfunction EveryQuest:AddQuestByID"))
 
 local loader = assert(loadstring(table.concat({
 	zoneSource,
 	contextSource,
-	metadataSource,
 	historySource,
-	"local function loadQuestDataAddon(addon) return EveryQuest:LoadQuestDataAddon(addon) end",
-	loadedQuestSource,
-	"local function getCurrentZoneSelection() return 'Kalimdor', {15, 'Dustwallow Marsh'} end",
+	reconcileSource,
 	saveSource,
 }, "\n")))
 loader()
@@ -64,7 +60,28 @@ local function resetHarness(staticData)
 			history = {},
 		},
 	}
-	EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
+	EveryQuest.QuestStore = EveryQuest.QuestStore:Create(EveryQuest.db.char.history, {
+		groupOrder = {
+			"Classes",
+			"Professions",
+			"Dungeons",
+			"Raids",
+			"Battlegrounds",
+			"Seasonal",
+			"Miscellaneous",
+			"Eastern Kingdoms",
+			"Kalimdor",
+			"Outland",
+		},
+		loader = function(group)
+			if EveryQuestData[group] then
+				return EveryQuestData[group]
+			end
+			local addon = "EveryQuest_" .. string.gsub(group, " ", "_")
+			local loaded = EveryQuest:LoadQuestDataAddon(addon)
+			return loaded and EveryQuestData[group] or nil
+		end,
+	})
 	EveryQuest.requestFrameUpdates = 0
 	function EveryQuest:RequestFrameUpdate()
 		self.requestFrameUpdates = self.requestFrameUpdates + 1
@@ -114,6 +131,7 @@ EveryQuest.db.char.history[1537] = {
 		status = 0,
 	},
 }
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 savedQuestID, zoneid = EveryQuest:SaveQuestHistoryByID(6625, "Ironforge", 0, "Alliance Trauma", false, 45)
 assert(savedQuestID == 6625 and zoneid == -324, "static profession data must override a misleading Ironforge quest-log header")
 assert(EveryQuest.db.char.history[1537][6625] == nil, "canonical remap must remove misplaced Ironforge history")
@@ -141,6 +159,7 @@ EveryQuest.db.char.history[1537] = {
 		count = 1,
 	},
 }
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 assert(EveryQuest:ReconcileQuestHistoryForZone("Eastern Kingdoms", 1537) == 1, "opening Ironforge history must move already-saved profession quests")
 assert(EveryQuest.db.char.history[1537][6625] == nil, "history render reconciliation must remove the old Ironforge entry")
 allianceTrauma = EveryQuest.db.char.history[-324][6625]
@@ -166,6 +185,7 @@ EveryQuest.db.char.history[15] = {
 		abandoned = 1787344511,
 	},
 }
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 savedQuestID, zoneid = EveryQuest:SaveQuestHistoryByID(7070, nil, 2)
 assert(savedQuestID == 7070 and zoneid == 2100, "loaded static quest data must move misplaced history")
 assert(EveryQuest.db.char.history[15][7070] == nil)
