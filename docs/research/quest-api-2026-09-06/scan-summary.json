@@ -1,0 +1,107 @@
+{
+  "scan": {
+    "addonVersion": "2026.3.6",
+    "clientBuild": "69546",
+    "clientVersion": "2.5.6",
+    "completedAt": 1788703955,
+    "eqAbsent": 209,
+    "eqFound": 5967,
+    "errorCount": 0,
+    "errors": 0,
+    "extraIds": 475,
+    "firstID": 1,
+    "formatVersion": 1,
+    "found": 6442,
+    "interface": 20506,
+    "lastID": 100000,
+    "locale": "enUS",
+    "missing": 93558,
+    "startedAt": 1788702935,
+    "titleCount": 6442,
+    "total": 100000
+  },
+  "comparisonWithSavedAudit": {
+    "previousUnavailable": 222,
+    "previousCompletedAt": 1788687096,
+    "recovered": [
+      {
+        "id": 7508,
+        "name": "The Forging of Quel'Serrar"
+      },
+      {
+        "id": 7871,
+        "name": "Vanquish the Invaders!"
+      },
+      {
+        "id": 7874,
+        "name": "Quell the Silverwing Usurpers"
+      },
+      {
+        "id": 7876,
+        "name": "Quell the Silverwing Usurpers"
+      },
+      {
+        "id": 8144,
+        "name": "Zandalarian Shadow Mastery Talisman"
+      },
+      {
+        "id": 8748,
+        "name": "The Path of the Protector"
+      },
+      {
+        "id": 8749,
+        "name": "The Path of the Protector"
+      },
+      {
+        "id": 8848,
+        "name": "Fifteen Signets for War Supplies"
+      },
+      {
+        "id": 8941,
+        "name": "Just Compensation"
+      },
+      {
+        "id": 8997,
+        "name": "Back to the Beginning"
+      },
+      {
+        "id": 9266,
+        "name": "Making Amends"
+      },
+      {
+        "id": 9267,
+        "name": "Mending Old Wounds"
+      },
+      {
+        "id": 10960,
+        "name": "When I Grow Up..."
+      }
+    ],
+    "newMissing": []
+  },
+  "eqPhaseLabels": {
+    "4": {
+      "found": 2,
+      "missing": 9
+    },
+    "5": {
+      "found": 18,
+      "missing": 35
+    }
+  },
+  "counts": {
+    "missing": 209,
+    "exactTitleMatches": 53,
+    "newIdCandidateSourceQuests": 9,
+    "sameIdTitleDifferences": 190
+  },
+  "questieUpstreamCommit": "94e2a1420ba989c344508f1b08e6767a8a3fa5a3",
+  "everyquestBaseCommit": "cf4c898",
+  "limitations": [
+    "No title is not proof of no quest.",
+    "No realm/NPC gameplay verification performed.",
+    "Only 1..100000 scanned.",
+    "Research covers 209 unresolved EveryQuest IDs. The 475 extra API IDs were counted, not individually researched except for related title-match candidates."
+  ],
+  "discoveryBuild": "Local experimental discovery implementation on top of cf4c898; this documentation PR does not include that implementation."
+}
