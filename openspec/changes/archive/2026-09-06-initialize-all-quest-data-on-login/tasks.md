@@ -48,7 +48,7 @@
 - [x] 7.1 Create one local commit `feat: initialize all quest data on login` and verify its complete contents and final clean status.
 - [x] 7.2 Push/open a PR only after separate authorization; verify remote branch and PR contents.
 - [x] 7.3 Verify remote CI after authorized delivery.
-- [ ] 7.4 Merge only after separate authorization and required evidence; verify canonical main.
+- [x] 7.4 Merge only after separate authorization and required evidence; verify canonical main.
 
 No package, version bump, tag, publication, or release is in checkpoint 2 scope.
 Do not archive this change while the required automated or live evidence is pending.
@@ -92,7 +92,7 @@ Do not archive this change while the required automated or live evidence is pend
   harness coverage; this live confirmation covers the disabled-module path
   and recovery after reload.
 - Before PR delivery, checkpoint 2 was local only. Delivery evidence is tracked
-  separately in section 7; this change remains active and unarchived.
+  separately in section 7; the post-merge verification is recorded below.
 
 - Delivery, 2026-09-06 (user authorized): pushed
   `initialize-all-quest-data-startup` over SSH and created
@@ -104,4 +104,43 @@ Do not archive this change while the required automated or live evidence is pend
   passed both Lua lint and OpenSpec validation for the implementation checkpoint;
   [GitLab mirror run 34054248303](https://github.com/ancestral-forge/everyquest-tbc-anniversary/actions/runs/34054248303)
   also passed. Subsequent delivery-evidence edits affect this document only.
-  Merge and archive have not been performed.
+  Post-merge verification is recorded below.
+
+## Post-Merge Verification, 2026-09-06
+
+- [PR #43](https://github.com/ancestral-forge/everyquest-tbc-anniversary/pull/43)
+  is `MERGED`, with merge commit
+  `59c5b73b22da44fb347ad220cf627549529caa20` and merge time
+  `2026-09-06T19:32:27Z`, verified using `gh pr view 43`.
+- Canonical GitHub `main`, verified through the branches API, and freshly
+  fetched `origin/main` both resolve to
+  `59c5b73b22da44fb347ad220cf627549529caa20`. The clean archive worktree
+  `/private/tmp/everyquest-archive-quest-data-startup` was created from that
+  commit on `archive-quest-data-startup`; the original checkout was preserved.
+- Post-merge main CI: [Linter run 34055212228](https://github.com/ancestral-forge/everyquest-tbc-anniversary/actions/runs/34055212228)
+  completed successfully for the `push` event on `main` at that exact merge
+  SHA. Both `Lua lint` (including the repository validation gate) and
+  `OpenSpec validation` jobs succeeded; the run completed at
+  `2026-09-06T19:32:47Z`.
+- Task 7.4 is complete. All implementation, automated-validation, installation,
+  live-evidence, and delivery tasks above are complete. The earlier checkpoint
+  evidence and its live-versus-automated coverage boundaries remain intact.
+
+## Archive Verification, 2026-09-06
+
+- Synced all four added `addon-runtime` requirements and their 14 scenarios
+  into `openspec/specs/addon-runtime/spec.md`, preserving its existing
+  requirements. Verified the full delta was present before moving this change
+  to `openspec/changes/archive/2026-09-06-initialize-all-quest-data-on-login`.
+- Before archive: `openspec validate --specs` and
+  `openspec validate initialize-all-quest-data-on-login --strict` passed.
+  After archive: `openspec validate --all` and `openspec validate --all --strict`
+  each passed all 12 active change/spec items; `openspec validate --archived
+  --strict` passed all five archived changes, including this change.
+- `tools/verify-addon.sh` passed Luacheck, Lua 5.1 compatibility, XML, TOC,
+  whitespace, and all 17 Lua regression files. The existing mise fallback
+  reported optional cache-write warnings but completed successfully.
+  `git diff --check` passed.
+- This archive updates OpenSpec documentation only. Earlier installation and
+  user-reported live evidence are retained above; no new client run,
+  installation, package, push, PR, merge, tag, or release was performed.
