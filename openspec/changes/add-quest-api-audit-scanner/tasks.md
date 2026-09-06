@@ -1,5 +1,9 @@
 ## 1. Reconfirm implementation boundary
 
+Historical checklist for the scanner verified on 2026-09-05. The later
+add-api-discovery-and-completion change renames the command to `api audit`;
+the original command spelling below records the tested historical build.
+
 - [x] 1.1 Reinspect the canonical checkout and isolated worktree branch, SHA, worktree list, and dirty state; verify implementation remains on `quest-api-audit-scanner` based on current `origin/main` and record any drift before editing.
 - [x] 1.2 Read `proposal.md`, `design.md`, `specs/quest-api-audit/spec.md`, the current slash-command path, SavedVariables setup, LOD loader, and verifier; verify the implementation plan still matches current code before adding files.
 

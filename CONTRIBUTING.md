@@ -60,10 +60,10 @@ options, and README.
 Run it only in a TBC Anniversary client:
 
 ```text
-/everyquest audit-api
-/everyquest audit-api status
-/everyquest audit-api cancel
-/everyquest audit-api clear
+/everyquest api audit
+/everyquest api audit status
+/everyquest api audit cancel
+/everyquest api audit clear
 ```
 
 The first command loads each enabled EveryQuest data module read-only and probes
@@ -126,6 +126,61 @@ flow rather than relying only on `/reload`.
 When installing a checkout into the client, verify repository-to-install parity
 with file comparisons. Do not treat a clean install comparison as gameplay
 proof.
+
+## Maintainer API Discovery
+
+`/everyquest api discover <first> <last>` probes an inclusive range independently
+of our database. IDs must be decimal integers in 1..2147483647, at most 100000
+per run. This is a safety cap, not the maximum Blizzard quest ID.
+
+Use `/everyquest api discover status`, `cancel`, or `clear` to inspect progress,
+cancel without losing the prior complete report, or remove only discovery's
+report while idle. Work is limited to 20 IDs per 0.1 seconds, followed by a
+ten-second warm-up and one retry of missing titles. Run diagnostics separately
+for reproducible results: audit and overlay can also warm the same client cache.
+
+The latest complete range replaces `EveryQuestDBPC.char.questApiDiscovery`.
+Flush with `/reload` or logout into the same per-character SavedVariables file
+described above. It contains `formatVersion`, `firstID`, `lastID`, `startedAt`,
+`completedAt`, `addonVersion`, `clientVersion`, `clientBuild`, `interface`,
+`locale`, `total`, `found`, `missing`, `errors`, `titles` keyed by ID, and sorted
+`probeErrors` with ID and reason. Missing IDs are the range minus title/error
+IDs. Ranges do not accumulate; copy a report before scanning another range if
+you need to retain both. Reload stops unfinished work and preserves the prior
+complete report. Audit reports and history are independent and unchanged.
+
+This is an observed title index, not a complete Blizzard database. Compare
+names only in the same locale, preserve all IDs sharing a title, and verify
+objectives, faction and chain before considering any ID correction. No IDs or
+quest records are automatically changed. The old `audit-api` and `apioverlay`
+spellings are replaced by `api audit` and `api overlay`.
+
+## Command Completion
+
+Press Tab after `/everyquest api au` to complete `audit`. An empty or ambiguous
+prefix prints the available choices in chat without changing input. Both
+scanners offer `status`, `cancel` and `clear`; discovery also shows the numeric
+range syntax without inserting numbers. Completion requires the cursor at the
+end and may clear highlighted selection. Mid-line edits, other slash commands
+and ordinary chat keep the previous Tab behavior. Completion never runs a
+command. If the client lacks the custom Tab extension, commands remain usable
+manually and EveryQuest prints one warning.
+
+## Developer API Overlay
+
+`/everyquest api overlay` toggles a temporary `[?]` marker after the level/type
+prefix. It checks rendered quest IDs as you browse or scroll, warms uncached
+quest data and retries after 10 seconds. Pending checks show no marker.
+
+`[?]` means only that the client API still returned no title, not that the quest
+is unavailable or belongs to a future phase. Slow cache loading can also cause
+it. With a phase label, the result is `[70][?][Phase 5] Title`.
+API errors leave affected quests unmarked and print at most one warning each
+time the overlay is enabled.
+
+Repeat the command to turn it off and discard checks/results; enable again to
+refresh. `/reload` resets it to off. No report or option is saved. This developer
+command is documented here rather than in the player README or changelog.
 
 ## Releases
 

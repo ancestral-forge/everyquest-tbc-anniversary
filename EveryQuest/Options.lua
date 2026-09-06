@@ -27,8 +27,18 @@ function EveryQuest:HandleSlash(input)
 		self:Toggle()
 	elseif command == "debug" then
 		self:ToggleDebug()
-	elseif command == "audit-api" then
-		self:HandleQuestApiAuditCommand(arguments)
+	elseif command == "api" then
+		local action, rest = arguments:match("^(%S*)%s*(.-)%s*$")
+		action = string.lower(action or "")
+		if action == "audit" then
+			self:HandleQuestApiAuditCommand(rest)
+		elseif action == "discover" then
+			self:HandleQuestApiDiscoveryCommand(rest)
+		elseif action == "overlay" and rest == "" then
+			self:ToggleQuestApiOverlay()
+		else
+			self:Print("EveryQuest: /everyquest api audit | discover <first> <last> | overlay")
+		end
 	elseif command == "help" or command == "?" then
 		self:PrintUsage()
 	else

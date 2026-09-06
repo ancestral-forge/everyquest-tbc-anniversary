@@ -2090,7 +2090,8 @@ function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 			history = nil
 		end
 		local status = getDisplayedQuestStatus(displayQuest, history)
-		local text = "["..level..qTag.."]"..getQuestPhaseLabel(displayQuest).." "..displayQuest["n"]
+		local text = "["..level..qTag.."]"..self:GetQuestApiOverlayLabel(displayQuest.id)
+			..getQuestPhaseLabel(displayQuest).." "..displayQuest["n"]
 		text = addQuestStatusLabel(text, status)
 		setButtonText(listFrame, text)
 		if status ~= nil then

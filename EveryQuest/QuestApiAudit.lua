@@ -383,6 +383,6 @@ function EveryQuest:HandleQuestApiAuditCommand(input)
 	elseif action == "clear" then
 		self:ClearQuestApiAudit()
 	else
-		self:Print("EveryQuest maintainer audit: /everyquest audit-api [status|cancel|clear]")
+		self:Print("EveryQuest maintainer audit: /everyquest api audit [status|cancel|clear]")
 	end
 end

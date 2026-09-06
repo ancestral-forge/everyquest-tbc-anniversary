@@ -19,7 +19,10 @@ localization.lua
 
 Core.lua
 QuestStore.lua
+QuestApiOverlay.lua
 Options.lua
 
 Everyquest.xml
 QuestApiAudit.lua
+QuestApiDiscovery.lua
+CommandCompletion.lua

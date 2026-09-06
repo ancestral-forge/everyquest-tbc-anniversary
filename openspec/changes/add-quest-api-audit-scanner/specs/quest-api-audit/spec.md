@@ -12,7 +12,7 @@ EveryQuest SHALL start the quest API audit only from the documented maintainer s
 - **THEN** no static quest IDs are probed through the quest API
 
 #### Scenario: Maintainer starts an audit
-- **WHEN** the player enters `/everyquest audit-api`
+- **WHEN** the player enters `/everyquest api audit`
 - **THEN** EveryQuest starts one quest API audit and reports that it has started
 
 #### Scenario: General help remains player-focused
@@ -73,7 +73,7 @@ The first probe pass SHALL classify non-empty titles as available, exceptions as
 - **THEN** the audit records the ID as a probe error rather than classifying it as unavailable
 
 ### Requirement: Observable lifecycle controls
-EveryQuest SHALL support audit status, cancellation, and result clearing through `audit-api status`, `audit-api cancel`, and `audit-api clear`. It SHALL prevent concurrent audit runs and SHALL report counts sufficient to distinguish collected, processed, available, retrying, unavailable, and errored IDs as applicable to the current state.
+EveryQuest SHALL support audit status, cancellation, and result clearing through `api audit status`, `api audit cancel`, and `api audit clear`. It SHALL prevent concurrent audit runs and SHALL report counts sufficient to distinguish collected, processed, available, retrying, unavailable, and errored IDs as applicable to the current state.
 
 #### Scenario: Status during a run
 - **WHEN** the player requests status while an audit is active

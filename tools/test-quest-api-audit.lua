@@ -443,12 +443,12 @@ test("routes the hidden maintainer command without changing player help", functi
 	setfenv(optionsChunk, harness.env)
 	optionsChunk()
 
-	harness.env.EveryQuest:HandleSlash(" audit-api   cancel ")
+	harness.env.EveryQuest:HandleSlash(" api audit   cancel ")
 	assert(routed == "cancel")
 	harness.env.EveryQuest:CreateOptions()
-	assert(harness.env.EveryQuest.options["audit-api"] == nil, "audit must not appear in options")
+	assert(harness.env.EveryQuest.options["api audit"] == nil, "audit must not appear in options")
 	harness.env.EveryQuest:PrintUsage()
-	assert(not hasMessage(harness, "audit-api"), "player help must not advertise the audit")
+	assert(not hasMessage(harness, "api audit"), "player help must not advertise the audit")
 end)
 
 print(("Quest API audit tests passed (%d scenarios)."):format(testsRun))

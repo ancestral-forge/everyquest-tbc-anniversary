@@ -75,6 +75,9 @@ end
 function EveryQuest:GetColor(value)
 	return value
 end
+function EveryQuest:GetQuestApiOverlayLabel()
+	return ""
+end
 
 updateButtonLoader(
 	EveryQuest,
@@ -120,6 +123,21 @@ assert(renderedColor == -3, "history rows must preserve the stored Abandoned col
 EveryQuest.db.profile.view = "zone"
 EveryQuest:UpdateButton(1, phaseQuest)
 assert(renderedText == "[70][Phase 4] A Troll Among Trolls (Abandoned)", "zone view must remain unchanged")
+
+function EveryQuest:GetQuestApiOverlayLabel(questID)
+	assert(questID == phaseQuest.id)
+	return "[?]"
+end
+EveryQuest:UpdateButton(1, phaseQuest)
+assert(renderedText == "[70][?][Phase 4] A Troll Among Trolls (Abandoned)")
+assert(renderedColor == -3)
+EveryQuest.db.profile.view = "history"
+phaseQuest.p = 5
+phaseHistory.status = -1
+EveryQuest:UpdateButton(1, phaseHistory)
+assert(renderedText == "[70][?][Phase 5] A Troll Among Trolls (Failed)")
+assert(renderedColor == -1)
+assert(phaseHistory.p == nil)
 
 local expectedPhases = {
 	[9524] = 4,
