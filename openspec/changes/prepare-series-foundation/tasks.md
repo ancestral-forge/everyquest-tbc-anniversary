@@ -22,7 +22,7 @@
 - [x] 3.5 Move and merge history through store-owned canonical-location operations so status, count, timestamps, and metadata survive while every old index/location entry is removed; verify idempotent reconciliation and duplicate-history cases.
 - [x] 3.6 Convert `GetQuestData`, `GetHistoryByQuestID`, canonical lookup, hydration, save, add, Clear Status, and reconciliation paths into store consumers or compatibility adapters; verify `tools/test-unmapped-quest-history.lua`, `tools/test-history-hydration.lua`, and `tools/test-quest-status-model.lua` pass.
 - [x] 3.7 Make history rows resolve static-only presentation metadata through indexed lookup, and add a regression proving a Phase 4/5 marker renders in history view although `p` is absent from the saved history record while the existing status color/suffix is preserved.
-- [ ] 3.8 Run focused tests, `tools/verify-addon.sh`, and `openspec validate --all`; inspect the complete diff, then create the review checkpoint PR `refactor: introduce indexed quest store` with no QuestRelations, QuestState, Series UI, version, changelog, XML, localization, or quest-data scope.
+- [x] 3.8 Run focused tests, `tools/verify-addon.sh`, and `openspec validate --all`; inspect the complete diff, then create the review checkpoint PR `refactor: introduce indexed quest store` with no QuestRelations, QuestState, Series UI, version, changelog, XML, localization, or quest-data scope.
 
 ## 4. Extract Normalized Quest Relations
 
