@@ -492,6 +492,13 @@ local function addQuestStatusLabel(text, status)
 	return text
 end
 
+local function getQuestDataAddonName(group)
+	if type(group) ~= "string" or group == "" then
+		return nil
+	end
+	return "EveryQuest_"..string.gsub(group, " ", "_")
+end
+
 local function loadQuestDataAddon(addon)
 	if C_AddOns.IsAddOnLoaded(addon) then
 		return true
@@ -1290,43 +1297,94 @@ function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 	return checked, completed, added, changed
 end
 
-function EveryQuest:LoadQuestData(group)
-	if group == nil then
-		return false
+function EveryQuest:EnsureQuestDataLoaded(group)
+	if type(group) ~= "string" or group == "" then
+		return nil, "INVALID_GROUP", false
 	end
 
-	local varname = "EveryQuest_"..string.gsub(group, " ", "_")
-	--local varname = "EveryQuest_"..group.." Quests"
-	self:Debug("Loading single module: "..concat(varname))
-	--local addonname = ("EveryQuest__%s%s_Data"):format(faction:sub(1,1), questtype)
-	--if questdata and questdata[varname] then return varname end
-	if not EveryQuestData[group] then
-		self:Debug("Module "..concat(group).." not loaded")
-		EveryQuest:Print(L["Loading "] .. group .. L[" Quest Data"])
-		local succ, reason = loadQuestDataAddon(varname)
-		if not succ then
-			if reason == "MISSING" then
-				EveryQuest:Print(L["Requires LOD Module: "] .. varname)
-			elseif reason == "DISABLED" then
-				EveryQuest:Print(L["Disabled LOD Module: "] .. varname)
-			else
-				EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"] .. ": " .. concat(reason))
-			end
-			return false
-		end
-		collectgarbage("collect")
-		if not EveryQuestData[group] then
-			EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"] .. ": NO_DATA")
-			return false
-		end
-	else
+	if EveryQuestData and type(EveryQuestData[group]) == "table" then
 		self:Debug("Module "..concat(group).." is loaded")
+		return EveryQuestData[group], nil, false
 	end
-	self.QuestStore:RegisterGroup(group, EveryQuestData[group])
-	self:HydrateQuestHistoryForGroup(group)
-	self:SyncCompletedQuestFlagsForGroup(group, true)
+
+	local addon = getQuestDataAddonName(group)
+	local wasLoaded = C_AddOns.IsAddOnLoaded(addon)
+	self:Debug("Loading single module: "..concat(addon))
+	self:Debug("Module "..concat(group).." not loaded")
+	local succ, reason = loadQuestDataAddon(addon)
+	local newlyLoaded = not wasLoaded and succ == true
+	if not succ then
+		return nil, reason or "LOAD_FAILED", false
+	end
+	if EveryQuestData and type(EveryQuestData[group]) == "table" then
+		return EveryQuestData[group], nil, newlyLoaded
+	end
+	return nil, "NO_DATA", newlyLoaded
+end
+
+function EveryQuest:PrepareQuestDataGroup(group)
+	local stats = {
+		newlyLoaded = false,
+		alreadyPrepared = false,
+		hydrated = 0,
+		checked = 0,
+		completed = 0,
+		added = 0,
+		changed = 0,
+	}
+
+	if type(group) == "string"
+		and sessionvars.preparedGroups
+		and sessionvars.preparedGroups[group]
+		and EveryQuestData
+		and type(EveryQuestData[group]) == "table" then
+		stats.alreadyPrepared = true
+		return EveryQuestData[group], nil, stats
+	end
+
+	local groupData, reason, newlyLoaded = self:EnsureQuestDataLoaded(group)
+	stats.newlyLoaded = newlyLoaded == true
+	if not groupData then
+		return nil, reason, stats
+	end
+
+	stats.hydrated = self:HydrateQuestHistoryForGroup(group)
+	stats.checked, stats.completed, stats.added, stats.changed = self:SyncCompletedQuestFlagsForGroup(group, false)
+
+	sessionvars.preparedGroups = sessionvars.preparedGroups or {}
+	sessionvars.preparedGroups[group] = true
+	return groupData, nil, stats
+end
+
+local function reportQuestDataLoadFailure(group, reason)
+	if type(group) ~= "string" or group == "" then
+		return
+	end
+
+	sessionvars.questDataLoadFailures = sessionvars.questDataLoadFailures or {}
+	if sessionvars.questDataLoadFailures[group] then
+		return
+	end
+	sessionvars.questDataLoadFailures[group] = true
+
+	local addon = getQuestDataAddonName(group)
+	if reason == "MISSING" then
+		EveryQuest:Print(L["Requires LOD Module: "] .. addon)
+	elseif reason == "DISABLED" then
+		EveryQuest:Print(L["Disabled LOD Module: "] .. addon)
+	else
+		EveryQuest:Print(L["Could not load "] .. group .. L[" Quest Data"] .. ": " .. concat(reason))
+	end
+end
+
+function EveryQuest:LoadQuestData(group)
+	local groupData, reason = self:PrepareQuestDataGroup(group)
+	if not groupData then
+		reportQuestDataLoadFailure(group, reason)
+		return false
+	end
 	--for k,v in pairs(EveryQuestData) do self:Debug(k) end
-	return EveryQuestData[group] --questdata[varname] and varname
+	return groupData --questdata[varname] and varname
 end
 
 function EveryQuest:GetStatus(displayid, queststatus)
@@ -1427,16 +1485,7 @@ local function loadQuestDataForStaticLookup(group)
 	if not group then
 		return nil
 	end
-	if EveryQuestData and EveryQuestData[group] then
-		return EveryQuestData[group]
-	end
-
-	local varname = "EveryQuest_"..string.gsub(group, " ", "_")
-	local succ = loadQuestDataAddon(varname)
-	if succ and EveryQuestData and type(EveryQuestData[group]) == "table" then
-		return EveryQuestData[group]
-	end
-	return nil
+	return EveryQuest:EnsureQuestDataLoaded(group)
 end
 
 EveryQuest.QuestStore:Configure({
