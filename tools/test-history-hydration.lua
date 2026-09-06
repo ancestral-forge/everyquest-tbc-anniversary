@@ -4,8 +4,9 @@ sourceFile:close()
 
 EveryQuest = {}
 EveryQuestData = {}
+dofile("EveryQuest/QuestStore.lua")
 
-local hydrationSource = assert(source:match("(local questMetadataFields.-)\nfunction EveryQuest:SyncCompletedQuestFlagsForGroup"))
+local hydrationSource = assert(source:match("(function EveryQuest:HydrateQuestHistoryForGroup.-)\nfunction EveryQuest:SyncCompletedQuestFlagsForGroup"))
 assert(loadstring(hydrationSource))()
 
 EveryQuest.db = {
@@ -39,6 +40,9 @@ EveryQuest.db = {
 		},
 	},
 }
+
+EveryQuest.QuestStore:Configure({groupOrder = {"Dungeons", "Kalimdor"}})
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 
 EveryQuestData.Kalimdor = {
 	[15] = {

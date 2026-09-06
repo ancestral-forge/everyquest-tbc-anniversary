@@ -1158,79 +1158,20 @@ end
 -- Get a Quest Data from a LOD module and return the table and the Category
 function EveryQuest:GetQuestData(questid, category)
 	self:Debug("GetQuestData - questid:"..concat(questid).." category:"..concat(category))
-	local zonegroup, zoneid
-
-	for k,v in pairs(zonemenu) do -- for each top level category
-		for _,av in pairs(v) do -- for each category
-			if av[2] == category then
-				zonegroup = k
-				zoneid = av[1]
-				self:Debug("GetQuestData - zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-			end
-		end
+	questid = tonumber(questid)
+	if not questid then
+		return false
 	end
-	if zonegroup ~= nil or zoneid ~= nil then
-		self:Debug("1GetQuestData - zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-		local quests = self:GetQuestZoneData(zonegroup, zoneid, "zone")
-		if quests == false then
-			return false
+	local zoneid, zonegroup = getZoneIDByCategory(category)
+	local quest, resolvedGroup, resolvedZoneID = self.QuestStore:GetStaticQuest(questid, zonegroup, zoneid)
+	if quest then
+		local history, historyZoneID = self.QuestStore:GetHistory(questid, resolvedZoneID)
+		if history and historyZoneID == resolvedZoneID then
+			self:Debug("GetQuestData - from history - questid:"..concat(questid).." zonegroup:"..concat(resolvedGroup).." zoneid:"..concat(resolvedZoneID))
+			return history, resolvedZoneID
 		end
-		for _,quest in pairs(quests) do
-			--for kt,vt in pairs(quest) do self:Print(kt .. " - " .. vt) end
-			if quest.id == questid then
-				if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
-					self:Debug("GetQuestData (Expanded) - from history - questid:"..concat(questid).." zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-					return self.db.char.history[zoneid][questid], zoneid
-				else
-					self:Debug("GetQuestData (Expanded) - from data - questid:"..concat(questid).." zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-					return quest, zoneid
-				end
-			end
-		end
-	end
-	-- try an expanded search
-	if zonegroup ~= nil then
-		local moduledata = self:LoadQuestData(zonegroup)
-		if moduledata == false then
-			return false
-		end
-		for _,part in pairs(moduledata) do
-			for _,quest in pairs(part) do
-				--for kt,vt in pairs(quest) do self:Print(kt .. " - " .. vt) end
-				if quest.id == questid then
-					if self.db.char.history[zoneid] and self.db.char.history[zoneid][questid] then
-						self:Debug("GetQuestData (Expanded) - from history - questid:"..concat(questid).." zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-						return self.db.char.history[zoneid][questid], zoneid
-					else
-						self:Debug("GetQuestData (Expanded) - from data - questid:"..concat(questid).." zonegroup:"..concat(zonegroup).." zoneid:"..concat(zoneid))
-						return quest, zoneid
-					end
-				end
-			end
-		end
-	else
-		self:Debug("Expanded Search")
-		local groups = {"Battlegrounds", "Classes", "Dungeons", "Kalimdor", "Eastern Kingdoms", "Miscellaneous", "Outland", "Professions", "Raids", "Seasonal"}
-		for _,v in pairs(groups) do
-			local moduledata = self:LoadQuestData(v)
-			if moduledata ~= false then
-				for k,part in pairs(moduledata) do
-					for _,quest in pairs(part) do
-						--for kt,vt in pairs(quest) do self:Print(kt .. " - " .. vt) end
-						if quest.id == questid then
-							if self.db.char.history[k] and self.db.char.history[k][questid] then
-								self:Debug("GetQuestData (Expanded 2x) - from history - questid:"..concat(questid).." zonegroup:"..concat(v).." zoneid:"..concat(k))
-								return self.db.char.history[k][questid], k
-							else
-								self:Debug("GetQuestData (Expanded 2x) - from data - questid:"..concat(questid).." zonegroup:"..concat(v).." zoneid:"..concat(k))
-								return quest, k
-							end
-						end
-					end
-				end
-			end
-		end
-
+		self:Debug("GetQuestData - from data - questid:"..concat(questid).." zonegroup:"..concat(resolvedGroup).." zoneid:"..concat(resolvedZoneID))
+		return quest, resolvedZoneID
 	end
 	return false
 end
@@ -1273,90 +1214,25 @@ function EveryQuest:ShowListMessage(message)
 	end
 end
 
-local questMetadataFields = {"id", "n", "l", "r", "s", "t", "d"}
-
-local function applyStaticQuestMetadata(history, quest)
-	local changed = false
-	for _, field in ipairs(questMetadataFields) do
-		if quest[field] ~= nil and history[field] ~= quest[field] then
-			history[field] = quest[field]
-			changed = true
-		elseif field == "d" and quest[field] == nil and history[field] ~= nil then
-			history[field] = nil
-			changed = true
-		end
-	end
-	return changed
-end
-
-local function copyMissingQuestHistoryFields(target, source)
-	for field, value in pairs(source) do
-		if target[field] == nil then
-			target[field] = value
-		end
-	end
-end
-
-local function resolveQuestHistoryZone(historyRoot, questid, canonicalZoneID)
-	local canonicalHistory = historyRoot[canonicalZoneID]
-	if type(canonicalHistory) ~= "table" then
-		canonicalHistory = nil
-	end
-	local canonicalQuest = canonicalHistory and canonicalHistory[questid]
-	local misplaced = {}
-	local changed = false
-
-	for savedZoneID, zoneHistory in pairs(historyRoot) do
-		if type(zoneHistory) == "table" then
-			local savedQuest = zoneHistory[questid]
-			if savedQuest then
-				if savedZoneID == canonicalZoneID then
-					canonicalQuest = savedQuest
-				else
-					table.insert(misplaced, {zoneid = savedZoneID, quest = savedQuest})
-				end
-			end
-		end
-	end
-
-	for _, entry in ipairs(misplaced) do
-		if not canonicalQuest then
-			if type(historyRoot[canonicalZoneID]) ~= "table" then
-				historyRoot[canonicalZoneID] = {}
-			end
-			historyRoot[canonicalZoneID][questid] = entry.quest
-			canonicalQuest = entry.quest
-		else
-			copyMissingQuestHistoryFields(canonicalQuest, entry.quest)
-		end
-		historyRoot[entry.zoneid][questid] = nil
-		changed = true
-	end
-
-	return canonicalQuest, changed
-end
-
 function EveryQuest:HydrateQuestHistoryForGroup(group)
 	if not group or not EveryQuestData or not EveryQuestData[group] or not self.db.char.history then
 		return 0
 	end
 
+	self.QuestStore:RegisterGroup(group, EveryQuestData[group])
 	local hydrated = 0
-	for zoneid, quests in pairs(EveryQuestData[group]) do
-		if type(quests) == "table" then
-			for _, quest in pairs(quests) do
-				local questid = tonumber(quest and quest.id)
-				local savedQuest, moved
-				if questid then
-					savedQuest, moved = resolveQuestHistoryZone(self.db.char.history, questid, zoneid)
-				end
-				local changed = moved
-				if savedQuest and applyStaticQuestMetadata(savedQuest, quest) then
-					changed = true
-				end
-				if savedQuest and changed then
-					hydrated = hydrated + 1
-				end
+	local seen = {}
+	for _, occurrence in ipairs(self.QuestStore:GetGroupOccurrences(group)) do
+		local questid = tonumber(occurrence.quest and occurrence.quest.id)
+		if questid and not seen[questid] then
+			seen[questid] = true
+			local savedQuest, _, moved, staticQuest = self.QuestStore:MoveHistoryToCanonicalLocation(questid)
+			local changed = moved
+			if savedQuest and self.QuestStore:ApplyStaticHistoryMetadata(savedQuest, staticQuest) then
+				changed = true
+			end
+			if savedQuest and changed then
+				hydrated = hydrated + 1
 			end
 		end
 	end
@@ -1367,6 +1243,7 @@ function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 	if not group or not EveryQuestData or not EveryQuestData[group] then
 		return 0, 0, 0, 0
 	end
+	self.QuestStore:RegisterGroup(group, EveryQuestData[group])
 
 	sessionvars.completedSyncGroups = sessionvars.completedSyncGroups or {}
 	if sessionvars.completedSyncGroups[group] then
@@ -1388,9 +1265,10 @@ function EveryQuest:SyncCompletedQuestFlagsForGroup(group, reportStatus)
 					checked = checked + 1
 					if isQuestFlaggedCompleted(questid) then
 						completed = completed + 1
+						local staticQuest, _, staticZoneID = self.QuestStore:GetStaticQuest(questid)
 						local history, wasAdded = self.QuestStore:EnsureHistoryRecord(questid, {
-							zoneID = zoneid,
-							quest = quest,
+							zoneID = staticZoneID or zoneid,
+							quest = staticQuest or quest,
 						})
 						if wasAdded then
 							added = added + 1
@@ -1444,6 +1322,7 @@ function EveryQuest:LoadQuestData(group)
 	else
 		self:Debug("Module "..concat(group).." is loaded")
 	end
+	self.QuestStore:RegisterGroup(group, EveryQuestData[group])
 	self:HydrateQuestHistoryForGroup(group)
 	self:SyncCompletedQuestFlagsForGroup(group, true)
 	--for k,v in pairs(EveryQuestData) do self:Debug(k) end
@@ -1453,8 +1332,12 @@ end
 function EveryQuest:GetStatus(displayid, queststatus)
 	local quest = displayid and questdisplay[displayid]
 	local zoneid = sessionvars.zoneid
-	if quest and zoneid and self.db.char.history[zoneid] and self.db.char.history[zoneid][quest.id] then
-		return getDisplayedQuestStatus(quest, self.db.char.history[zoneid][quest.id]) == queststatus
+	local history, historyZoneID
+	if quest then
+		history, historyZoneID = self.QuestStore:GetHistory(quest.id, zoneid)
+	end
+	if history and historyZoneID == zoneid then
+		return getDisplayedQuestStatus(quest, history) == queststatus
 	end
 	return quest ~= nil and getDisplayedQuestStatus(quest) == queststatus
 end
@@ -1524,14 +1407,7 @@ function EveryQuest:FindQuestLogEntryByName(questName)
 end
 
 function EveryQuest:GetHistoryByQuestID(questid)
-	questid = tonumber(questid)
-	if not questid then return end
-
-	for zoneid, quests in pairs(self.db.char.history or {}) do
-		if type(quests) == "table" and quests[questid] then
-			return quests[questid], zoneid
-		end
-	end
+	return self.QuestStore:GetHistory(questid)
 end
 
 local canonicalQuestSearchGroups = {
@@ -1547,79 +1423,26 @@ local canonicalQuestSearchGroups = {
 	"Outland",
 }
 
-local function getQuestDataByIDInGroup(group, questid)
-	local groupData = EveryQuestData and EveryQuestData[group]
-	if type(groupData) ~= "table" then
-		return nil
-	end
-
-	for zoneid, quests in pairs(groupData) do
-		if type(quests) == "table" then
-			for _, quest in pairs(quests) do
-				if tonumber(quest and quest.id) == questid then
-					return quest, zoneid
-				end
-			end
-		end
-	end
-	return nil
-end
-
-local function getLoadedQuestDataByID(questid)
-	if not EveryQuestData then
-		return nil
-	end
-
-	for group in pairs(EveryQuestData) do
-		local quest, zoneid = getQuestDataByIDInGroup(group, questid)
-		if quest then
-			return quest, zoneid
-		end
-	end
-	return nil
-end
-
 local function loadQuestDataForStaticLookup(group)
 	if not group then
-		return false
+		return nil
 	end
 	if EveryQuestData and EveryQuestData[group] then
-		return true
+		return EveryQuestData[group]
 	end
 
 	local varname = "EveryQuest_"..string.gsub(group, " ", "_")
 	local succ = loadQuestDataAddon(varname)
-	return succ and EveryQuestData and EveryQuestData[group] ~= nil
-end
-
-local function getCanonicalQuestDataByID(questid, categoryGroup)
-	local quest, zoneid = getLoadedQuestDataByID(questid)
-	if quest then
-		return quest, zoneid
-	end
-
-	local searchedGroups = {}
-	if categoryGroup then
-		searchedGroups[categoryGroup] = true
-		if loadQuestDataForStaticLookup(categoryGroup) then
-			quest, zoneid = getQuestDataByIDInGroup(categoryGroup, questid)
-			if quest then
-				return quest, zoneid
-			end
-		end
-	end
-
-	for _, group in ipairs(canonicalQuestSearchGroups) do
-		if not searchedGroups[group] and loadQuestDataForStaticLookup(group) then
-			searchedGroups[group] = true
-			quest, zoneid = getQuestDataByIDInGroup(group, questid)
-			if quest then
-				return quest, zoneid
-			end
-		end
+	if succ and EveryQuestData and type(EveryQuestData[group]) == "table" then
+		return EveryQuestData[group]
 	end
 	return nil
 end
+
+EveryQuest.QuestStore:Configure({
+	loader = loadQuestDataForStaticLookup,
+	groupOrder = canonicalQuestSearchGroups,
+})
 
 function EveryQuest:ReconcileQuestHistoryForZone(group, zoneid)
 	if not zoneid or not self.db.char.history then
@@ -1639,11 +1462,13 @@ function EveryQuest:ReconcileQuestHistoryForZone(group, zoneid)
 	for _, questid in ipairs(questIDs) do
 		questid = tonumber(questid)
 		if questid then
-			local staticQuest, staticZoneID = getCanonicalQuestDataByID(questid, group)
+			local savedQuest, staticZoneID, moved, staticQuest = self.QuestStore:MoveHistoryToCanonicalLocation(questid, {
+				groupHint = group,
+				zoneHint = zoneid,
+			})
 			if staticZoneID then
-				local savedQuest, moved = resolveQuestHistoryZone(self.db.char.history, questid, staticZoneID)
 				local changed = moved
-				if savedQuest and staticQuest and applyStaticQuestMetadata(savedQuest, staticQuest) then
+				if savedQuest and staticQuest and self.QuestStore:ApplyStaticHistoryMetadata(savedQuest, staticQuest) then
 					changed = true
 				end
 				if changed then
@@ -1678,32 +1503,21 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 	end
 	rememberQuestContext(questid, category, questTitle, daily, questLevel)
 	local categoryZoneID, categoryGroup = getZoneIDByCategory(category)
-	local staticQuest, staticZoneID = getCanonicalQuestDataByID(questid, categoryGroup)
+	local canonicalHistory, staticZoneID, moved, staticQuest = self.QuestStore:MoveHistoryToCanonicalLocation(questid, {
+		groupHint = categoryGroup,
+		zoneHint = categoryZoneID,
+	})
 	if staticZoneID then
 		categoryZoneID = staticZoneID
 	end
-
-	if categoryZoneID and self.db.char.history[categoryZoneID] and self.db.char.history[categoryZoneID][questid] then
-		if history and historyZoneID and historyZoneID ~= categoryZoneID and self.db.char.history[historyZoneID] then
-			self.db.char.history[historyZoneID][questid] = nil
-			changed = true
-		end
-		history = self.db.char.history[categoryZoneID][questid]
+	if canonicalHistory then
+		history = canonicalHistory
 		historyZoneID = categoryZoneID
-	elseif history and categoryZoneID and historyZoneID ~= categoryZoneID then
-		if self.db.char.history[categoryZoneID] == nil then
-			self.db.char.history[categoryZoneID] = {}
-		end
-		if self.db.char.history[categoryZoneID][questid] == nil then
-			self.db.char.history[categoryZoneID][questid] = history
-		else
-			history = self.db.char.history[categoryZoneID][questid]
-		end
-		if historyZoneID and self.db.char.history[historyZoneID] then
-			self.db.char.history[historyZoneID][questid] = nil
-		end
+		changed = moved
+	elseif history and categoryZoneID then
+		history, moved = self.QuestStore:MoveHistoryToZone(questid, categoryZoneID)
 		historyZoneID = categoryZoneID
-		changed = true
+		changed = moved
 	end
 
 	if not history then
@@ -1723,7 +1537,7 @@ function EveryQuest:SaveQuestHistoryByID(questid, category, qstatus, questTitle,
 		historyZoneID = zoneid
 	end
 
-	if staticQuest and applyStaticQuestMetadata(history, staticQuest) then
+	if staticQuest and self.QuestStore:ApplyStaticHistoryMetadata(history, staticQuest) then
 		changed = not added
 	end
 	if questTitle and questTitle ~= "" then
@@ -1803,7 +1617,7 @@ end
 function EveryQuest:MarkQuestByID(questid, status, timestampField, category, questTitle, daily, questLevel)
 	local savedQuestID, zoneid = self:SaveQuestHistoryByID(questid, category, status, questTitle, daily, questLevel)
 	if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
-		local history = self.db.char.history[zoneid][savedQuestID]
+		local history = self.QuestStore:GetHistory(savedQuestID, zoneid)
 		history.status = status
 		if timestampField == "failed" then
 			history.abandoned = nil
@@ -1827,7 +1641,7 @@ function EveryQuest:MarkQuestByName(questName, status, timestampField)
 	elseif questindex then
 		local savedQuestID, zoneid = self:SaveQuestHistoryByID(self:GetQID(questindex), category, status, questName)
 		if savedQuestID and zoneid then
-			local history = self.db.char.history[zoneid][savedQuestID]
+			local history = self.QuestStore:GetHistory(savedQuestID, zoneid)
 			history.status = status
 			if timestampField == "failed" then
 				history.abandoned = nil
@@ -2039,7 +1853,7 @@ function EveryQuest:QuestTurnedIn(questName, questid)
 		local savedQuestID, zoneid, savedDaily = EveryQuest:SaveQuestHistoryByID(questid, category, 2, questName, daily, questLevel)
 		if savedQuestID ~= nil and savedQuestID ~= false and zoneid ~= nil then
 			self:Debug("QuestTurnedIn - questid:"..concat(savedQuestID).." zoneid:"..concat(zoneid))
-			local history = self.db.char.history[zoneid][savedQuestID]
+			local history = self.QuestStore:GetHistory(savedQuestID, zoneid)
 			history.status = 2
 			history.completed = time()
 			history.abandoned = nil
@@ -2236,37 +2050,47 @@ end
 function EveryQuest:UpdateButton(buttonid, quest, arrayid)
 	local view = self.db.profile.view
 	if view == "history" or view == "zone" then
+		local displayQuest = quest
+		if view == "history" then
+			local staticQuest = self.QuestStore:GetStaticQuest(quest.id, sessionvars.zonegroup, sessionvars.zoneid)
+			if staticQuest then
+				displayQuest = staticQuest
+			end
+		end
 		local listFrame = _G["EveryQuestTitle"..buttonid]
 		clearButtonTexture(listFrame)
 		setButtonText(listFrame, "")
-		if not questdisplay[buttonid] then questdisplay[buttonid] = quest end
-		if questdisplay[buttonid].id ~= quest.id then questdisplay[buttonid] = nil questdisplay[buttonid] = quest end
+		if questdisplay[buttonid] ~= displayQuest then
+			questdisplay[buttonid] = displayQuest
+		end
 		--questdisplay[buttonid].arrayid = arrayid
 		local qTag
-		if quest["t"] then
-			--self:Debug("questtype:"..quest.t)
-			qTag = self:QuestType(quest["t"]) or ""
+		if displayQuest["t"] then
+			--self:Debug("questtype:"..displayQuest.t)
+			qTag = self:QuestType(displayQuest["t"]) or ""
 		else
 			qTag = ""
 		end
-		if quest["d"] then
+		if displayQuest["d"] then
 			--if qTag == nil then qTag = "" end
 			qTag = qTag .. L["Y"]
 		end
 		local level
-		if quest["l"] then
-			level = quest["l"]
+		if displayQuest["l"] then
+			level = displayQuest["l"]
 		else
-			if quest["r"] then
-				level = "r"..quest["r"]
+			if displayQuest["r"] then
+				level = "r"..displayQuest["r"]
 			else
 				level = "--"
 			end
 		end
-		local history = self.db.char.history and self.db.char.history[sessionvars.zoneid]
-			and self.db.char.history[sessionvars.zoneid][quest.id]
-		local status = getDisplayedQuestStatus(quest, history)
-		local text = "["..level..qTag.."]"..getQuestPhaseLabel(quest).." "..quest["n"]
+		local history, historyZoneID = self.QuestStore:GetHistory(displayQuest.id, sessionvars.zoneid)
+		if historyZoneID ~= sessionvars.zoneid then
+			history = nil
+		end
+		local status = getDisplayedQuestStatus(displayQuest, history)
+		local text = "["..level..qTag.."]"..getQuestPhaseLabel(displayQuest).." "..displayQuest["n"]
 		text = addQuestStatusLabel(text, status)
 		setButtonText(listFrame, text)
 		if status ~= nil then
@@ -2290,7 +2114,10 @@ function EveryQuest:ButtonEnter(frame)
 	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
 	GameTooltip:SetHyperlink("quest:"..quest.id)
 	local queststatus = L["Unknown"]
-	local history = self.db.char.history[zoneid] and self.db.char.history[zoneid][questid]
+	local history, historyZoneID = self.QuestStore:GetHistory(questid, zoneid)
+	if historyZoneID ~= zoneid then
+		history = nil
+	end
 	if history then
 		isCollected = true
 	end
@@ -2314,21 +2141,21 @@ function EveryQuest:ButtonEnter(frame)
 	--self:Debug("ButtonEnter - buttonid:"..index.." queststatus:"..queststatus.." status:"..status)
 	GameTooltip:AddLine(L["Status: "] .. queststatus,self:GetColor(status))
 	if isCollected then
-		if self.db.char.history[zoneid][quest.id].completed then
+		if history.completed then
 			local completedline = L["Completed"]
-			if self.db.char.history[zoneid][quest.id].count then
-				completedline = completedline .. " ("..self.db.char.history[zoneid][quest.id].count.." "..L["Times"]..")"
+			if history.count then
+				completedline = completedline .. " ("..history.count.." "..L["Times"]..")"
 			end
-			completedline = completedline .. ": "..EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].completed)
+			completedline = completedline .. ": "..EveryQuest:timeDiff(history.completed)
 			GameTooltip:AddLine(completedline,self:GetColor("FFFFFF"))
 
 		elseif status == -1 then
-			if self.db.char.history[zoneid][quest.id].failed then
-				GameTooltip:AddLine(L["Failed: "] .. EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].failed),self:GetColor("FFFFFF"))
+			if history.failed then
+				GameTooltip:AddLine(L["Failed: "] .. EveryQuest:timeDiff(history.failed),self:GetColor("FFFFFF"))
 			end
 		elseif status == -3 then
-			if self.db.char.history[zoneid][quest.id].abandoned then
-				GameTooltip:AddLine(L["Abandoned: "] .. EveryQuest:timeDiff(self.db.char.history[zoneid][quest.id].abandoned),self:GetColor("FFFFFF"))
+			if history.abandoned then
+				GameTooltip:AddLine(L["Abandoned: "] .. EveryQuest:timeDiff(history.abandoned),self:GetColor("FFFFFF"))
 			end
 		end
 	end

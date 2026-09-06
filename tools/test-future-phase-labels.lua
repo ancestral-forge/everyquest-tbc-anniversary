@@ -51,7 +51,7 @@ local updateButtonLoader = assert(loadstring(table.concat({
 local renderedText
 local renderedColor
 local questdisplay = {}
-local sessionvars = {zoneid = 3805}
+local sessionvars = {zonegroup = "Raids", zoneid = 3805}
 local row = {Show = function() end}
 local environment = {EveryQuestTitle1 = row}
 environment._G = environment
@@ -64,6 +64,11 @@ local EveryQuest = {
 		char = {history = {[3805] = {}}},
 	},
 }
+local globalEveryQuest = _G.EveryQuest
+_G.EveryQuest = EveryQuest
+dofile("EveryQuest/QuestStore.lua")
+_G.EveryQuest = globalEveryQuest
+EveryQuest.QuestStore:SetHistoryRoot(EveryQuest.db.char.history)
 function EveryQuest:QuestType()
 	return ""
 end
@@ -85,14 +90,36 @@ updateButtonLoader(
 )
 
 local phaseQuest = {id = 11165, n = "A Troll Among Trolls", l = 70, s = 3, p = 4}
+EveryQuest.QuestStore:Configure({groupOrder = {"Raids"}})
+EveryQuest.QuestStore:RegisterGroup("Raids", {[3805] = {phaseQuest}})
 EveryQuest:UpdateButton(1, phaseQuest)
 assert(renderedText == "[70][Phase 4] A Troll Among Trolls")
 assert(renderedColor == "FFFFFF", "phase labels must not create a status color")
 
-EveryQuest.db.char.history[3805][11165] = {status = -1}
+local phaseHistory = EveryQuest.QuestStore:EnsureHistoryRecord(11165, {
+	zoneID = 3805,
+	quest = phaseQuest,
+})
+assert(phaseHistory.p == nil, "phase metadata must not be persisted in history")
+phaseHistory.status = -1
 EveryQuest:UpdateButton(1, phaseQuest)
 assert(renderedText == "[70][Phase 4] A Troll Among Trolls (Failed)")
 assert(renderedColor == -1, "phase labels must preserve the existing status color")
+
+EveryQuest.db.profile.view = "history"
+EveryQuest:UpdateButton(1, phaseHistory)
+assert(renderedText == "[70][Phase 4] A Troll Among Trolls (Failed)", "history rows must join static phase metadata")
+assert(renderedColor == -1, "history rows must preserve the stored Failed color")
+assert(phaseHistory.p == nil, "rendering must not hydrate phase metadata into history")
+
+phaseHistory.status = -3
+EveryQuest:UpdateButton(1, phaseHistory)
+assert(renderedText == "[70][Phase 4] A Troll Among Trolls (Abandoned)")
+assert(renderedColor == -3, "history rows must preserve the stored Abandoned color")
+
+EveryQuest.db.profile.view = "zone"
+EveryQuest:UpdateButton(1, phaseQuest)
+assert(renderedText == "[70][Phase 4] A Troll Among Trolls (Abandoned)", "zone view must remain unchanged")
 
 local expectedPhases = {
 	[9524] = 4,
