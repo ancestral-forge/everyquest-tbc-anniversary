@@ -50,6 +50,61 @@ checks repository whitespace, and runs the checked-in Lua regression tests.
 Static checks prove syntax and file hygiene only. They do not prove in-game
 behavior.
 
+## Maintainer Quest API Audit
+
+EveryQuest ships a dormant in-client scanner for comparing the unique quest IDs
+in all ten static data modules with the current Anniversary quest-title API. It
+does not run automatically and is intentionally absent from the player help,
+options, and README.
+
+Run it only in a TBC Anniversary client:
+
+```text
+/everyquest audit-api
+/everyquest audit-api status
+/everyquest audit-api cancel
+/everyquest audit-api clear
+```
+
+The first command loads each enabled EveryQuest data module read-only and probes
+the resulting IDs in bounded batches. After pass 1 it waits ten seconds without
+probing so the client quest cache can warm, then retries only IDs with no title.
+`status` prints the current pass and counts, or the remaining warm-up time and
+retry-candidate count. `cancel` stops future probes, including during warm-up,
+without replacing the last complete report. `clear` removes only the saved audit
+report and is refused while a scan is active. Loaded data modules stay resident
+until `/reload`, which also reclaims their session memory.
+
+A completed scan stores `EveryQuestDBPC.char.questApiAudit` with
+`formatVersion`, `startedAt`, `completedAt`, `addonVersion`, `clientVersion`,
+`clientBuild`, `interface`, `locale`, the four result counts (`total`,
+`available`, `unavailable`, and `errors`), sorted `unavailableIds`, and sorted
+`probeErrors` entries containing an ID and concise reason. Use `/reload` or log
+out to flush the report, then inspect the per-character file at
+`WTF/Account/<ACCOUNT>/<REALM>/<CHARACTER>/SavedVariables/EveryQuest.lua`.
+
+Treat the report as evidence, not as quest truth. API title presence does not
+prove that a quest is available or obtainable on the realm, and a missing title
+does not justify automatically hiding or deleting a database record. Client
+version `2.5.6` is also not a content-phase signal: client metadata may include
+quests from a later unlock.
+
+Classify unavailable candidates before changing data:
+
+- `phase-pending`: keep the record and rerun after the relevant content unlock
+  or client-build change;
+- `legacy/retired`: require an authoritative provenance source and a live-client
+  recheck;
+- `seasonal`: rerun while the corresponding event is active and retain the
+  source used for the decision;
+- `data defect`: make a focused, reviewable correction only after provenance and
+  live behavior agree.
+
+In particular, keep Sunwell Plateau, Isle of Quel'Danas, and Magisters' Terrace
+candidates phase-pending until that Anniversary phase opens, then rerun the
+audit. Automated tests, static checks, packaging, and install parity remain
+separate from live API evidence.
+
 The reusable linter workflow runs Luacheck and the Lua 5.1 compatibility check
 for main pushes, pull requests, manual dispatches, and releases. The release
 workflow must depend on this linter gate before packaging.

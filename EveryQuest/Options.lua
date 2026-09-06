@@ -21,11 +21,14 @@ function EveryQuest:PrintUsage()
 end
 
 function EveryQuest:HandleSlash(input)
-	local command = string.lower((input or ""):match("^%s*(%S*)") or "")
+	local command, arguments = (input or ""):match("^%s*(%S*)%s*(.-)%s*$")
+	command = string.lower(command or "")
 	if command == "" then
 		self:Toggle()
 	elseif command == "debug" then
 		self:ToggleDebug()
+	elseif command == "audit-api" then
+		self:HandleQuestApiAuditCommand(arguments)
 	elseif command == "help" or command == "?" then
 		self:PrintUsage()
 	else
