@@ -63,6 +63,10 @@ None.
   tests may inject small bundled fixtures through the provider boundary.
 - Workflows and packaging: no CI, packaging, installation, backup, or release
   behavior changes are intended.
+- Documentation: record each checkpoint's user-visible changes and bug fixes
+  in `CHANGELOG.md` under `[Unreleased]` in the same PR, as required by
+  `CONTRIBUTING.md`; purely internal refactors need no entry. This does not
+  require a version bump or release action.
 - Evidence: focused Lua 5.1 regressions, `tools/verify-addon.sh`, OpenSpec
   validation, and complete diff inspection are required locally. Visual status,
   lifecycle, disabled/faulty Questie, and no-regression behavior require a
